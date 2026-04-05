@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LRCLIB Publisher</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Modern Glassmorphism & Dark Mode Theme */
+      :root {
+        --bg-base: #0f1115;
+        --bg-glass: rgba(30, 33, 40, 0.6);
+        --bg-glass-hover: rgba(40, 44, 52, 0.8);
+        --primary: #6366f1;
+        --primary-glow: rgba(99, 102, 241, 0.4);
+        --primary-hover: #4f46e5;
+        --accent: #8b5cf6;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --border: rgba(255, 255, 255, 0.08);
+        --error: #ef4444;
+        --success: #10b981;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Outfit", sans-serif;
+        background:
+          radial-gradient(
+            circle at 15% 50%,
+            rgba(99, 102, 241, 0.15),
+            transparent 25%
+          ),
+          radial-gradient(
+            circle at 85% 30%,
+            rgba(139, 92, 246, 0.15),
+            transparent 25%
+          ),
+          var(--bg-base);
+        color: var(--text-main);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+        display: flex;
+        justify-content: center;
+      }
+
+      /* Glassmorphism utilities */
+      .glass {
+        background: var(--bg-glass);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      }
+
+      .container {
+        max-width: 900px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 1rem;
+      }
+
+      h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #a5b4fc, #c4b5fd);
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+        letter-spacing: -1px;
+      }
+
+      p.subtitle {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        font-weight: 300;
+      }
+
+      .card {
+        padding: 2rem;
+        transition:
+          transform 0.3s ease,
+          background 0.3s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        background: var(--bg-glass-hover);
+      }
+
+      .card h2 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .card h2::before {
+        content: "";
+        display: block;
+        width: 8px;
+        height: 24px;
+        background: linear-gradient(to bottom, var(--primary), var(--accent));
+        border-radius: 4px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      @media (max-width: 600px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+
+      .form-group.full {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-left: 0.2rem;
+      }
+
+      input,
+      textarea {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border);
+        color: var(--text-main);
+        padding: 0.9rem;
+        border-radius: 12px;
+        font-family: inherit;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px var(--primary-glow);
+        background: rgba(0, 0, 0, 0.4);
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 160px;
+        font-family: "Menlo", "Monaco", "Courier New", monospace;
+        font-size: 0.9rem;
+        line-height: 1.6;
+      }
+
+      .hint {
+        font-size: 0.85rem;
+        color: var(--accent);
+        margin-bottom: 1rem;
+        margin-top: -0.5rem;
+        opacity: 0.9;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+      }
+
+      button {
+        padding: 0.8rem 1.6rem;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        font-family: inherit;
+      }
+
+      button.primary {
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        color: white;
+        box-shadow: 0 4px 15px var(--primary-glow);
+      }
+
+      button.primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px var(--primary-glow);
+      }
+
+      button.primary:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      button.secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-main);
+        border: 1px solid var(--border);
+      }
+
+      button.secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        filter: grayscale(0.5);
+      }
+
+      /* Modal Styles */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+        z-index: 1000;
+        padding: 1rem;
+      }
+
+      .modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .modal {
+        max-width: 650px;
+        width: 100%;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        transform: scale(0.95);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      .modal-overlay.active .modal {
+        transform: scale(1);
+      }
+
+      .modal-header {
+        margin-bottom: 1rem;
+      }
+
+      .modal-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+      }
+
+      .review-content {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 12px;
+        padding: 1.2rem;
+        margin: 1rem 0;
+        font-family: "Menlo", "Monaco", monospace;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        color: #86efac;
+        overflow-y: auto;
+        flex: 1;
+        border: 1px solid var(--border);
+      }
+
+      .status {
+        padding: 1rem;
+        border-radius: 12px;
+        margin-top: 1rem;
+        display: none;
+        font-weight: 500;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .status.active {
+        display: block;
+      }
+
+      .status.info {
+        background: rgba(99, 102, 241, 0.1);
+        color: #a5b4fc;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+      }
+
+      .status.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+      }
+
+      .status.error {
+        background: rgba(239, 68, 68, 0.1);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 3px;
+        margin-top: 1rem;
+        overflow: hidden;
+        display: none;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        width: 0%;
+        transition: width 0.1s linear;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Publisher</h1>
+        <p class="subtitle">
+          Extract metadata, Solve challenge, and Publish to LRCLIB directly
+        </p>
+      </header>
+
+      <div class="card glass">
+        <h2>Auto Extract from YouTube</h2>
+        <p class="hint">
+          ✨ Paste a YouTube video or audio link to automatically transcribe
+          lyrics using AI (WhisperX).
+        </p>
+        <div
+          class="grid"
+          style="grid-template-columns: 1fr auto; align-items: end"
+        >
+          <div class="form-group" style="grid-column: 1">
+            <label>YouTube URL</label>
+            <input
+              type="text"
+              id="youtubeUrl"
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+          </div>
+          <div class="form-group" style="grid-column: 2">
+            <button class="primary" id="btnExtractYt">
+              Extract & Transcribe
+            </button>
+          </div>
+        </div>
+        <div id="ytStatusBox" class="status" style="margin-top: 1rem"></div>
+      </div>
+
+      <div class="card glass">
+        <h2>Track Information</h2>
+        <div class="grid">
+          <div class="form-group">
+            <label>Track Name *</label>
+            <input
+              type="text"
+              id="trackName"
+              placeholder="E.g. I Want to Live"
+            />
+          </div>
+          <div class="form-group">
+            <label>Artist Name *</label>
+            <input
+              type="text"
+              id="artistName"
+              placeholder="E.g. Borislav Slavov"
+            />
+          </div>
+          <div class="form-group">
+            <label>Album Name *</label>
+            <input
+              type="text"
+              id="albumName"
+              placeholder="E.g. Baldur's Gate 3..."
+            />
+          </div>
+          <div class="form-group">
+            <label>Duration (Seconds) *</label>
+            <input type="number" id="duration" placeholder="E.g. 233" min="1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card glass">
+        <h2>Lyrics Content</h2>
+        <p class="hint">
+          ✨ Tip: Paste LRC synced lyrics below to auto-extract [ar:], [ti:],
+          [al:], and [length:] tags!
+        </p>
+        <div class="grid">
+          <div class="form-group full">
+            <label>Synced Lyrics (LRC)</label>
+            <textarea
+              id="syncedLyrics"
+              placeholder="[00:17.12] I feel your breath upon my neck...
+[ar: Artist]
+[ti: Title]"
+            ></textarea>
+          </div>
+          <div class="form-group full">
+            <label>Plain Lyrics (Optional)</label>
+            <textarea
+              id="plainLyrics"
+              placeholder="Line 1...
+Line 2..."
+            ></textarea>
+          </div>
+          <div class="form-group full" style="display: none">
+            <label>User Agent (Used for API Requests)</label>
+            <input
+              type="text"
+              id="userAgent"
+              value="LRCLIB Web Publisher v1.0.0 (https://github.com/lrclib)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="secondary" id="btnClear">Clear fields</button>
+        <button class="primary" id="btnReview">Review & Publish</button>
+      </div>
+    </div>
+
+    <!-- Review & Publish Modal -->
+    <div class="modal-overlay" id="reviewModal">
+      <div class="modal glass card">
+        <div class="modal-header">
+          <div class="modal-title">Final Review</div>
+          <p
+            style="
+              color: var(--text-muted);
+              margin-top: 0.5rem;
+              font-size: 0.95rem;
+            "
+          >
+            Check the payload below. Click publish to solve the Proof of Work
+            and submit.
+          </p>
+        </div>
+
+        <div class="review-content" id="reviewContent"></div>
+
+        <div id="statusBox" class="status"></div>
+        <div class="progress-bar" id="progressBar">
+          <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+
+        <div class="actions" style="margin-top: 1.5rem">
+          <button class="secondary" id="btnCancelModal">Cancel</button>
+          <button class="primary" id="btnPublish">Solve PoW & Publish</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
