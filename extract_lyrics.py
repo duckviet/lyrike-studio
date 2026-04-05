@@ -5,15 +5,22 @@ import argparse
 import tempfile
 import logging
 import warnings
+import subprocess
 import yt_dlp
 import whisperx
 import torch
 
 warnings.filterwarnings("ignore")
 
+
 MAX_DURATION = 5 
 MAX_WORDS = 12   
 
+
+vad_opts = {
+    "vad_onset": 0.500,    # Ngưỡng bắt đầu giọng nói (mặc định ~0.5)
+    "vad_offset": 0.363    # Ngưỡng kết thúc giọng nói (tăng/giảm để cắt câu nhanh hơn)
+}
 
 # Configure basic logging
 logger = logging.getLogger("lyrics_extractor")
@@ -54,12 +61,7 @@ def extract_metadata_and_audio(url, output_path):
             "duration": dur
         }
 
-def group_words_into_lines(segments, max_gap=0.8, max_duration=3.0):
-    """
-    Regroup word-level timestamps into short lyric lines.
-    - max_gap: nếu khoảng cách giữa 2 từ > max_gap giây -> tách dòng mới
-    - max_duration: nếu dòng hiện tại dài hơn max_duration giây -> tách dòng mới
-    """
+def group_words_into_lines(segments, max_gap=2.0, max_duration=10.0):
     all_words = []
     for seg in segments:
         words = seg.get("words", [])
@@ -68,7 +70,6 @@ def group_words_into_lines(segments, max_gap=0.8, max_duration=3.0):
                 all_words.append(w)
 
     if not all_words:
-        # Fallback: nếu không có word-level, trả về segment gốc
         lines = []
         for seg in segments:
             text = seg.get("text", "").strip()
@@ -87,8 +88,36 @@ def group_words_into_lines(segments, max_gap=0.8, max_duration=3.0):
         gap = curr["start"] - prev["end"]
         duration = curr["end"] - line_start
 
+        word_text = curr["word"].strip()
+        clean_word = "".join(c for c in word_text if c.isalpha() or c == "'")
+        
+        is_capitalized = len(clean_word) > 0 and clean_word[0].isupper()
+        is_pronoun_i = clean_word in ["I", "I'm", "I've", "I'll", "I'd"]
+        
+        prev_text = prev["word"].strip()
+        
+        # Bổ sung dấu phẩy (,) vào danh sách ép buộc xuống dòng
+        ends_with_punctuation = prev_text.endswith(('.', '!', '?', ',', ';', ':'))
+
+        should_split = False
+
+        # Tách nếu gap quá dài hoặc dòng quá dài
         if gap > max_gap or duration > max_duration:
-            # Kết thúc dòng hiện tại, bắt đầu dòng mới
+            should_split = True
+        # Tách nếu từ trước CÓ DẤU CÂU (chấm, phẩy...)
+        elif ends_with_punctuation:
+            should_split = True
+        # Tách nếu từ mới viết hoa
+        elif is_capitalized:
+            if is_pronoun_i:
+                # Đối với đại từ "I", chỉ cần gap > 0.25s là tách để tránh dính chữ
+                # (hoặc nó đã tự tách nếu có dấu câu ở trên rồi)
+                if gap > 0.25:
+                    should_split = True
+            else:
+                should_split = True
+
+        if should_split:
             text = " ".join(w["word"].strip() for w in current_words)
             lines.append((line_start, text))
             current_words = [curr]
@@ -102,6 +131,30 @@ def group_words_into_lines(segments, max_gap=0.8, max_duration=3.0):
         lines.append((line_start, text))
 
     return lines
+    
+def extract_vocals_demucs(audio_path, output_dir):
+    logger.info(f"Running Demucs source separation on {audio_path}...")
+    cmd = [
+        sys.executable, "-m", "demucs.separate",
+        "--two-stems=vocals",
+        "-n", "htdemucs",
+        "-o", output_dir,
+        audio_path
+    ]
+    try:
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Demucs failed: {e}")
+        raise
+
+    audio_basename = os.path.splitext(os.path.basename(audio_path))[0]
+    vocals_path = os.path.join(output_dir, "htdemucs", audio_basename, "vocals.wav")
+    
+    if os.path.exists(vocals_path):
+        logger.info(f"Demucs processing complete. Vocals saved to: {vocals_path}")
+        return vocals_path
+    else:
+        raise FileNotFoundError(f"Demucs failed to output vocals file at expected path: {vocals_path}")
 
 
 def process_audio(audio_path):
@@ -112,10 +165,20 @@ def process_audio(audio_path):
         f"(Device: {device}, Precision: {compute_type})..."
     )
 
-    # 1. Transcribe
+    # asr_opts = {
+    #     "beam_size": 5,
+    #     "initial_prompt": "Lyrics of a song, with proper punctuation, commas, and line breaks:"
+    # }
+
+    # Load model với cả vad_options và asr_options
     model = whisperx.load_model(
-        "small", device, compute_type=compute_type
+        "small", 
+        device, 
+        compute_type=compute_type, 
+        vad_options=vad_opts,
+        # asr_options=asr_opts
     )
+  
 
     logger.info("Starting transcription...")
     audio = whisperx.load_audio(audio_path)
@@ -149,11 +212,11 @@ def process_audio(audio_path):
             f"Falling back to unaligned segments."
         )
 
-    # 3. Regroup words into short lyric lines (1-3s each)
+    # 3. Regroup words into short lyric lines based on capitalization
     lines = group_words_into_lines(
         result["segments"],
-        max_gap=0.3,      # tách dòng nếu nghỉ > 0.8s
-        max_duration=2.0,  # tách dòng nếu dài > 3s
+        max_gap=2.0,      # tách dòng nếu gap kéo dài > 2.0s
+        max_duration=15.0 # tách dòng nếu dài vượt qua 15s
     )
 
     synced_lyrics = []
@@ -174,9 +237,15 @@ def run_extraction(url: str):
     with tempfile.TemporaryDirectory() as tmpdir:
         raw_audio_path = os.path.join(tmpdir, "audio")
         final_audio_path = os.path.join(tmpdir, "audio.wav")
+        demucs_out_dir = os.path.join(tmpdir, "demucs_output")
         
         metadata = extract_metadata_and_audio(url, raw_audio_path)
-        synced, plain = process_audio(final_audio_path)
+        
+        # 1. Tách nhạc dùng demucs
+        vocals_path = extract_vocals_demucs(final_audio_path, demucs_out_dir)
+        
+        # 2. Xử lý dùng whisperx
+        synced, plain = process_audio(vocals_path)
             
         output = {
             "trackName": metadata["title"],
