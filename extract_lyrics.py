@@ -1,11 +1,14 @@
+# extract_lyrics.py
 import sys
 import json
 import os
-import argparse
+import subprocess
 import tempfile
 import logging
 import warnings
-import subprocess
+import shutil
+import argparse
+from pathlib import Path
 import yt_dlp
 import whisperx
 import torch
@@ -133,7 +136,13 @@ def group_words_into_lines(segments, max_gap=2.0, max_duration=10.0):
     return lines
     
 def extract_vocals_demucs(audio_path, output_dir):
+    """
+    Extract vocals using Demucs.
+    Returns the path to the extracted vocals file.
+    """
     logger.info(f"Running Demucs source separation on {audio_path}...")
+    
+    # We use a specific model and two-stems for efficiency
     cmd = [
         sys.executable, "-m", "demucs.separate",
         "--two-stems=vocals",
@@ -141,11 +150,14 @@ def extract_vocals_demucs(audio_path, output_dir):
         "-o", output_dir,
         audio_path
     ]
+    
     try:
-        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        # Note: Demucs can be very slow without a GPU
+        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except subprocess.CalledProcessError as e:
-        logger.error(f"Demucs failed: {e}")
-        raise
+        stderr = e.stderr.decode() if e.stderr else "Unknown error"
+        logger.error(f"Demucs failed: {stderr}")
+        raise RuntimeError(f"Demucs processing failed: {stderr}")
 
     audio_basename = os.path.splitext(os.path.basename(audio_path))[0]
     vocals_path = os.path.join(output_dir, "htdemucs", audio_basename, "vocals.wav")
@@ -154,30 +166,65 @@ def extract_vocals_demucs(audio_path, output_dir):
         logger.info(f"Demucs processing complete. Vocals saved to: {vocals_path}")
         return vocals_path
     else:
+        # Fallback check for different naming conventions if any
         raise FileNotFoundError(f"Demucs failed to output vocals file at expected path: {vocals_path}")
 
 
-def process_audio(audio_path):
+_CACHED_MODELS = {}
+
+def get_whisper_model(model_name="small", device=None, compute_type=None):
+    global _CACHED_MODELS
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    if compute_type is None:
+        compute_type = "float16" if device == "cuda" else "int8"
+    
+    key = (model_name, device, compute_type)
+    if key not in _CACHED_MODELS:
+        logger.info(f"Loading WhisperX model '{model_name}' (Device: {device}, Precision: {compute_type})...")
+        _CACHED_MODELS[key] = whisperx.load_model(
+            model_name,
+            device,
+            compute_type=compute_type,
+            vad_options=vad_opts
+        )
+    return _CACHED_MODELS[key]
+
+def process_audio(audio_path, use_demucs=False, output_vocal_path=None):
+    """
+    Main entry point for processing audio.
+    1. (Optional) Run Demucs to extract vocals.
+    2. Run WhisperX for transcription and alignment.
+    """
+    working_audio = audio_path
+
+    if use_demucs:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            try:
+                vocals_path = extract_vocals_demucs(audio_path, tmpdir)
+                if output_vocal_path:
+                    # Move processed vocal to persistent path
+                    import shutil
+                    shutil.move(vocals_path, output_vocal_path)
+                    working_audio = output_vocal_path
+                    logger.info(f"Vocal saved to persistent cache: {output_vocal_path}")
+                else:
+                    # Use temporary vocal path but need to be careful with scope
+                    # Better to copy it out or process immediately
+                    # For now, let's just process it within this block
+                    working_audio = vocals_path
+                    return _run_whisper_on_audio(working_audio)
+            except Exception as e:
+                logger.warning(f"Demucs failed, falling back to original audio: {e}")
+                working_audio = audio_path
+    
+    return _run_whisper_on_audio(working_audio)
+
+def _run_whisper_on_audio(audio_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     compute_type = "float16" if device == "cuda" else "int8"
-    logger.info(
-        f"Loading WhisperX main model "
-        f"(Device: {device}, Precision: {compute_type})..."
-    )
-
-    # asr_opts = {
-    #     "beam_size": 5,
-    #     "initial_prompt": "Lyrics of a song, with proper punctuation, commas, and line breaks:"
-    # }
-
-    # Load model với cả vad_options và asr_options
-    model = whisperx.load_model(
-        "small", 
-        device, 
-        compute_type=compute_type, 
-        vad_options=vad_opts,
-        # asr_options=asr_opts
-    )
+    
+    model = get_whisper_model("small", device, compute_type)
   
 
     logger.info("Starting transcription...")
