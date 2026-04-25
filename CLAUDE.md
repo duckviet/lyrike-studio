@@ -1,0 +1,8 @@
+# Claude Context
+
+Use `docs/AI_CONTEXT.md` as the source of truth for project conventions and boundaries.
+
+Also read:
+
+- `docs/ARCHITECTURE.md`
+- `docs/GLOSSARY.md`
