@@ -27,7 +27,7 @@ export type LyricsDoc = {
   meta: LyricsMeta;
 };
 
-type LyricsHistoryState = {
+export type LyricsHistoryState = {
   doc: LyricsDoc;
   selectedLineId: string | null;
 };

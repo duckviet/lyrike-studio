@@ -22,7 +22,11 @@
   export let onExportLrc: () => void;
 
   let fileInput: HTMLInputElement;
-  let containerRef: HTMLElement;
+  let listRef: HTMLUListElement | null = null;
+
+  // Track last scrolled id to avoid redundant scrolling
+  let lastScrolledActiveId: string | null = null;
+  let lastScrolledSelectedId: string | null = null;
 
   function handleImportClick() {
     fileInput?.click();
@@ -45,19 +49,47 @@
     input.value = "";
   }
 
-  // Auto-scroll logic
-  $: if (lyricsState.selectedLineId && containerRef) {
-    const activeEl = containerRef.querySelector(`[data-id="${lyricsState.selectedLineId}"]`);
-    if (activeEl) {
-      activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+  function scrollLineIntoView(lineId: string) {
+    if (!listRef) return;
+    const el = listRef.querySelector<HTMLElement>(`[data-id="${lineId}"]`);
+    if (!el) return;
+
+    // Scroll inside the list, not the whole page
+    const listRect = listRef.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const offset =
+      elRect.top - listRect.top - listRect.height / 2 + elRect.height / 2;
+
+    listRef.scrollBy({ top: offset, behavior: "smooth" });
+  }
+
+  // Priority auto-scroll by activeLineId (playing)
+  $: if (
+    lyricsState.tab === "synced" &&
+    listRef &&
+    lyricsState.activeLineId &&
+    lyricsState.activeLineId !== lastScrolledActiveId
+  ) {
+    lastScrolledActiveId = lyricsState.activeLineId;
+    scrollLineIntoView(lyricsState.activeLineId);
+  }
+
+  // When user manually selects another line (not pushed by timeline) -> scroll to it
+  $: if (
+    lyricsState.tab === "synced" &&
+    listRef &&
+    lyricsState.selectedLineId &&
+    lyricsState.selectedLineId !== lastScrolledSelectedId &&
+    lyricsState.selectedLineId !== lyricsState.activeLineId
+  ) {
+    lastScrolledSelectedId = lyricsState.selectedLineId;
+    scrollLineIntoView(lyricsState.selectedLineId);
   }
 </script>
 
-<article 
-  class="panel lyrics-column" 
+<article
+  class="panel lyrics-column"
   class:hidden-mobile={activeTab !== "lyrics"}
-  bind:this={containerRef}
 >
   <div class="rightbar-head">
     <div class="lyrics-tabs" role="tablist" aria-label="Lyrics editor tabs">
@@ -91,13 +123,13 @@
   </div>
 
   {#if lyricsState.tab === "synced"}
-    <ul class="lyrics-list">
+    <ul class="lyrics-list" bind:this={listRef}>
       {#each lyricsState.doc.syncedLines as line, index (line.id)}
         <LyricLineItem
           {line}
           {index}
-          isActive={line.id === lyricsState.selectedLineId}
-          isPlaying={line.id === lyricsState.activeLineId}
+          isActive={line.id === lyricsState.activeLineId}
+          isSelected={line.id === lyricsState.selectedLineId}
           {formatTime}
           {onSeekLine}
           {onSelectLine}

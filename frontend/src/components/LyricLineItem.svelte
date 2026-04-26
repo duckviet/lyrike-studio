@@ -3,8 +3,8 @@
 
   export let line: LyricLine;
   export let index: number;
-  export let isActive: boolean;
-  export let isPlaying: boolean;
+  export let isActive: boolean; // currently playing based on time
+  export let isSelected: boolean; // currently selected for editing
   export let formatTime: (seconds: number) => string;
 
   export let onSeekLine: (line: LyricLine) => void;
@@ -18,7 +18,7 @@
   export let onNudge: (line: LyricLine, edge: "start" | "end", delta: number) => void;
 </script>
 
-<li class:active={isActive} class:playing={isPlaying} data-id={line.id}>
+<li class:active={isActive} class:selected={isSelected} data-id={line.id}>
   <div class="line-head">
     <button
       type="button"
@@ -83,14 +83,24 @@
     border-color: #bcc99c;
   }
 
-  li.active {
+  /* selected = user click chọn để edit (viền indigo) */
+  li.selected {
     border-color: var(--indigo);
     background: var(--indigo-soft);
     box-shadow: 0 0 0 2px rgba(74, 87, 178, 0.08);
   }
 
-  li.playing {
+  /* active = đang phát theo thời gian (highlight nổi bật hơn) */
+  li.active {
     box-shadow: inset 0 0 0 2px var(--primary-deep), 0 6px 16px rgba(143, 181, 32, 0.12);
+  }
+
+  /* Khi vừa active vừa selected → giữ cả hai */
+  li.active.selected {
+    box-shadow: 
+      inset 0 0 0 2px var(--primary-deep),
+      0 0 0 2px rgba(74, 87, 178, 0.08),
+      0 6px 16px rgba(143, 181, 32, 0.12);
   }
 
   .line-head {
@@ -150,7 +160,8 @@
     transition: opacity 160ms ease;
   }
 
-  li:not(:hover):not(.active) .line-tools {
+  /* Ẩn tools khi không hover, không selected, không active */
+  li:not(:hover):not(.selected):not(.active) .line-tools {
     opacity: 0;
     pointer-events: none;
   }

@@ -26,9 +26,12 @@
     onToggleLoop: () => void;
     onSelectLine: (lineId: string) => void;
     onRegionResize: (lineId: string, start: number, end: number) => void;
+    onRegionResizeCommit: (lineId: string, start: number, end: number) => void;
+    onRegionResizeStart?: () => void;
     waveformHost: HTMLDivElement | null;
     waveformTimelineHost: HTMLDivElement | null;
     onSeekBy: (delta: number) => void;
+    onSeekTo: (time: number) => void;
     onTogglePlayback: () => void;
   }
 
@@ -55,11 +58,22 @@
     onToggleLoop,
     onSelectLine,
     onRegionResize,
+    onRegionResizeCommit,
+    onRegionResizeStart,
     waveformHost = $bindable(null),
     waveformTimelineHost = $bindable(null),
     onSeekBy,
+    onSeekTo,
     onTogglePlayback,
   }: Props = $props();
+
+  function handleWaveformClick(event: MouseEvent) {
+    if (!mediaInfo) return;
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const time = (waveScrollLeft + x) / (wavePxPerSec || zoomLevel);
+    onSeekTo(Math.max(0, Math.min(duration, time)));
+  }
 </script>
 
 <article class="panel timeline-column" class:hidden-mobile={activeTab !== "timeline"}>
@@ -105,8 +119,20 @@
       <span>Load a video to see the waveform</span>
     </div>
 
-    <div class="ruler-track" bind:this={waveformTimelineHost} class:hidden={!mediaInfo}></div>
-    <div class="wave-track" bind:this={waveformHost} class:hidden={!mediaInfo}></div>
+    <div
+      class="ruler-track"
+      bind:this={waveformTimelineHost}
+      class:hidden={!mediaInfo}
+      role="presentation"
+      onclick={handleWaveformClick}
+    ></div>
+    <div
+      class="wave-track"
+      bind:this={waveformHost}
+      class:hidden={!mediaInfo}
+      role="presentation"
+      onclick={handleWaveformClick}
+    ></div>
 
     {#if mediaInfo}
       <LyricRegionsTrack
@@ -118,6 +144,8 @@
         selectedLineId={lyricsState.selectedLineId}
         {onSelectLine}
         onResize={onRegionResize}
+        onResizeCommit={onRegionResizeCommit}
+        onResizeStart={onRegionResizeStart}
       />
     {/if}
 

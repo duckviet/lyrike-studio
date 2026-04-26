@@ -96,8 +96,8 @@ def transcript_path(video_id: str) -> Path:
     return TRANSCRIPT_CACHE_DIR / f"{video_id}.json"
 
 
-def peaks_path(video_id: str) -> Path:
-    return PEAKS_CACHE_DIR / f"{video_id}.json"
+def peaks_path(video_id: str, source: str = "original") -> Path:
+    return PEAKS_CACHE_DIR / f"{video_id}_{source}.json"
 
 
 def vocals_path(video_id: str) -> Path:
@@ -554,13 +554,17 @@ def stream_cached_audio(video_id: str, request: Request, vocals: bool = True):
 
 
 @app.get("/local-api/peaks/{video_id}")
-def get_audio_peaks(video_id: str, samples: int = 800, force: bool = False, vocals: bool = True):
+def get_audio_peaks(
+    video_id: str, samples: int = 800, force: bool = False, vocals: bool = True
+):
     safe_video_id = normalize_video_id(video_id)
     if not safe_video_id:
         raise HTTPException(status_code=400, detail="Invalid videoId")
 
     if samples < 64 or samples > 4000:
-        raise HTTPException(status_code=400, detail="samples must be between 64 and 4000")
+        raise HTTPException(
+            status_code=400, detail="samples must be between 64 and 4000"
+        )
 
     audio_file = find_cached_audio(safe_video_id, prefer_vocals=vocals)
     if audio_file is None:
@@ -569,23 +573,22 @@ def get_audio_peaks(video_id: str, samples: int = 800, force: bool = False, voca
             detail="Audio cache not found. Call /local-api/fetch with URL first.",
         )
 
-    cache_file = peaks_path(safe_video_id)
+    # Determine actual source from the selected file
+    is_vocals = "_vocals" in audio_file.name
+    source = "vocals" if is_vocals else "original"
+
+    cache_file = peaks_path(safe_video_id, source)
     if cache_file.exists() and not force:
         cached = load_json(cache_file)
         if cached and cached.get("samples") == samples:
-            return {
-                **cached,
-                "cacheHit": True,
-            }
+            return {**cached, "cacheHit": True}
 
     metadata = load_metadata(safe_video_id) or {}
     duration = float(metadata.get("duration", 0) or 0)
     payload = build_peaks_payload(safe_video_id, audio_file, duration, samples)
+    payload["source"] = source
     save_json(cache_file, payload)
-    return {
-        **payload,
-        "cacheHit": False,
-    }
+    return {**payload, "cacheHit": False}
 
 
 @app.api_route(

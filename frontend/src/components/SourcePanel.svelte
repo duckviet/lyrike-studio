@@ -1,14 +1,17 @@
 <script lang="ts">
   import type { FetchMediaResponse } from "../lib/api";
+  import type { PublishFlowState } from "../lib/app/publishFlow";
 
   export let activeTab: "source" | "timeline" | "lyrics";
   export let sourceInput = "";
   export let fetchState: "idle" | "loading" | "ready" | "error";
   export let sourceMessage: string;
   export let mediaInfo: FetchMediaResponse | null;
+  export let publishState: PublishFlowState;
   export let transcribeState: string;
   export let formatTime: (seconds: number) => string;
   export let onFetch: () => void;
+  export let onPublish: () => void;
   export let onTranscribe: () => void;
 </script>
 
@@ -88,6 +91,41 @@
         </div>
       </div>
     </section>
+
+    <section class="publish-card">
+      <div class="card-header">
+        <span class="tag">Publish</span>
+      </div>
+
+      <button
+        type="button"
+        class="btn-action primary"
+        disabled={publishState.status === "running"}
+        on:click={onPublish}
+      >
+        {#if publishState.status === "running"}
+          <span class="spinner"></span> Publishing...
+        {:else}
+          Publish to LRCLIB
+        {/if}
+      </button>
+
+      <ol class="publish-steps" aria-label="Publish progress">
+        {#each publishState.steps as step (step.id)}
+          <li data-status={step.status}>
+            <span class="step-dot" aria-hidden="true"></span>
+            <span>{step.label}</span>
+          </li>
+        {/each}
+      </ol>
+
+      <p class="publish-message" data-status={publishState.status}>
+        {publishState.message}
+        {#if publishState.status === "running" && publishState.currentStep === "pow" && publishState.nonceAttempts > 0}
+          {' '}(attempts: {publishState.nonceAttempts.toLocaleString()})
+        {/if}
+      </p>
+    </section>
   {/if}
 </article>
 
@@ -104,7 +142,8 @@
   }
 
   .input-section,
-  .info-card {
+  .info-card,
+  .publish-card {
     border: 1px solid var(--line);
     border-radius: 14px;
     background: rgba(255, 255, 251, 0.88);
@@ -246,6 +285,13 @@
     gap: 14px;
   }
 
+  .publish-card {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .card-header {
     display: flex;
     align-items: center;
@@ -314,6 +360,81 @@
     border-top-color: #1f2c06;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
+  }
+
+  .publish-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 6px;
+  }
+
+  .publish-steps li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #5f6847;
+    font-size: 0.8rem;
+  }
+
+  .step-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #c8d2ac;
+    box-shadow: 0 0 0 1px #b4c193 inset;
+  }
+
+  .publish-steps li[data-status="running"] {
+    color: #34451f;
+    font-weight: 700;
+  }
+
+  .publish-steps li[data-status="running"] .step-dot {
+    background: #d2f255;
+    box-shadow: 0 0 0 1px #a4c22c inset;
+  }
+
+  .publish-steps li[data-status="success"] {
+    color: #2f6618;
+  }
+
+  .publish-steps li[data-status="success"] .step-dot {
+    background: #4daf2c;
+    box-shadow: 0 0 0 1px #2f7f17 inset;
+  }
+
+  .publish-steps li[data-status="error"] {
+    color: #8a2828;
+  }
+
+  .publish-steps li[data-status="error"] .step-dot {
+    background: #da3f3f;
+    box-shadow: 0 0 0 1px #a22424 inset;
+  }
+
+  .publish-message {
+    margin: 0;
+    border-left: 3px solid var(--line);
+    border-radius: 10px;
+    padding: 0.65rem 0.72rem;
+    background: #f7f9ed;
+    color: #596346;
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  .publish-message[data-status="success"] {
+    border-left-color: #3b7b0d;
+    background: #f3fbe9;
+    color: #295212;
+  }
+
+  .publish-message[data-status="error"] {
+    border-left-color: var(--danger);
+    background: #fff4f2;
+    color: #7a2a2a;
   }
 
   .pulse {

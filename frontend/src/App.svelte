@@ -6,16 +6,27 @@
     fetchMedia,
     fetchPeaks,
     getAudioUrl,
+    publishLyrics,
+    requestPublishChallenge,
     requestTranscription,
     streamTranscription,
     type FetchMediaResponse,
     type PeaksResponse,
   } from "./lib/api";
-  import { createDraftManager } from "./lib/app/draftManager";
+  import {
+    createDebouncedDraftAutosave,
+    createDraftManager,
+  } from "./lib/app/draftManager";
   import { createEditorLifecycleController } from "./lib/app/editorLifecycleController";
   import { formatTime } from "./lib/app/formatters";
   import { createGlobalKeydownHandler } from "./lib/app/keyboardShortcuts";
   import { createLyricsActions } from "./lib/app/lyricsActions";
+  import { buildPublishPayload } from "./lib/app/publishPayload";
+  import {
+    createPublishFlowMachine,
+    type PublishFlowState,
+  } from "./lib/app/publishFlow";
+  import { solvePowInWorker } from "./lib/app/powWorkerClient";
   import {
     fetchMediaForEditor,
     runTranscriptionFlow,
@@ -45,6 +56,10 @@
   const waveformController = new WaveformController();
   const lyricsStore = new LyricsStore();
   const draftManager = createDraftManager();
+  const draftAutosave = createDebouncedDraftAutosave({
+    save: (videoId, payload) => draftManager.save(videoId, payload),
+    delayMs: 1000,
+  });
 
   let activeTab: TabId = "timeline";
   let sourceInput = "";
@@ -65,10 +80,13 @@
   let waveScrollLeft = 0;
   let wavePxPerSec = zoomLevel;
 
+  let dragBaseState: any = null;
   let isPlaying = false;
   let currentTime = 0;
   let duration = 0;
   let transcribeAbortController: AbortController | null = null;
+  let publishState: PublishFlowState;
+  let lastAutosaveFingerprint = "";
 
   const lyricsActions = createLyricsActions({
     lyricsStore,
@@ -99,6 +117,11 @@
     },
   });
 
+  const publishFlow = createPublishFlowMachine((next) => {
+    publishState = next;
+  });
+  publishState = publishFlow.getState();
+
   function saveDraft() {
     if (!mediaInfo) {
       sourceMessage = "Load media before saving a draft.";
@@ -128,6 +151,34 @@
 
     lyricsStore.loadDraft(draft.doc, draft.selectedLineId ?? null);
     sourceMessage = "Draft restored from local storage.";
+  }
+
+  async function handlePublish() {
+    if (!mediaInfo) {
+      sourceMessage = "Load media before publishing.";
+      return;
+    }
+
+    await publishFlow.run({
+      buildPayload: () =>
+        buildPublishPayload({
+          lyricsState,
+          mediaInfo,
+          exportLrc: () => lyricsStore.exportToLrc(),
+        }),
+      requestChallenge: requestPublishChallenge,
+      solvePow: ({ prefix, targetHex, onProgress }) =>
+        solvePowInWorker({
+          prefix,
+          targetHex,
+          onProgress,
+        }),
+      publish: ({ payload, publishToken }) =>
+        publishLyrics({
+          payload,
+          publishToken,
+        }),
+    });
   }
 
   let videoPlayerRef: VideoPlayer;
@@ -179,9 +230,26 @@
   });
 
   onDestroy(() => {
+    draftAutosave.flushNow();
     lifecycleController.dispose();
     transcribeAbortController?.abort();
   });
+
+  $: if (mediaInfo?.videoId) {
+    const fingerprint = JSON.stringify({
+      videoId: mediaInfo.videoId,
+      doc: lyricsState.doc,
+      selectedLineId: lyricsState.selectedLineId,
+    });
+
+    if (fingerprint !== lastAutosaveFingerprint) {
+      lastAutosaveFingerprint = fingerprint;
+      draftAutosave.schedule(mediaInfo.videoId, {
+        doc: lyricsState.doc,
+        selectedLineId: lyricsState.selectedLineId,
+      });
+    }
+  }
 
   $: if (lifecycleController.isLoopSelectionOutdated(lyricsState.selectedLineId)) {
     loopEnabled = false;
@@ -224,6 +292,8 @@
       sourceMessage = result.sourceMessage;
       fetchState = "ready";
       loopEnabled = false;
+      publishFlow.reset();
+      lastAutosaveFingerprint = "";
     } catch (error) {
       peaksState = "error";
       peaksMessage = "Failed to load waveform peaks.";
@@ -295,9 +365,11 @@
             {fetchState}
             {sourceMessage}
             {mediaInfo}
+            {publishState}
             {transcribeState}
             {formatTime}
             onFetch={handleFetch}
+            onPublish={handlePublish}
             onTranscribe={handleTranscribe}
           />
         </aside>
@@ -362,8 +434,16 @@
         onZoomChange={handleZoomChange}
         onToggleLoop={toggleLoopForActiveLine}
         onSelectLine={lyricsActions.selectLine}
-        onRegionResize={(id, s, e) => lyricsStore.setLineRange(id, s, e)}
+        onRegionResize={lyricsActions.resizeLineLive}
+        onRegionResizeCommit={(id, s, e) => {
+          lyricsActions.resizeLineCommit(id, s, e, dragBaseState);
+          dragBaseState = null;
+        }}
+        onRegionResizeStart={() => {
+          dragBaseState = lyricsStore.getHistoryState();
+        }}
         onSeekBy={(delta) => videoPlayerRef?.seekBy(delta)}
+        onSeekTo={(time) => videoPlayerRef?.seekTo(time)}
         onTogglePlayback={() => isPlaying ? videoPlayerRef?.pause() : videoPlayerRef?.play()}
         bind:waveformHost
         bind:waveformTimelineHost

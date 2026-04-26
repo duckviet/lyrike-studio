@@ -10,6 +10,8 @@
     selectedLineId: string | null;
     onSelectLine: (lineId: string) => void;
     onResize: (lineId: string, start: number, end: number) => void;
+    onResizeCommit: (lineId: string, start: number, end: number) => void;
+    onResizeStart?: () => void;
   }
 
   let {
@@ -21,6 +23,8 @@
     selectedLineId,
     onSelectLine,
     onResize,
+    onResizeCommit,
+    onResizeStart,
   }: Props = $props();
 
   let trackEl: HTMLDivElement | null = $state(null);
@@ -36,6 +40,8 @@
   };
 
   let drag: DragState | null = $state(null);
+  let lastResizeState: { lineId: string; start: number; end: number } | null =
+    null;
 
   function beginDrag(
     event: PointerEvent,
@@ -53,6 +59,7 @@
       originEnd: line.end,
     };
     onSelectLine(line.id);
+    onResizeStart?.();
   }
 
   function onPointerMove(event: PointerEvent) {
@@ -75,12 +82,23 @@
       nextEnd = nextStart + len;
     }
 
+    lastResizeState = { lineId: drag.lineId, start: nextStart, end: nextEnd };
     onResize(drag.lineId, nextStart, nextEnd);
   }
 
   function endDrag(event: PointerEvent) {
     if (!drag) return;
     (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
+
+    if (lastResizeState) {
+      onResizeCommit(
+        lastResizeState.lineId,
+        lastResizeState.start,
+        lastResizeState.end,
+      );
+      lastResizeState = null;
+    }
+
     drag = null;
   }
 </script>
