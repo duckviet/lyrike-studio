@@ -3,8 +3,8 @@ import type {
   PeaksResponse,
   TranscribeResponse,
 } from "../api";
-import type { MediaController } from "../MediaController";
-import type { WaveformController } from "../WaveformController";
+import type { MediaController } from "@/entities/media";
+import type { WaveformController } from "@/entities/media";
 
 export type PeaksLoadResult = {
   peaksInfo: PeaksResponse | null;

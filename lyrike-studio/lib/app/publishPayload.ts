@@ -1,6 +1,6 @@
 import type { PublishLyricsPayload } from "../api";
 import type { FetchMediaResponse } from "../api";
-import type { LyricsState } from "../LyricsStore";
+import type { LyricsState } from "@/entities/lyrics";
 
 const SYNCED_TIMESTAMP_REGEX = /\[\d{2}:\d{2}(?:\.\d{2,3})?\]/;
 

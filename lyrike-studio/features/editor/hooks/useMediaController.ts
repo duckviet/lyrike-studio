@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { MediaController } from "@/lib/MediaController";
+import { MediaController } from "@/entities/media";
 
 export function useMediaController() {
   const controllerRef = useRef<MediaController | null>(null);
