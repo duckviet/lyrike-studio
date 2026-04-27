@@ -42,6 +42,8 @@ interface TimelinePanelAdapterProps {
   peaksInfo: PeaksResponse | null;
   audioUrl: string | null;
   onGetBaseState?: () => unknown;
+  onInsertAtGap: (start: number, end: number) => void;
+  onExtendLine: (lineId: string, edge: "start" | "end", newTime: number) => void;
 }
 
 export function TimelinePanelAdapter(props: TimelinePanelAdapterProps) {

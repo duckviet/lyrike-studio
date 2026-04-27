@@ -368,6 +368,26 @@ export class LyricsStore {
     });
   }
 
+  /**
+   * Inserts a new lyric line within a specific time range (gap).
+   */
+  insertAtRange(start: number, end: number): void {
+    this.commit("Insert", (scope) => {
+      const inserted: LyricLine = {
+        id: createLineId(),
+        start,
+        end,
+        text: "new line",
+      };
+
+      const nextLines = sortByStart([...scope.doc.syncedLines, inserted]);
+      return {
+        doc: applyDocWithSyncedLines(scope.doc, nextLines),
+        selectedLineId: inserted.id,
+      };
+    });
+  }
+
   deleteLine(lineId: string): void {
     this.commit("Delete", (scope) => {
       const lines = scope.doc.syncedLines;

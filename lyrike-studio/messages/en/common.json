@@ -1,0 +1,16 @@
+{
+  "nav": {
+    "home": "Home",
+    "editor": "Open Editor",
+    "projects": "Projects",
+    "account": "Account",
+    "github": "Github"
+  },
+  "button": {
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "status": {
+    "loading": "Loading..."
+  }
+}

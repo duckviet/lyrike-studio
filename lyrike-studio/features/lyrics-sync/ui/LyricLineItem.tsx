@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import { useTranslations } from "next-intl";
 import type { LyricLine } from "@/entities/lyrics";
 import { NUDGE_DELTA_SEC } from "@/features/lyrics-sync/config/constants";
 import { cn } from "@/shared/lib/utils";
@@ -68,6 +69,8 @@ export const LyricLineItem = memo(function LyricLineItem({
   onDelete,
   onNudge,
 }: LyricLineItemProps) {
+  const t = useTranslations("dashboard.actions");
+
   return (
     <li
       data-id={line.id}
@@ -122,14 +125,14 @@ export const LyricLineItem = memo(function LyricLineItem({
         <ButtonGroup>
           <button
             onClick={() => onReorder(line.id, "up")}
-            title="Move up"
+            title={t("moveUp")}
             className={segmentBase}
           >
             ↑
           </button>
           <button
             onClick={() => onReorder(line.id, "down")}
-            title="Move down"
+            title={t("moveDown")}
             className={segmentWithDivider}
           >
             ↓
@@ -140,28 +143,28 @@ export const LyricLineItem = memo(function LyricLineItem({
         <ButtonGroup>
           <button
             onClick={() => onInsertAfter(line.id)}
-            title="Insert after"
+            title={t("insertAfter")}
             className={segmentBase}
           >
             +
           </button>
           <button
             onClick={() => onSplit(line.id)}
-            title="Split"
+            title={t("split")}
             className={segmentWithDivider}
           >
             ⎘
           </button>
           <button
             onClick={() => onMerge(line.id)}
-            title="Merge with previous"
+            title={t("merge")}
             className={segmentWithDivider}
           >
             ⊕
           </button>
           <button
             onClick={() => onDelete(line.id)}
-            title="Delete"
+            title={t("delete")}
             className={cn(
               segmentWithDivider,
               "hover:bg-danger/10 hover:text-danger",
@@ -175,28 +178,28 @@ export const LyricLineItem = memo(function LyricLineItem({
         <ButtonGroup>
           <button
             onClick={() => onNudge(line, "start", -NUDGE_DELTA_SEC)}
-            title={`Start −${NUDGE_DELTA_SEC}s`}
+            title={t("nudgeStart", { delta: -NUDGE_DELTA_SEC })}
             className={nudgeBase}
           >
             −S
           </button>
           <button
             onClick={() => onNudge(line, "start", NUDGE_DELTA_SEC)}
-            title={`Start +${NUDGE_DELTA_SEC}s`}
+            title={t("nudgeStart", { delta: NUDGE_DELTA_SEC })}
             className={nudgeWithDivider}
           >
             +S
           </button>
           <button
             onClick={() => onNudge(line, "end", -NUDGE_DELTA_SEC)}
-            title={`End −${NUDGE_DELTA_SEC}s`}
+            title={t("nudgeEnd", { delta: -NUDGE_DELTA_SEC })}
             className={nudgeWithDivider}
           >
             −E
           </button>
           <button
             onClick={() => onNudge(line, "end", NUDGE_DELTA_SEC)}
-            title={`End +${NUDGE_DELTA_SEC}s`}
+            title={t("nudgeEnd", { delta: NUDGE_DELTA_SEC })}
             className={nudgeWithDivider}
           >
             +E

@@ -39,6 +39,14 @@ export function useTimelinePanelProps(
     onSeekBy: onSeekBothBy,
     onSeekTo: onSeekBothTo,
     onTogglePlayback: onToggleBothPlayback,
+    onInsertAtGap: actions.insertAtRange,
+    onExtendLine: (lineId: string, edge: "start" | "end", newTime: number) => {
+      const line = state.lyricsState.doc.syncedLines.find((l) => l.id === lineId);
+      if (!line) return;
+      const start = edge === "start" ? newTime : line.start;
+      const end = edge === "end" ? newTime : line.end;
+      actions.setLineRangeCommit(lineId, start, end);
+    },
     waveformController: actions.waveformController,
     mediaController: actions.mediaController,
     peaksInfo: state.peaksInfo,

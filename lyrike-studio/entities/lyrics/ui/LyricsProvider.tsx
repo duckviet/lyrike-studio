@@ -114,6 +114,10 @@ export function useLyrics() {
         store.insertAfter(lineId);
         sync();
       },
+      insertAtRange: (start: number, end: number) => {
+        store.insertAtRange(start, end);
+        sync();
+      },
       deleteLine: (lineId: string) => {
         store.deleteLine(lineId);
         sync();

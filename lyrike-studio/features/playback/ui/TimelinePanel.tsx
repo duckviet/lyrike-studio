@@ -49,11 +49,19 @@ interface TimelinePanelProps {
   onSeekBy: (delta: number) => void;
   onSeekTo: (time: number) => void;
   onTogglePlayback: () => void;
+  onInsertAtGap: (start: number, end: number) => void;
+  onExtendLine: (
+    lineId: string,
+    edge: "start" | "end",
+    newTime: number,
+  ) => void;
   waveformController: WaveformController;
   mediaController: MediaController;
   peaksInfo: PeaksResponse | null;
   audioUrl: string | null;
 }
+
+import { useTranslations } from "next-intl";
 
 export const TimelinePanel = memo(
   forwardRef(function TimelinePanel(
@@ -88,6 +96,8 @@ export const TimelinePanel = memo(
       onSeekBy,
       onSeekTo,
       onTogglePlayback,
+      onInsertAtGap,
+      onExtendLine,
       waveformController,
       mediaController,
       peaksInfo,
@@ -95,6 +105,7 @@ export const TimelinePanel = memo(
     }: TimelinePanelProps,
     ref,
   ) {
+    const t = useTranslations("dashboard.editor");
     const waveHostRef = useRef<HTMLDivElement>(null);
     const timelineHostRef = useRef<HTMLDivElement>(null);
     const isInitialized = useRef(false);
@@ -116,7 +127,6 @@ export const TimelinePanel = memo(
         isInitialized.current = false;
         waveformController.destroy();
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [waveformController, mediaController]);
 
     useEffect(() => {
@@ -148,7 +158,7 @@ export const TimelinePanel = memo(
               disabled={!mediaInfo?.audioReady}
               onClick={onTogglePlayback}
             >
-              {isPlaying ? "⏸ Pause" : "▶ Play"}
+              {isPlaying ? `⏸ ${t("pause")}` : `▶ ${t("play")}`}
             </button>
             <div className="inline-flex items-center gap-0.5 p-1 border border-line rounded-lg bg-bg">
               <button
@@ -171,8 +181,8 @@ export const TimelinePanel = memo(
           </div>
 
           <div className="min-w-[180px] flex items-center justify-center gap-3">
-            <span className="text-[0.66rem] font-bold text-ink-light-soft uppercase tracking-widest">
-              Zoom
+            <span className="text-[0.66rem] font-bold text-ink-light-soft uppercase text-nowrap tracking-widest">
+              {t("zoom")}
             </span>
             <input
               className="w-full max-w-[260px] h-1.5 border-0 rounded-full bg-bg appearance-none cursor-pointer p-0 accent-primary"
@@ -191,7 +201,7 @@ export const TimelinePanel = memo(
               className={`h-7 px-3 rounded border border-line bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 ${loopEnabled ? "bg-primary text-[#002633] border-primary shadow-md" : "text-ink-light-soft hover:bg-bg-elev"}`}
               onClick={onToggleLoop}
             >
-              Loop
+              {t("loop")}
             </button>
             <div className="min-w-[142px] px-3 py-2 border border-line rounded-lg bg-bg text-center text-primary font-mono text-sm font-medium tabular-nums">
               {formatTime(currentTime)} / {formatTime(duration)}
@@ -203,7 +213,7 @@ export const TimelinePanel = memo(
                 disabled={!canUndo}
                 onClick={onUndo}
               >
-                Undo
+                {t("undo")}
               </button>
               <button
                 type="button"
@@ -211,14 +221,14 @@ export const TimelinePanel = memo(
                 disabled={!canRedo}
                 onClick={onRedo}
               >
-                Redo
+                {t("redo")}
               </button>
               <button
                 type="button"
                 className="h-7 px-3 rounded border-0 bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev text-ink-light-soft"
                 onClick={onSaveDraft}
               >
-                Draft
+                {t("draft")}
               </button>
             </div>
           </div>
@@ -235,7 +245,7 @@ export const TimelinePanel = memo(
           >
             {!mediaInfo && (
               <div className="flex-1 h-full grid place-items-center border border-dashed border-white/10 rounded-lg text-white/30 text-sm">
-                <span>Load a video to see the waveform</span>
+                <span>{t("loadWaveform")}</span>
               </div>
             )}
           </div>
@@ -253,12 +263,14 @@ export const TimelinePanel = memo(
               onResizeCommit={onRegionResizeCommit}
               onResizeStart={onRegionResizeStart}
               onGetBaseState={onGetBaseState}
+              onInsertAtGap={onInsertAtGap}
+              onExtendLine={onExtendLine}
             />
           )}
 
           {mediaInfo && peaksState !== "idle" && (
             <p
-              className="absolute right-5 bottom-5 m-0 rounded-full bg-[#0f1115]/85 text-ink-light-soft backdrop-blur-sm border border-line px-3 py-1 text-xs"
+              className="absolute right-5 top-2 m-0 rounded-full bg-[#0f1115]/85 text-ink-light-soft backdrop-blur-sm border border-line px-2 py-1 text-[10px]"
               data-state={peaksState}
             >
               {peaksMessage}

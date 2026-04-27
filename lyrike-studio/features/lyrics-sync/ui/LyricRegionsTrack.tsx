@@ -1,8 +1,14 @@
 "use client";
 
-import { useRef, useState, useCallback, memo } from "react";
+import { useRef, useState, useCallback } from "react";
 import type { LyricLine } from "@/entities/lyrics";
 import { MIN_LINE_LENGTH_SEC } from "@/features/lyrics-sync/config/constants";
+import { cn } from "@/shared/lib/utils";
+import { computeGaps, type GapRegion } from "../lib/gap-utils";
+import { GapRegionBox } from "./parts/GapRegionBox";
+import { RegionBox } from "./parts/RegionBox";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface LyricRegionsTrackProps {
   lines: LyricLine[];
@@ -21,6 +27,13 @@ interface LyricRegionsTrackProps {
   ) => void;
   onResizeStart?: () => void;
   onGetBaseState?: () => unknown;
+  // Gap actions
+  onInsertAtGap: (start: number, end: number) => void;
+  onExtendLine: (
+    lineId: string,
+    edge: "start" | "end",
+    newTime: number,
+  ) => void;
 }
 
 type DragState = {
@@ -32,56 +45,7 @@ type DragState = {
   baseState: unknown;
 };
 
-const RegionBox = memo(function RegionBox({
-  line,
-  isActive,
-  isSelected,
-  pxPerSec,
-  onBeginDrag,
-  onSelect,
-}: {
-  line: LyricLine;
-  isActive: boolean;
-  isSelected: boolean;
-  pxPerSec: number;
-  onBeginDrag: (
-    event: React.PointerEvent,
-    line: LyricLine,
-    edge: "start" | "end" | "move",
-  ) => void;
-  onSelect: (id: string) => void;
-}) {
-  const left = line.start * pxPerSec;
-  const width = Math.max((line.end - line.start) * pxPerSec, 1);
-
-  return (
-    <div
-      className={`absolute top-1.5 bottom-1.5 flex items-stretch border rounded-md overflow-hidden transition-all duration-150 ${isSelected ? "border-amber shadow-selected" : ""} ${isActive ? "bg-primary-20 border-primary shadow-active" : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"}`}
-      style={{ left: `${left}px`, width: `${width}px` }}
-      data-id={line.id}
-    >
-      <div
-        className="w-1.5 shrink-0 bg-transparent cursor-ew-resize transition-colors duration-150 hover:bg-primary/50"
-        onPointerDown={(e) => onBeginDrag(e, line, "start")}
-      />
-      <button
-        type="button"
-        className="flex-1 min-w-0 p-2 border-0 bg-transparent text-left cursor-grab text-xs font-medium text-white/80 overflow-hidden active:cursor-grabbing transition-colors hover:text-white"
-        onPointerDown={(e) => onBeginDrag(e, line, "move")}
-        onClick={() => onSelect(line.id)}
-        title={line.text}
-      >
-        <span className="block whitespace-nowrap overflow-hidden text-ellipsis">
-          {line.text}
-        </span>
-      </button>
-      <div
-        className="w-1.5 shrink-0 bg-transparent cursor-ew-resize transition-colors duration-150 hover:bg-primary/50"
-        onPointerDown={(e) => onBeginDrag(e, line, "end")}
-      />
-    </div>
-  );
-});
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function LyricRegionsTrack({
   lines,
@@ -95,6 +59,8 @@ export function LyricRegionsTrack({
   onResizeCommit,
   onResizeStart,
   onGetBaseState,
+  onInsertAtGap,
+  onExtendLine,
 }: LyricRegionsTrackProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
@@ -103,8 +69,12 @@ export function LyricRegionsTrack({
     start: number;
     end: number;
   } | null>(null);
+  const [selectedGapId, setSelectedGapId] = useState<string | null>(null);
 
   const totalWidth = Math.max(duration * pxPerSec, 0);
+  const gaps = computeGaps(lines, duration);
+
+  // ── Drag handlers ──────────────────────────────────────────────────────────
 
   const beginDrag = useCallback(
     (
@@ -122,6 +92,7 @@ export function LyricRegionsTrack({
         originEnd: line.end,
         baseState: onGetBaseState?.() ?? null,
       });
+      setSelectedGapId(null);
       onSelectLine(line.id);
       onResizeStart?.();
     },
@@ -138,17 +109,15 @@ export function LyricRegionsTrack({
       let nextEnd = drag.originEnd;
 
       if (drag.edge === "start") {
-        nextStart = Math.min(
-          drag.originEnd - MIN_LINE_LENGTH_SEC,
-          drag.originStart + dt,
+        nextStart = Math.max(
+          0,
+          Math.min(drag.originEnd - MIN_LINE_LENGTH_SEC, drag.originStart + dt),
         );
-        nextStart = Math.max(0, nextStart);
       } else if (drag.edge === "end") {
-        nextEnd = Math.max(
-          drag.originStart + MIN_LINE_LENGTH_SEC,
-          drag.originEnd + dt,
+        nextEnd = Math.min(
+          duration,
+          Math.max(drag.originStart + MIN_LINE_LENGTH_SEC, drag.originEnd + dt),
         );
-        nextEnd = Math.min(duration, nextEnd);
       } else {
         const len = drag.originEnd - drag.originStart;
         nextStart = Math.max(
@@ -171,7 +140,6 @@ export function LyricRegionsTrack({
       (event.currentTarget as HTMLElement).releasePointerCapture(
         event.pointerId,
       );
-
       if (lastResizeState) {
         onResizeCommit(
           lastResizeState.lineId,
@@ -181,19 +149,55 @@ export function LyricRegionsTrack({
         );
         setLastResizeState(null);
       }
-
       setDrag(null);
     },
     [drag, lastResizeState, onResizeCommit],
   );
 
+  // ── Gap selection ──────────────────────────────────────────────────────────
+
+  const selectGap = useCallback(
+    (gapId: string) => {
+      setSelectedGapId(gapId);
+      onSelectLine(null); // deselect any lyric line
+    },
+    [onSelectLine],
+  );
+
+  const deselectGap = useCallback(() => {
+    setSelectedGapId(null);
+  }, []);
+
+  const handleTrackClick = useCallback(() => {
+    // Click on empty track background → deselect everything
+    setSelectedGapId(null);
+  }, []);
+
+  // ── Gap action builders ────────────────────────────────────────────────────
+
+  const buildGapActions = (gap: GapRegion) => ({
+    onInsert: () => onInsertAtGap(gap.start, gap.end),
+    onExtendPrev: gap.prevLineId
+      ? () => onExtendLine(gap.prevLineId!, "end", gap.end)
+      : null,
+    onExtendNext: gap.nextLineId
+      ? () => onExtendLine(gap.nextLineId!, "start", gap.start)
+      : null,
+  });
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
     <div
-      className="relative h-11 shrink-0 overflow-hidden border-0 rounded-b-xl bg-[#050608]"
       ref={trackRef}
+      className="relative z-20 h-11 shrink-0 border-0 rounded-b-xl bg-[#050608]"
+      // overflow-x: clip clips horizontally without creating a stacking context
+      // that would prevent overflow-y (the popup) from being visible
+      style={{ overflowX: "clip", overflowY: "visible" }}
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
+      onClick={handleTrackClick}
     >
       <div
         className="relative h-full will-change-transform"
@@ -202,6 +206,25 @@ export function LyricRegionsTrack({
           transform: `translateX(-${scrollLeft}px)`,
         }}
       >
+        {/* Gap regions — rendered below lyric regions (z-order) */}
+        {gaps.map((gap) => {
+          const { onInsert, onExtendPrev, onExtendNext } = buildGapActions(gap);
+          return (
+            <GapRegionBox
+              key={gap.id}
+              gap={gap}
+              pxPerSec={pxPerSec}
+              isSelected={gap.id === selectedGapId}
+              onSelect={selectGap}
+              onInsert={onInsert}
+              onExtendPrev={onExtendPrev}
+              onExtendNext={onExtendNext}
+              onDeselect={deselectGap}
+            />
+          );
+        })}
+
+        {/* Lyric regions — rendered above gaps */}
         {lines.map((line) => (
           <RegionBox
             key={line.id}
@@ -210,7 +233,10 @@ export function LyricRegionsTrack({
             isSelected={line.id === selectedLineId}
             pxPerSec={pxPerSec}
             onBeginDrag={beginDrag}
-            onSelect={onSelectLine}
+            onSelect={(id) => {
+              setSelectedGapId(null);
+              onSelectLine(id);
+            }}
           />
         ))}
       </div>

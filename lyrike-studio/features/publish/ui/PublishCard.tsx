@@ -1,5 +1,4 @@
-"use client";
-
+import { useTranslations } from "next-intl";
 import type { PublishFlowState } from "@/features/publish";
 
 interface PublishCardProps {
@@ -8,11 +7,13 @@ interface PublishCardProps {
 }
 
 export function PublishCard({ publishState, onPublish }: PublishCardProps) {
+  const t = useTranslations("dashboard.publish");
+
   return (
     <section className="border border-line rounded-2xl bg-bg-soft p-4 flex flex-col gap-3 shadow-sm">
       <div className="flex items-center">
         <span className="inline-flex rounded-md bg-primary-10 text-primary px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wider border border-primary-20">
-          Publish
+          {t("label")}
         </span>
       </div>
 
@@ -25,10 +26,10 @@ export function PublishCard({ publishState, onPublish }: PublishCardProps) {
         {publishState.status === "running" ? (
           <>
             <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{" "}
-            Publishing...
+            {t("running")}
           </>
         ) : (
-          "Publish to LRCLIB"
+          t("button")
         )}
       </button>
 
@@ -65,7 +66,7 @@ export function PublishCard({ publishState, onPublish }: PublishCardProps) {
         {publishState.status === "running" &&
           publishState.currentStep === "pow" &&
           publishState.nonceAttempts > 0 && (
-            <> (attempts: {publishState.nonceAttempts.toLocaleString()})</>
+            <> ({t("attempts")}: {publishState.nonceAttempts.toLocaleString()})</>
           )}
       </p>
     </section>

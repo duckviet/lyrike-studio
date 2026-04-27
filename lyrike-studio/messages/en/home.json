@@ -1,0 +1,61 @@
+{
+  "hero": {
+    "label": "LYRICS TIMING EDITOR",
+    "title": "Precise, not complicated.",
+    "subtitle": "The creative side of syncing.",
+    "cta": "Try the editor",
+    "demo": "Watch demo"
+  },
+  "overview": {
+    "label": "NOT JUST ANOTHER TEXT EDITOR",
+    "title1": "Some tools show the lyrics.",
+    "title2": "This one feels the music.",
+    "description": "Most editors treat lyrics as plain text. We built this one to work with the audio itself — waveform visualization, region-based editing, and tap-to-sync that lets you feel the rhythm instead of guessing.",
+    "waveform": "Waveform",
+    "timeline": "Timeline",
+    "export": "Export"
+  },
+  "features": {
+    "waveform": {
+      "label": "WAVEFORM EDITING",
+      "title": "Drag. Resize. Done.",
+      "description": "See every syllable on the timeline. Drag regions to align with the music. Resize with precision using intuitive handles."
+    },
+    "transcription": {
+      "label": "AUTO TRANSCRIPTION",
+      "title": "Paste a link. Get lyrics back.",
+      "description": "Drop a YouTube URL and let our transcription service extract the audio and generate timed lyrics for you to fine-tune.",
+      "analyzing": "Analyzing audio..."
+    },
+    "tap": {
+      "label": "TAP SYNC",
+      "title": "Sync with your ears, not your eyes.",
+      "description": "Play the track and tap any key to mark each line. The rhythm stays in your fingers, not in tedious timestamp hunting."
+    },
+    "export": {
+      "label": "EXPORT",
+      "title": "One click to .lrc",
+      "description": "Download industry-standard LRC files. Compatible with all major lyric players, karaoke apps, and subtitle editors."
+    }
+  },
+  "workflow": {
+    "label": "THE WORKFLOW",
+    "title1": "Nothing here is rushed.",
+    "title2": "Including the timing.",
+    "steps": [
+      { "title": "Paste URL", "description": "Drop a YouTube link or upload audio file" },
+      { "title": "Audio Ready", "description": "We extract the audio and generate waveform" },
+      { "title": "Sync Lines", "description": "Edit timestamps or tap to sync manually" },
+      { "title": "Export LRC", "description": "Download your timed lyrics instantly" }
+    ]
+  },
+  "finalCta": {
+    "title": "Ready to sync?",
+    "cta": "Open the editor — it's free",
+    "description": "No account needed. No install. Just paste & go."
+  },
+  "footer": {
+    "tagline": "Made with ♪ for music lovers",
+    "copyright": "© 2026"
+  }
+}

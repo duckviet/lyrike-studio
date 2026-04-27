@@ -1,0 +1,31 @@
+{
+  "editor": {
+    "play": "Play",
+    "pause": "Pause",
+    "zoom": "Zoom",
+    "loop": "Loop",
+    "undo": "Undo",
+    "redo": "Redo",
+    "draft": "Draft",
+    "loadWaveform": "Load a video to see the waveform"
+  },
+  "actions": {
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "insertAfter": "Insert after",
+    "split": "Split",
+    "merge": "Merge with previous",
+    "delete": "Delete",
+    "nudgeStart": "Start {delta}s",
+    "nudgeEnd": "End {delta}s",
+    "extendPrev": "Extend previous line to fill gap",
+    "insertGap": "Insert new line in gap",
+    "extendNext": "Extend next line to fill gap"
+  },
+  "publish": {
+    "label": "Publish",
+    "button": "Publish to LRCLIB",
+    "running": "Publishing...",
+    "attempts": "attempts"
+  }
+}

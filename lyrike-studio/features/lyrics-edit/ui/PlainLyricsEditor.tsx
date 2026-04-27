@@ -16,7 +16,7 @@ export function PlainLyricsEditor({
   return (
     <label
       className={cn(
-        "grid gap-1",
+        "grid gap-1 p-2",
         "text-[0.72rem] font-bold uppercase tracking-wider text-ink-light-soft",
         className,
       )}

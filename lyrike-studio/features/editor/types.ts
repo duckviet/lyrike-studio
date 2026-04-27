@@ -51,6 +51,7 @@ export interface EditorActions {
   selectLine: (lineId: string | null) => void;
   reorder: (lineId: string, direction: "up" | "down") => void;
   insertAfter: (lineId: string) => void;
+  insertAtRange: (start: number, end: number) => void;
   splitLine: (lineId: string) => void;
   mergeWithPrevious: (lineId: string) => void;
   deleteLine: (lineId: string) => void;
