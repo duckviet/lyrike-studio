@@ -11,9 +11,14 @@ interface LyricRegionsTrackProps {
   scrollLeft: number;
   activeLineId: string | null;
   selectedLineId: string | null;
-  onSelectLine: (lineId: string) => void;
+  onSelectLine: (lineId: string | null) => void;
   onResize: (lineId: string, start: number, end: number) => void;
-  onResizeCommit: (lineId: string, start: number, end: number, baseState: unknown) => void;
+  onResizeCommit: (
+    lineId: string,
+    start: number,
+    end: number,
+    baseState: unknown,
+  ) => void;
   onResizeStart?: () => void;
   onGetBaseState?: () => unknown;
 }
@@ -24,7 +29,7 @@ type DragState = {
   originX: number;
   originStart: number;
   originEnd: number;
-  baseState: unknown; // snapshot captured at drag start for undo
+  baseState: unknown;
 };
 
 const RegionBox = memo(function RegionBox({
@@ -39,7 +44,11 @@ const RegionBox = memo(function RegionBox({
   isActive: boolean;
   isSelected: boolean;
   pxPerSec: number;
-  onBeginDrag: (event: React.PointerEvent, line: LyricLine, edge: "start" | "end" | "move") => void;
+  onBeginDrag: (
+    event: React.PointerEvent,
+    line: LyricLine,
+    edge: "start" | "end" | "move",
+  ) => void;
   onSelect: (id: string) => void;
 }) {
   const left = line.start * pxPerSec;
@@ -47,25 +56,27 @@ const RegionBox = memo(function RegionBox({
 
   return (
     <div
-      className={`region-box ${isActive ? "active" : ""} ${isSelected ? "selected" : ""}`}
+      className={`absolute top-1.5 bottom-1.5 flex items-stretch border rounded-md overflow-hidden transition-all duration-150 ${isSelected ? "border-amber shadow-selected" : ""} ${isActive ? "bg-primary-20 border-primary shadow-active" : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"}`}
       style={{ left: `${left}px`, width: `${width}px` }}
       data-id={line.id}
     >
       <div
-        className="handle handle-start"
+        className="w-1.5 shrink-0 bg-transparent cursor-ew-resize transition-colors duration-150 hover:bg-primary/50"
         onPointerDown={(e) => onBeginDrag(e, line, "start")}
       />
       <button
         type="button"
-        className="region-body"
+        className="flex-1 min-w-0 p-2 border-0 bg-transparent text-left cursor-grab text-xs font-medium text-white/80 overflow-hidden active:cursor-grabbing transition-colors hover:text-white"
         onPointerDown={(e) => onBeginDrag(e, line, "move")}
         onClick={() => onSelect(line.id)}
         title={line.text}
       >
-        <span className="region-text">{line.text}</span>
+        <span className="block whitespace-nowrap overflow-hidden text-ellipsis">
+          {line.text}
+        </span>
       </button>
       <div
-        className="handle handle-end"
+        className="w-1.5 shrink-0 bg-transparent cursor-ew-resize transition-colors duration-150 hover:bg-primary/50"
         onPointerDown={(e) => onBeginDrag(e, line, "end")}
       />
     </div>
@@ -109,7 +120,6 @@ export function LyricRegionsTrack({
         originX: event.clientX,
         originStart: line.start,
         originEnd: line.end,
-        // Snapshot the pre-drag history state so Undo can jump back correctly
         baseState: onGetBaseState?.() ?? null,
       });
       onSelectLine(line.id);
@@ -167,7 +177,7 @@ export function LyricRegionsTrack({
           lastResizeState.lineId,
           lastResizeState.start,
           lastResizeState.end,
-          drag.baseState, // ← pre-drag snapshot for correct Undo
+          drag.baseState,
         );
         setLastResizeState(null);
       }
@@ -178,15 +188,15 @@ export function LyricRegionsTrack({
   );
 
   return (
-    <div 
-      className="regions-track" 
+    <div
+      className="relative h-11 shrink-0 overflow-hidden border-0 rounded-b-xl bg-[#050608]"
       ref={trackRef}
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
     >
       <div
-        className="regions-canvas"
+        className="relative h-full will-change-transform"
         style={{
           width: `${totalWidth}px`,
           transform: `translateX(-${scrollLeft}px)`,

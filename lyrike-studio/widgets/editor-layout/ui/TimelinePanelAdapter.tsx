@@ -29,7 +29,7 @@ interface TimelinePanelAdapterProps {
   onSaveDraft: () => void;
   onZoomChange: (pxPerSec: number) => void;
   onToggleLoop: () => void;
-  onSelectLine: (lineId: string) => void;
+  onSelectLine: (lineId: string | null) => void;
   onRegionResize: (lineId: string, start: number, end: number) => void;
   onRegionResizeCommit: (lineId: string, start: number, end: number, baseState: unknown) => void;
   onRegionResizeStart?: () => void;

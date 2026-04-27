@@ -13,7 +13,7 @@ interface LyricsPanelAdapterProps {
   onSetTab: (tab: LyricsState["tab"]) => void;
   onSeekLine: (line: LyricLine) => void;
   onEditLineText: (lineId: string, text: string) => void;
-  onSelectLine: (lineId: string) => void;
+  onSelectLine: (lineId: string | null) => void;
   onReorder: (lineId: string, direction: "up" | "down") => void;
   onInsertAfter: (lineId: string) => void;
   onSplit: (lineId: string) => void;
@@ -21,7 +21,7 @@ interface LyricsPanelAdapterProps {
   onDelete: (lineId: string) => void;
   onNudge: (line: LyricLine, edge: "start" | "end", delta: number) => void;
   onSetPlainLyrics: (value: string) => void;
-  onUpdateMetaField: (key: keyof LyricsMeta, value: string) => void;
+  onUpdateMetaField: (update: Partial<LyricsMeta>) => void;
   onImportLrc: (rawLrc: string) => void;
   onExportLrc: () => string;
 }

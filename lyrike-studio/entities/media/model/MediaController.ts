@@ -18,34 +18,40 @@ export class MediaController {
   private readonly bus: EventTarget;
 
   constructor() {
-    this.audio = new Audio();
-    this.bus = new EventTarget();
+    if (typeof window !== "undefined") {
+      this.audio = new Audio();
+      this.bus = new EventTarget();
 
-    this.audio.preload = "auto";
+      this.audio.preload = "auto";
 
-    this.audio.addEventListener("timeupdate", () => {
-      this.emit("timeupdate", { currentTime: this.audio.currentTime });
-    });
+      this.audio.addEventListener("timeupdate", () => {
+        this.emit("timeupdate", { currentTime: this.audio.currentTime });
+      });
 
-    this.audio.addEventListener("loadedmetadata", () => {
-      this.emit("durationchange", { duration: this.audio.duration || 0 });
-    });
+      this.audio.addEventListener("loadedmetadata", () => {
+        this.emit("durationchange", { duration: this.audio.duration || 0 });
+      });
 
-    this.audio.addEventListener("play", () => {
-      this.emit("playstate", { isPlaying: true });
-    });
+      this.audio.addEventListener("play", () => {
+        this.emit("playstate", { isPlaying: true });
+      });
 
-    this.audio.addEventListener("pause", () => {
-      this.emit("playstate", { isPlaying: false });
-    });
+      this.audio.addEventListener("pause", () => {
+        this.emit("playstate", { isPlaying: false });
+      });
 
-    this.audio.addEventListener("error", () => {
-      const mediaError = this.audio.error;
-      const message = mediaError
-        ? `Audio error code ${mediaError.code}`
-        : "Unknown audio error";
-      this.emit("error", { message });
-    });
+      this.audio.addEventListener("error", () => {
+        const mediaError = this.audio.error;
+        const message = mediaError
+          ? `Audio error code ${mediaError.code}`
+          : "Unknown audio error";
+        this.emit("error", { message });
+      });
+    } else {
+      // Mock for SSR
+      this.audio = null as unknown as HTMLAudioElement;
+      this.bus = null as unknown as EventTarget;
+    }
   }
 
   subscribe<T extends PlaybackEventName>(

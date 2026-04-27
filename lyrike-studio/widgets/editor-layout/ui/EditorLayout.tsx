@@ -16,16 +16,18 @@ export function EditorLayout({
   header,
 }: EditorLayoutProps) {
   return (
-    <main className="app-shell">
-      <header className="top-header">
-        <div className="logo">
-          <div className="logo-icon" />
-          <h1>Lyrics Studio</h1>
-        </div>
-        {header}
-      </header>
+    <main className="flex flex-col overflow-hidden h-[calc(100vh-60px)] w-full bg-transparent">
+      {header && (
+        <header className="top-header">
+          <div className="logo">
+            <div className="logo-icon" />
+            <h1>Lyrics Studio</h1>
+          </div>
+          {header}
+        </header>
+      )}
 
-      <div className="app-body">{children}</div>
+      <div className="flex-1 flex flex-col min-h-0">{children}</div>
     </main>
   );
 }

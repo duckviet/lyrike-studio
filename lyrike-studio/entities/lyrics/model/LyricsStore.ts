@@ -189,6 +189,18 @@ export class LyricsStore {
     this.emit();
   }
 
+  clearSelection(): void {
+    if (this.state.selectedLineId === null) {
+      return;
+    }
+
+    this.state = {
+      ...this.state,
+      selectedLineId: null,
+    };
+    this.emit();
+  }
+
   loadDraft(doc: LyricsDoc, selectedLineId: string | null): void {
     this.history.clear();
     const selected = ensureSelectedLine(doc.syncedLines, selectedLineId);
