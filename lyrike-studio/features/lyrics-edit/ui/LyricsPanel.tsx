@@ -1,21 +1,28 @@
 "use client";
 
-import { useRef, useEffect, useState, memo } from "react";
+import { memo } from "react";
+import { cn } from "@/shared/lib/utils";
+
 import { LyricLineItem } from "@/features/lyrics-sync/ui/LyricLineItem";
+import { MetaForm } from "@/features/lyrics-edit/ui/MetaForm";
 import type { LyricsState, LyricsMeta } from "@/entities/lyrics";
 import type { LyricLine } from "@/entities/lyrics";
-import { MetaForm } from "@/features/lyrics-edit/ui/MetaForm";
+import { TabBar, TabItem } from "./Tabbar";
+import { IconButton } from "./IconButton";
+import { useLyricsPanelScroll } from "../model/useLyricsPanelScroll";
+import { useLrcFileImport } from "../model/useLrcFileImport";
+import { PlainLyricsEditor } from "./PlainLyricsEditor";
 
-type TabId = "source" | "timeline" | "lyrics";
+type LyricsTabId = LyricsState["tab"];
 
 interface LyricsPanelProps {
-  activeTab: TabId;
+  activeTab: "source" | "timeline" | "lyrics";
   lyricsState: LyricsState;
   formatTime: (seconds: number) => string;
-  onSetTab: (tab: LyricsState["tab"]) => void;
+  onSetTab: (tab: LyricsTabId) => void;
   onSeekLine: (line: LyricLine) => void;
   onEditLineText: (lineId: string, text: string) => void;
-  onSelectLine: (lineId: string) => void;
+  onSelectLine: (lineId: string | null) => void;
   onReorder: (lineId: string, direction: "up" | "down") => void;
   onInsertAfter: (lineId: string) => void;
   onSplit: (lineId: string) => void;
@@ -23,9 +30,123 @@ interface LyricsPanelProps {
   onDelete: (lineId: string) => void;
   onNudge: (line: LyricLine, edge: "start" | "end", delta: number) => void;
   onSetPlainLyrics: (value: string) => void;
-  onUpdateMetaField: (key: keyof LyricsMeta, value: string) => void;
+  onUpdateMetaField: (update: Partial<LyricsMeta>) => void;
   onImportLrc: (rawLrc: string) => void;
   onExportLrc: () => void;
+}
+
+const LYRICS_TABS: TabItem<LyricsTabId>[] = [
+  { id: "synced", label: "Synced" },
+  { id: "plain", label: "Plain" },
+  { id: "meta", label: "Meta" },
+];
+
+interface PanelToolbarProps {
+  activeTab: LyricsTabId;
+  onTabChange: (tab: LyricsTabId) => void;
+  onImportClick: () => void;
+  onExportClick: () => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function PanelToolbar({
+  activeTab,
+  onTabChange,
+  onImportClick,
+  onExportClick,
+  fileInputRef,
+  onFileChange,
+}: PanelToolbarProps) {
+  return (
+    <div className="shrink-0 flex items-center justify-between gap-2 border-b border-line p-2">
+      <TabBar
+        tabs={LYRICS_TABS}
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+      />
+
+      <div className="flex gap-1.5">
+        <IconButton label="Import LRC" onClick={onImportClick}>
+          ⬆
+        </IconButton>
+        <IconButton label="Export LRC" onClick={onExportClick}>
+          ⬇
+        </IconButton>
+        {/* Hidden file input — triggered by Import button above */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".lrc,.txt"
+          onChange={onFileChange}
+          className="hidden"
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface SyncedLinesListProps {
+  lines: LyricLine[];
+  activeLineId: string | null;
+  selectedLineId: string | null;
+  listRef: React.RefObject<HTMLUListElement | null>;
+  formatTime: (seconds: number) => string;
+  onSeekLine: LyricsPanelProps["onSeekLine"];
+  onSelectLine: LyricsPanelProps["onSelectLine"];
+  onEditLineText: LyricsPanelProps["onEditLineText"];
+  onReorder: LyricsPanelProps["onReorder"];
+  onInsertAfter: LyricsPanelProps["onInsertAfter"];
+  onSplit: LyricsPanelProps["onSplit"];
+  onMerge: LyricsPanelProps["onMerge"];
+  onDelete: LyricsPanelProps["onDelete"];
+  onNudge: LyricsPanelProps["onNudge"];
+}
+
+function SyncedLinesList({
+  lines,
+  activeLineId,
+  selectedLineId,
+  listRef,
+  formatTime,
+  onSeekLine,
+  onSelectLine,
+  onEditLineText,
+  onReorder,
+  onInsertAfter,
+  onSplit,
+  onMerge,
+  onDelete,
+  onNudge,
+}: SyncedLinesListProps) {
+  return (
+    <ul
+      ref={listRef}
+      className="min-h-0 flex-1 m-0 p-2 list-none flex flex-col gap-2 overflow-y-auto scroll-smooth"
+    >
+      {lines.map((line, index) => (
+        <LyricLineItem
+          key={line.id}
+          line={line}
+          index={index}
+          isActive={line.id === activeLineId}
+          isSelected={line.id === selectedLineId}
+          formatTime={formatTime}
+          onSeekLine={onSeekLine}
+          onSelectLine={onSelectLine}
+          onEditLineText={onEditLineText}
+          onReorder={onReorder}
+          onInsertAfter={onInsertAfter}
+          onSplit={onSplit}
+          onMerge={onMerge}
+          onDelete={onDelete}
+          onNudge={onNudge}
+        />
+      ))}
+    </ul>
+  );
 }
 
 export const LyricsPanel = memo(function LyricsPanel({
@@ -47,158 +168,58 @@ export const LyricsPanel = memo(function LyricsPanel({
   onImportLrc,
   onExportLrc,
 }: LyricsPanelProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
-  const [lastScrolledActiveId, setLastScrolledActiveId] = useState<
-    string | null
-  >(null);
-  const [lastScrolledSelectedId, setLastScrolledSelectedId] = useState<
-    string | null
-  >(null);
-
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = typeof reader.result === "string" ? reader.result : "";
-      onImportLrc(text);
-    };
-    reader.readAsText(file);
-    event.target.value = "";
-  };
-
-  const scrollLineIntoView = (lineId: string) => {
-    if (!listRef.current) return;
-    const el = listRef.current.querySelector<HTMLElement>(
-      `[data-id="${lineId}"]`,
-    );
-    if (!el) return;
-
-    const listRect = listRef.current.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    const offset =
-      elRect.top - listRect.top - listRect.height / 2 + elRect.height / 2;
-
-    listRef.current.scrollBy({ top: offset, behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    if (
-      lyricsState.tab === "synced" &&
-      listRef.current &&
-      lyricsState.activeLineId &&
-      lyricsState.activeLineId !== lastScrolledActiveId
-    ) {
-      setLastScrolledActiveId(lyricsState.activeLineId);
-      scrollLineIntoView(lyricsState.activeLineId);
-    }
-  }, [lyricsState.activeLineId, lyricsState.tab]);
-
-  useEffect(() => {
-    if (
-      lyricsState.tab === "synced" &&
-      listRef.current &&
-      lyricsState.selectedLineId &&
-      lyricsState.selectedLineId !== lastScrolledSelectedId &&
-      lyricsState.selectedLineId !== lyricsState.activeLineId
-    ) {
-      setLastScrolledSelectedId(lyricsState.selectedLineId);
-      scrollLineIntoView(lyricsState.selectedLineId);
-    }
-  }, [lyricsState.selectedLineId, lyricsState.tab]);
+  const { listRef } = useLyricsPanelScroll(lyricsState);
+  const { fileInputRef, openFilePicker, handleFileChange } =
+    useLrcFileImport(onImportLrc);
 
   return (
     <article
-      className={`lyrics-column ${activeTab !== "lyrics" ? "hidden-mobile" : ""}`}
+      className={cn(
+        "min-h-0 h-full flex flex-col gap-3",
+        "overflow-hidden bg-transparent border-0 shadow-none",
+        activeTab !== "lyrics" && "hidden md:flex",
+      )}
     >
-      <div className="rightbar-head">
-        <div
-          className="lyrics-tabs"
-          role="tablist"
-          aria-label="Lyrics editor tabs"
-        >
-          <button
-            type="button"
-            className={lyricsState.tab === "synced" ? "active" : ""}
-            onClick={() => onSetTab("synced")}
-          >
-            Synced
-          </button>
-          <button
-            type="button"
-            className={lyricsState.tab === "plain" ? "active" : ""}
-            onClick={() => onSetTab("plain")}
-          >
-            Plain
-          </button>
-          <button
-            type="button"
-            className={lyricsState.tab === "meta" ? "active" : ""}
-            onClick={() => onSetTab("meta")}
-          >
-            Meta
-          </button>
-        </div>
-        <div className="io-actions">
-          <button
-            className="icon-btn"
-            title="Import LRC"
-            onClick={handleImportClick}
-          >
-            ⬆
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept=".lrc,.txt"
-            onChange={handleFileChange}
-            hidden
-          />
-          <button className="icon-btn" title="Export LRC" onClick={onExportLrc}>
-            ⬇
-          </button>
-        </div>
-      </div>
+      <PanelToolbar
+        activeTab={lyricsState.tab}
+        onTabChange={onSetTab}
+        onImportClick={openFilePicker}
+        onExportClick={onExportLrc}
+        fileInputRef={fileInputRef}
+        onFileChange={handleFileChange}
+      />
 
-      {lyricsState.tab === "synced" ? (
-        <ul className="lyrics-list" ref={listRef}>
-          {lyricsState.doc.syncedLines.map((line, index) => (
-            <LyricLineItem
-              key={line.id}
-              line={line}
-              index={index}
-              isActive={line.id === lyricsState.activeLineId}
-              isSelected={line.id === lyricsState.selectedLineId}
-              formatTime={formatTime}
-              onSeekLine={onSeekLine}
-              onSelectLine={onSelectLine}
-              onEditLineText={onEditLineText}
-              onReorder={onReorder}
-              onInsertAfter={onInsertAfter}
-              onSplit={onSplit}
-              onMerge={onMerge}
-              onDelete={onDelete}
-              onNudge={onNudge}
-            />
-          ))}
-        </ul>
-      ) : lyricsState.tab === "plain" ? (
-        <label className="stack-field">
-          Plain Lyrics
-          <textarea
-            className="plain-editor"
-            value={lyricsState.doc.plainLyrics}
-            onChange={(e) => onSetPlainLyrics(e.target.value)}
-          />
-        </label>
-      ) : (
-        <MetaForm meta={lyricsState.doc.meta} onUpdateMetaField={onUpdateMetaField} />
+      {lyricsState.tab === "synced" && (
+        <SyncedLinesList
+          lines={lyricsState.doc.syncedLines}
+          activeLineId={lyricsState.activeLineId}
+          selectedLineId={lyricsState.selectedLineId}
+          listRef={listRef}
+          formatTime={formatTime}
+          onSeekLine={onSeekLine}
+          onSelectLine={onSelectLine}
+          onEditLineText={onEditLineText}
+          onReorder={onReorder}
+          onInsertAfter={onInsertAfter}
+          onSplit={onSplit}
+          onMerge={onMerge}
+          onDelete={onDelete}
+          onNudge={onNudge}
+        />
+      )}
+
+      {lyricsState.tab === "plain" && (
+        <PlainLyricsEditor
+          value={lyricsState.doc.plainLyrics}
+          onChange={onSetPlainLyrics}
+        />
+      )}
+
+      {lyricsState.tab === "meta" && (
+        <MetaForm
+          meta={lyricsState.doc.meta}
+          onUpdateMetaField={onUpdateMetaField}
+        />
       )}
     </article>
   );

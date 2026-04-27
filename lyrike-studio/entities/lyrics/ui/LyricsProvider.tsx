@@ -61,8 +61,12 @@ export function useLyrics() {
         store.setActiveLine(lineId);
         sync();
       },
-      selectLine: (lineId: string) => {
-        store.selectLine(lineId);
+      selectLine: (lineId: string | null) => {
+        if (lineId === null) {
+          store.clearSelection();
+        } else {
+          store.selectLine(lineId);
+        }
         sync();
       },
       selectByOffset: (offset: number) => {

@@ -57,7 +57,7 @@ export class WaveformController {
       progressColor: "#8b5cf6",
       cursorColor: "#ffffff",
       cursorWidth: 2,
-      height: 170,
+      height: 140,
       barWidth: 2,
       barGap: 1,
       barRadius: 2,
@@ -112,13 +112,16 @@ export class WaveformController {
 
   private emitZoom() {
     if (!this.waveSurfer) return;
-    const px =
-      this.waveSurfer.options?.minPxPerSec ?? this.currentPxPerSec;
+    const px = this.waveSurfer.options?.minPxPerSec ?? this.currentPxPerSec;
     this.currentPxPerSec = px;
     this.zoomHandler?.(px);
   }
 
-  private _doLoad(sourceUrl: string, peaks: number[] | null, duration: number): void {
+  private _doLoad(
+    sourceUrl: string,
+    peaks: number[] | null,
+    duration: number,
+  ): void {
     if (!this.waveSurfer) return;
     this.isReady = false;
 
@@ -160,8 +163,7 @@ export class WaveformController {
     }
   }
 
-  renderLyricRegions(_lines: LyricLine[], _activeLineId: string | null): void {
-  }
+  renderLyricRegions(_lines: LyricLine[], _activeLineId: string | null): void {}
 
   toggleLoop(lineId: string, lines: LyricLine[]): boolean {
     if (this.loopLineId === lineId) {
