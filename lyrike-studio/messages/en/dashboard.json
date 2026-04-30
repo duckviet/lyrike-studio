@@ -20,7 +20,8 @@
     "nudgeEnd": "End {delta}s",
     "extendPrev": "Extend previous line to fill gap",
     "insertGap": "Insert new line in gap",
-    "extendNext": "Extend next line to fill gap"
+    "extendNext": "Extend next line to fill gap",
+    "deleteGap": "Delete gap and pull subsequent lines"
   },
   "publish": {
     "label": "Publish",

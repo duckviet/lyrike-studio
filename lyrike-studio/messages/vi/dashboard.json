@@ -20,7 +20,8 @@
     "nudgeEnd": "Kết thúc {delta}s",
     "extendPrev": "Kéo dài dòng trước để lấp đầy khoảng trống",
     "insertGap": "Thêm dòng mới vào khoảng trống",
-    "extendNext": "Kéo dài dòng tiếp theo để lấp đầy khoảng trống"
+    "extendNext": "Kéo dài dòng tiếp theo để lấp đầy khoảng trống",
+    "deleteGap": "Xóa khoảng trống và kéo các dòng phía sau về gần"
   },
   "publish": {
     "label": "Xuất bản",

@@ -13,7 +13,7 @@ interface SourcePanelProps {
   fetchState: "idle" | "loading" | "ready" | "error";
   sourceMessage: string;
   mediaInfo: FetchMediaResponse | null;
-  publishState: PublishFlowState;
+  publishState: PublishFlowState | null;
   transcribeState: string;
   formatTime: (seconds: number) => string;
   onFetch: () => void;

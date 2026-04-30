@@ -1,4 +1,4 @@
-import type { LyricsState } from "@/entities/lyrics/ui/LyricsProvider";
+import type { LyricsState } from "@/entities/lyrics/types";
 import type { FetchMediaResponse, PeaksResponse } from "@/lib/api";
 import type { PublishFlowState } from "@/features/publish";
 import type { MediaController, WaveformController } from "@/entities/media";
@@ -55,6 +55,7 @@ export interface EditorActions {
   splitLine: (lineId: string) => void;
   mergeWithPrevious: (lineId: string) => void;
   deleteLine: (lineId: string) => void;
+  deleteGap: (gapStart: number, gapEnd: number, prevLineId: string | null, nextLineId: string | null) => void;
   nudgeLine: (lineId: string, edge: "start" | "end", delta: number) => void;
   setPlainLyrics: (value: string) => void;
   setMeta: (update: Partial<LyricsMeta>) => void;

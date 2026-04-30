@@ -3,19 +3,18 @@
 import { memo } from "react";
 import { cn } from "@/shared/lib/utils";
 
-import { LyricLineItem } from "@/features/lyrics-sync/ui/LyricLineItem";
 import { MetaForm } from "@/features/lyrics-edit/ui/MetaForm";
 import type { LyricsState, LyricsMeta } from "@/entities/lyrics";
 import type { LyricLine } from "@/entities/lyrics";
-import { TabBar, TabItem } from "./Tabbar";
-import { IconButton } from "./IconButton";
 import { useLyricsPanelScroll } from "../model/useLyricsPanelScroll";
 import { useLrcFileImport } from "../model/useLrcFileImport";
 import { PlainLyricsEditor } from "./PlainLyricsEditor";
+import PanelToolbar from "./PanelToolBar";
+import SyncedLinesList from "./SyncedLinesList";
 
 type LyricsTabId = LyricsState["tab"];
 
-interface LyricsPanelProps {
+export interface LyricsPanelProps {
   activeTab: "source" | "timeline" | "lyrics";
   lyricsState: LyricsState;
   formatTime: (seconds: number) => string;
@@ -33,120 +32,6 @@ interface LyricsPanelProps {
   onUpdateMetaField: (update: Partial<LyricsMeta>) => void;
   onImportLrc: (rawLrc: string) => void;
   onExportLrc: () => void;
-}
-
-const LYRICS_TABS: TabItem<LyricsTabId>[] = [
-  { id: "synced", label: "Synced" },
-  { id: "plain", label: "Plain" },
-  { id: "meta", label: "Meta" },
-];
-
-interface PanelToolbarProps {
-  activeTab: LyricsTabId;
-  onTabChange: (tab: LyricsTabId) => void;
-  onImportClick: () => void;
-  onExportClick: () => void;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-function PanelToolbar({
-  activeTab,
-  onTabChange,
-  onImportClick,
-  onExportClick,
-  fileInputRef,
-  onFileChange,
-}: PanelToolbarProps) {
-  return (
-    <div className="shrink-0 flex items-center justify-between gap-2 border-b border-line p-2">
-      <TabBar
-        tabs={LYRICS_TABS}
-        activeTab={activeTab}
-        onTabChange={onTabChange}
-      />
-
-      <div className="flex gap-1.5">
-        <IconButton label="Import LRC" onClick={onImportClick}>
-          ⬆
-        </IconButton>
-        <IconButton label="Export LRC" onClick={onExportClick}>
-          ⬇
-        </IconButton>
-        {/* Hidden file input — triggered by Import button above */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".lrc,.txt"
-          onChange={onFileChange}
-          className="hidden"
-          aria-hidden="true"
-          tabIndex={-1}
-        />
-      </div>
-    </div>
-  );
-}
-
-interface SyncedLinesListProps {
-  lines: LyricLine[];
-  activeLineId: string | null;
-  selectedLineId: string | null;
-  listRef: React.RefObject<HTMLUListElement | null>;
-  formatTime: (seconds: number) => string;
-  onSeekLine: LyricsPanelProps["onSeekLine"];
-  onSelectLine: LyricsPanelProps["onSelectLine"];
-  onEditLineText: LyricsPanelProps["onEditLineText"];
-  onReorder: LyricsPanelProps["onReorder"];
-  onInsertAfter: LyricsPanelProps["onInsertAfter"];
-  onSplit: LyricsPanelProps["onSplit"];
-  onMerge: LyricsPanelProps["onMerge"];
-  onDelete: LyricsPanelProps["onDelete"];
-  onNudge: LyricsPanelProps["onNudge"];
-}
-
-function SyncedLinesList({
-  lines,
-  activeLineId,
-  selectedLineId,
-  listRef,
-  formatTime,
-  onSeekLine,
-  onSelectLine,
-  onEditLineText,
-  onReorder,
-  onInsertAfter,
-  onSplit,
-  onMerge,
-  onDelete,
-  onNudge,
-}: SyncedLinesListProps) {
-  return (
-    <ul
-      ref={listRef}
-      className="min-h-0 flex-1 m-0 p-2 list-none flex flex-col gap-2 overflow-y-auto scroll-smooth"
-    >
-      {lines.map((line, index) => (
-        <LyricLineItem
-          key={line.id}
-          line={line}
-          index={index}
-          isActive={line.id === activeLineId}
-          isSelected={line.id === selectedLineId}
-          formatTime={formatTime}
-          onSeekLine={onSeekLine}
-          onSelectLine={onSelectLine}
-          onEditLineText={onEditLineText}
-          onReorder={onReorder}
-          onInsertAfter={onInsertAfter}
-          onSplit={onSplit}
-          onMerge={onMerge}
-          onDelete={onDelete}
-          onNudge={onNudge}
-        />
-      ))}
-    </ul>
-  );
 }
 
 export const LyricsPanel = memo(function LyricsPanel({

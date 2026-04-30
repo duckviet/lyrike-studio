@@ -6,10 +6,7 @@ import type { FetchMediaResponse, PeaksResponse } from "@/lib/api";
 import type { LyricsState } from "@/entities/lyrics";
 import type { WaveformController } from "@/entities/media";
 import type { MediaController } from "@/entities/media";
-import {
-  DEFAULT_ZOOM_PX_PER_SEC,
-  SEEK_DELTA_SEC,
-} from "@/shared/config/constants";
+import { WAVEFORM, TIMING } from "@/shared/config/constants";
 
 type TabId = "source" | "timeline" | "lyrics";
 
@@ -55,6 +52,12 @@ interface TimelinePanelProps {
     edge: "start" | "end",
     newTime: number,
   ) => void;
+  onDeleteGap?: (
+    gapStart: number,
+    gapEnd: number,
+    prevLineId: string | null,
+    nextLineId: string | null,
+  ) => void;
   waveformController: WaveformController;
   mediaController: MediaController;
   peaksInfo: PeaksResponse | null;
@@ -74,7 +77,7 @@ export const TimelinePanel = memo(
       duration = 0,
       peaksState = "idle",
       peaksMessage = "",
-      zoomLevel = DEFAULT_ZOOM_PX_PER_SEC,
+      zoomLevel = WAVEFORM.DEFAULT_ZOOM_PX_PER_SEC,
       loopEnabled = false,
       canUndo = false,
       canRedo = false,
@@ -98,6 +101,7 @@ export const TimelinePanel = memo(
       onTogglePlayback,
       onInsertAtGap,
       onExtendLine,
+      onDeleteGap,
       waveformController,
       mediaController,
       peaksInfo,
@@ -165,7 +169,7 @@ export const TimelinePanel = memo(
                 type="button"
                 className="h-7 px-3 rounded border-0 bg-transparent text-ink-light-soft text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev"
                 disabled={!mediaInfo?.audioReady}
-                onClick={() => onSeekBy(-SEEK_DELTA_SEC)}
+                onClick={() => onSeekBy(-TIMING.SEEK_DELTA_SEC)}
               >
                 −5s
               </button>
@@ -173,7 +177,7 @@ export const TimelinePanel = memo(
                 type="button"
                 className="h-7 px-3 rounded border-0 bg-transparent text-ink-light-soft text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev"
                 disabled={!mediaInfo?.audioReady}
-                onClick={() => onSeekBy(SEEK_DELTA_SEC)}
+                onClick={() => onSeekBy(TIMING.SEEK_DELTA_SEC)}
               >
                 +5s
               </button>
@@ -265,6 +269,17 @@ export const TimelinePanel = memo(
               onGetBaseState={onGetBaseState}
               onInsertAtGap={onInsertAtGap}
               onExtendLine={onExtendLine}
+              onDeleteGap={
+                onDeleteGap
+                  ? (gap) =>
+                      onDeleteGap(
+                        gap.start,
+                        gap.end,
+                        gap.prevLineId ?? null,
+                        gap.nextLineId ?? null,
+                      )
+                  : undefined
+              }
             />
           )}
 

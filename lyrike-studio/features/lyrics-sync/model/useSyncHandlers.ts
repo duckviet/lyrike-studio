@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { LyricLine } from "@/entities/lyrics";
-import { MIN_LINE_LENGTH_SEC } from "@/features/lyrics-sync/config/constants";
+import { TIMING } from "@/shared/config/constants";
 
 export interface DragState {
   lineId: string;
@@ -35,13 +35,13 @@ export function useSyncHandlers({
 
   const setLineRangeLive = useCallback((lineId: string, start: number, end: number) => {
     const clampedStart = Math.max(0, start);
-    const clampedEnd = Math.max(clampedStart + MIN_LINE_LENGTH_SEC, end);
+    const clampedEnd = Math.max(clampedStart + TIMING.MIN_LINE_LENGTH_SEC, end);
     onResize(lineId, clampedStart, clampedEnd);
   }, [onResize]);
 
   const setLineRangeCommit = useCallback((lineId: string, start: number, end: number) => {
     const clampedStart = Math.max(0, start);
-    const clampedEnd = Math.max(clampedStart + MIN_LINE_LENGTH_SEC, end);
+    const clampedEnd = Math.max(clampedStart + TIMING.MIN_LINE_LENGTH_SEC, end);
     onResizeCommit(lineId, clampedStart, clampedEnd);
   }, [onResizeCommit]);
 

@@ -8,6 +8,7 @@ interface GapPopupProps {
   onInsert: () => void;
   onExtendPrev: (() => void) | null;
   onExtendNext: (() => void) | null;
+  onDelete: (() => void) | null;
   onClose: () => void;
 }
 
@@ -15,6 +16,7 @@ export function GapPopup({
   onInsert,
   onExtendPrev,
   onExtendNext,
+  onDelete,
   onClose,
 }: GapPopupProps) {
   const t = useTranslations("dashboard.actions");
@@ -43,6 +45,18 @@ export function GapPopup({
           title={t("extendPrev")}
           onClick={() => {
             onExtendPrev();
+            onClose();
+          }}
+          variant="neutral"
+        />
+      )}
+
+      {onDelete && (
+        <PopupAction
+          label="✕"
+          title={t("deleteGap")}
+          onClick={() => {
+            onDelete();
             onClose();
           }}
           variant="neutral"

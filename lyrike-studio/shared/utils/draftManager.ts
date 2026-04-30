@@ -1,4 +1,4 @@
-import type { LyricsDoc } from "@/entities/lyrics/model/LyricsStore";
+import type { LyricsDoc } from "@/entities/lyrics";
 
 export type DraftPayload = {
   savedAt: string;

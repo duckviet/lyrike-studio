@@ -3,7 +3,7 @@
 import { memo } from "react";
 import { useTranslations } from "next-intl";
 import type { LyricLine } from "@/entities/lyrics";
-import { NUDGE_DELTA_SEC } from "@/features/lyrics-sync/config/constants";
+import { TIMING } from "@/shared/config/constants";
 import { cn } from "@/shared/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -177,29 +177,29 @@ export const LyricLineItem = memo(function LyricLineItem({
         {/* Nudge */}
         <ButtonGroup>
           <button
-            onClick={() => onNudge(line, "start", -NUDGE_DELTA_SEC)}
-            title={t("nudgeStart", { delta: -NUDGE_DELTA_SEC })}
+            onClick={() => onNudge(line, "start", -TIMING.NUDGE_DELTA_SEC)}
+            title={t("nudgeStart", { delta: -TIMING.NUDGE_DELTA_SEC })}
             className={nudgeBase}
           >
             −S
           </button>
           <button
-            onClick={() => onNudge(line, "start", NUDGE_DELTA_SEC)}
-            title={t("nudgeStart", { delta: NUDGE_DELTA_SEC })}
+            onClick={() => onNudge(line, "start", TIMING.NUDGE_DELTA_SEC)}
+            title={t("nudgeStart", { delta: TIMING.NUDGE_DELTA_SEC })}
             className={nudgeWithDivider}
           >
             +S
           </button>
           <button
-            onClick={() => onNudge(line, "end", -NUDGE_DELTA_SEC)}
-            title={t("nudgeEnd", { delta: -NUDGE_DELTA_SEC })}
+            onClick={() => onNudge(line, "end", -TIMING.NUDGE_DELTA_SEC)}
+            title={t("nudgeEnd", { delta: -TIMING.NUDGE_DELTA_SEC })}
             className={nudgeWithDivider}
           >
             −E
           </button>
           <button
-            onClick={() => onNudge(line, "end", NUDGE_DELTA_SEC)}
-            title={t("nudgeEnd", { delta: NUDGE_DELTA_SEC })}
+            onClick={() => onNudge(line, "end", TIMING.NUDGE_DELTA_SEC)}
+            title={t("nudgeEnd", { delta: TIMING.NUDGE_DELTA_SEC })}
             className={nudgeWithDivider}
           >
             +E
