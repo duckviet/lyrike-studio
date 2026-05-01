@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/lib/utils";
+import { useTranslations } from "next-intl";
 
 interface PlainLyricsEditorProps {
   value: string;
@@ -13,15 +14,17 @@ export function PlainLyricsEditor({
   onChange,
   className,
 }: PlainLyricsEditorProps) {
+  const t = useTranslations("editor");
+
   return (
     <label
       className={cn(
-        "grid gap-1",
+        "grid gap-1 p-4",
         "text-[0.72rem] font-bold uppercase tracking-wider text-ink-light-soft",
         className,
       )}
     >
-      Plain Lyrics
+      {t("plainLyrics")}
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}

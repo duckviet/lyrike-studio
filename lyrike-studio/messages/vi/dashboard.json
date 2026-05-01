@@ -1,0 +1,32 @@
+{
+  "editor": {
+    "play": "Phát",
+    "pause": "Tạm dừng",
+    "zoom": "Phóng to",
+    "loop": "Lặp lại",
+    "undo": "Hoàn tác",
+    "redo": "Làm lại",
+    "draft": "Bản nháp",
+    "loadWaveform": "Tải video để xem dạng sóng"
+  },
+  "actions": {
+    "moveUp": "Di chuyển lên",
+    "moveDown": "Di chuyển xuống",
+    "insertAfter": "Thêm vào sau",
+    "split": "Chia nhỏ",
+    "merge": "Gộp với dòng trước",
+    "delete": "Xóa",
+    "nudgeStart": "Bắt đầu {delta}s",
+    "nudgeEnd": "Kết thúc {delta}s",
+    "extendPrev": "Kéo dài dòng trước để lấp đầy khoảng trống",
+    "insertGap": "Thêm dòng mới vào khoảng trống",
+    "extendNext": "Kéo dài dòng tiếp theo để lấp đầy khoảng trống",
+    "deleteGap": "Xóa khoảng trống và kéo các dòng phía sau về gần"
+  },
+  "publish": {
+    "label": "Xuất bản",
+    "button": "Xuất bản lên LRCLIB",
+    "running": "Đang xuất bản...",
+    "attempts": "lần thử"
+  }
+}

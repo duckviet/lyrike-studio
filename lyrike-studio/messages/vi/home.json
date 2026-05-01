@@ -1,0 +1,73 @@
+{
+  "hero": {
+    "label": "TRÌNH SOẠN THẢO LỜI BÀI HÁT",
+    "title": "Chính xác, không phức tạp.",
+    "subtitle": "Khía cạnh sáng tạo của việc đồng bộ.",
+    "cta": "Dùng thử trình soạn thảo",
+    "demo": "Xem demo"
+  },
+  "overview": {
+    "label": "KHÔNG CHỈ LÀ TRÌNH SOẠN THẢO VĂN BẢN",
+    "title1": "Vài công cụ hiển thị lời bài hát.",
+    "title2": "Công cụ này cảm nhận âm nhạc.",
+    "description": "Hầu hết các trình soạn thảo coi lời bài hát là văn bản thuần túy. Chúng tôi xây dựng công cụ này để hoạt động với chính âm thanh — trực quan hóa dạng sóng, chỉnh sửa dựa trên vùng và đồng bộ bằng cách nhấn phím để bạn cảm nhận nhịp điệu thay vì đoán.",
+    "waveform": "Dạng sóng",
+    "timeline": "Dòng thời gian",
+    "export": "Xuất file"
+  },
+  "features": {
+    "waveform": {
+      "label": "CHỈNH SỬA DẠNG SÓNG",
+      "title": "Kéo. Thay đổi kích thước. Xong.",
+      "description": "Thấy từng âm tiết trên dòng thời gian. Kéo các vùng để khớp với âm nhạc. Thay đổi kích thước chính xác với các tay cầm trực quan."
+    },
+    "transcription": {
+      "label": "TỰ ĐỘNG PHIÊN ÂM",
+      "title": "Dán link. Nhận lại lời bài hát.",
+      "description": "Dán URL YouTube và để dịch vụ phiên âm của chúng tôi trích xuất âm thanh và tạo lời bài hát có mốc thời gian để bạn tinh chỉnh.",
+      "analyzing": "Đang phân tích..."
+    },
+    "tap": {
+      "label": "ĐỒNG BỘ NHẤN PHÍM",
+      "title": "Đồng bộ bằng tai, không phải bằng mắt.",
+      "description": "Phát bản nhạc và nhấn bất kỳ phím nào để đánh dấu từng dòng. Nhịp điệu nằm trong ngón tay bạn, không phải trong việc tìm kiếm mốc thời gian tẻ nhạt."
+    },
+    "export": {
+      "label": "XUẤT FILE",
+      "title": "Một cú nhấp chuột để có .lrc",
+      "description": "Tải xuống các tệp LRC tiêu chuẩn công nghiệp. Tương thích với tất cả các trình phát lời bài hát, ứng dụng karaoke và trình chỉnh sửa phụ đề chính."
+    }
+  },
+  "workflow": {
+    "label": "QUY TRÌNH LÀM VIỆC",
+    "title1": "Không có gì ở đây là vội vã.",
+    "title2": "Bao gồm cả việc căn chỉnh thời gian.",
+    "steps": [
+      {
+        "title": "Dán URL",
+        "description": "Dán link YouTube hoặc tải lên tệp âm thanh"
+      },
+      {
+        "title": "Âm thanh Sẵn sàng",
+        "description": "Chúng tôi trích xuất âm thanh và tạo dạng sóng"
+      },
+      {
+        "title": "Đồng bộ Dòng",
+        "description": "Chỉnh sửa mốc thời gian hoặc nhấn để đồng bộ thủ công"
+      },
+      {
+        "title": "Xuất LRC",
+        "description": "Tải xuống lời bài hát đã đồng bộ ngay lập tức"
+      }
+    ]
+  },
+  "finalCta": {
+    "title": "Sẵn sàng để đồng bộ?",
+    "cta": "Mở trình soạn thảo — hoàn toàn miễn phí",
+    "description": "Không cần tài khoản. Không cần cài đặt. Chỉ cần dán và chạy."
+  },
+  "footer": {
+    "tagline": "Được tạo ra với ♪ dành cho những người yêu âm nhạc",
+    "copyright": "© 2026"
+  }
+}

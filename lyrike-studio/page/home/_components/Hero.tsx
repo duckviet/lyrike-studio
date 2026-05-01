@@ -1,24 +1,29 @@
-"use client";
-
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/shared/lib/i18n/navigation";
 import { ScrollReveal } from "./ScrollReveal";
 
 export function Hero() {
+  const t = useTranslations("home.hero");
+
   return (
     <section className="min-h-screen flex items-center px-8 py-32">
       <div className="max-w-[1200px] mx-auto w-full">
         <ScrollReveal>
           <span className="block text-xs font-semibold tracking-[0.2em] uppercase text-ink-soft mb-6">
-            LYRICS TIMING EDITOR
+            {t("label")}
           </span>
         </ScrollReveal>
 
         <ScrollReveal delay={100}>
           <h1 className="font-serif text-4xl md:text-6xl font-normal text-ink leading-tight mb-8">
-            Precise,{" "}
-            <em className="italic bg-cream-dark px-1">not complicated.</em>
+            {t.rich("title", {
+              em: (chunks) => (
+                <em className="italic bg-cream-dark px-1">{chunks}</em>
+              ),
+              br: () => <br />,
+            })}
             <br />
-            The creative side of syncing.
+            {t("subtitle")}
           </h1>
         </ScrollReveal>
 
@@ -28,13 +33,13 @@ export function Hero() {
               href="/studio"
               className="bg-accent text-cream px-8 py-4 rounded-full font-medium shadow-green hover:bg-accent-warm transition-all duration-300"
             >
-              Try the editor
+              {t("cta")}
             </Link>
             <a
               href="#demo"
               className="inline-flex items-center gap-2 text-base font-medium text-ink transition-colors duration-200 hover:text-accent"
             >
-              Watch demo{" "}
+              {t("demo")}{" "}
               <span className="transition-transform duration-200 group-hover:translate-x-1">
                 →
               </span>

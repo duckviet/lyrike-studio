@@ -1,4 +1,6 @@
-import Link from "next/link";
+"use client";
+import { useTranslations, useLocale } from "next-intl";
+import { Link, usePathname, useRouter } from "@/shared/lib/i18n/navigation";
 
 const HomeIcon = () => (
   <svg
@@ -84,9 +86,31 @@ const GithubIcon = () => (
   </svg>
 );
 
-export const Navbar = () => {
+const LanguageSwitcher = () => {
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const toggleLocale = () => {
+    const nextLocale = locale === "en" ? "vi" : "en";
+    router.replace(pathname, { locale: nextLocale });
+  };
+
   return (
-    <nav className="sticky top-0 left-0 right-0 z-50 px-8 py-3 bg-cream/85 backdrop-blur-md border-b border-ink/5">
+    <button
+      onClick={toggleLocale}
+      className="flex items-center gap-2 text-xs font-bold text-ink-soft hover:text-ink hover:bg-ink/5 px-2 py-1 rounded-md transition-all border border-ink/10 uppercase tracking-tighter"
+    >
+      <span>{locale === "en" ? "EN" : "VI"}</span>
+    </button>
+  );
+};
+
+export const Navbar = () => {
+  const t = useTranslations("common.nav");
+
+  return (
+    <nav className="sticky top-0 left-0 right-0 z-50 px-8 py-3 bg-cream/85 backdrop-blur-md border-b border-line">
       <div className="max-w-[1200px] mx-auto flex items-center justify-between">
         <Link
           href="/"
@@ -102,30 +126,30 @@ export const Navbar = () => {
             className="flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-ink/5 px-3 py-2 rounded-lg transition-all"
           >
             <HomeIcon />
-            <span>Home</span>
+            <span>{t("home")}</span>
           </Link>
           <Link
             href="/studio"
             className="flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-ink/5 px-3 py-2 rounded-lg transition-all"
           >
             <EditorIcon />
-            <span>Open Editor</span>
+            <span>{t("editor")}</span>
           </Link>
-          <Link
+          {/* <Link
             href="/projects"
             className="flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-ink/5 px-3 py-2 rounded-lg transition-all"
           >
             <ProjectsIcon />
-            <span>Projects</span>
+            <span>{t("projects")}</span>
           </Link>
           <Link
             href="/account"
             className="flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-ink/5 px-3 py-2 rounded-lg transition-all"
           >
             <AccountIcon />
-            <span>Account</span>
-          </Link>
-          <div className="w-[1px] h-4 bg-ink/10 mx-2" />
+            <span>{t("account")}</span>
+          </Link> */}
+          <div className="w-px h-4 bg-ink/10 mx-2" />
           <a
             href="https://github.com/duckviet/lyrike-studio"
             target="_blank"
@@ -134,6 +158,8 @@ export const Navbar = () => {
           >
             <GithubIcon />
           </a>
+          <div className="w-px h-4 bg-ink/10 mx-2" />
+          <LanguageSwitcher />
         </div>
       </div>
     </nav>

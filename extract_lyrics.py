@@ -189,36 +189,7 @@ def get_whisper_model(model_name="small", device=None, compute_type=None):
             vad_options=vad_opts
         )
     return _CACHED_MODELS[key]
-
-def process_audio(audio_path, use_demucs=False, output_vocal_path=None):
-    """
-    Main entry point for processing audio.
-    1. (Optional) Run Demucs to extract vocals.
-    2. Run WhisperX for transcription and alignment.
-    """
-    working_audio = audio_path
-
-    if use_demucs:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            try:
-                vocals_path = extract_vocals_demucs(audio_path, tmpdir)
-                if output_vocal_path:
-                    # Move processed vocal to persistent path
-                    import shutil
-                    shutil.move(vocals_path, output_vocal_path)
-                    working_audio = output_vocal_path
-                    logger.info(f"Vocal saved to persistent cache: {output_vocal_path}")
-                else:
-                    # Use temporary vocal path but need to be careful with scope
-                    # Better to copy it out or process immediately
-                    # For now, let's just process it within this block
-                    working_audio = vocals_path
-                    return _run_whisper_on_audio(working_audio)
-            except Exception as e:
-                logger.warning(f"Demucs failed, falling back to original audio: {e}")
-                working_audio = audio_path
-    
-    return _run_whisper_on_audio(working_audio)
+ 
 
 def _run_whisper_on_audio(audio_path):
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -292,7 +263,7 @@ def run_extraction(url: str):
         vocals_path = extract_vocals_demucs(final_audio_path, demucs_out_dir)
         
         # 2. Xử lý dùng whisperx
-        synced, plain = process_audio(vocals_path)
+        synced, plain = _run_whisper_on_audio(vocals_path)
             
         output = {
             "trackName": metadata["title"],

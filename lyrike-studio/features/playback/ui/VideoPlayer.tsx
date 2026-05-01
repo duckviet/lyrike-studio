@@ -1,9 +1,28 @@
 "use client";
 
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import { TIMING } from "@/shared/config/constants";
 
 interface VideoPlayerProps {
   videoId: string | null;
+}
+
+interface YTPlayer {
+  playVideo(): void;
+  pauseVideo(): void;
+  seekTo(time: number, allowSeekAhead: boolean): void;
+  getCurrentTime(): number;
+  getPlayerState(): number;
+  destroy(): void;
+}
+
+interface YouTubeAPI {
+  Player: new (element: HTMLElement, config: object) => YTPlayer;
+}
+
+interface WindowWithYT {
+  YT?: YouTubeAPI;
+  onYouTubeIframeAPIReady?: () => void;
 }
 
 export const VideoPlayer = forwardRef<
@@ -16,7 +35,7 @@ export const VideoPlayer = forwardRef<
   VideoPlayerProps
 >(function VideoPlayer({ videoId }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const playerRef = useRef<any>(null);
+  const playerRef = useRef<YTPlayer | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useImperativeHandle(ref, () => ({
@@ -31,14 +50,15 @@ export const VideoPlayer = forwardRef<
 
   const loadYTApi = () => {
     return new Promise<void>((resolve) => {
-      if ((window as any).YT?.Player) {
+      const win = window as WindowWithYT;
+      if (win.YT?.Player) {
         resolve();
         return;
       }
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
       document.head.appendChild(tag);
-      (window as any).onYouTubeIframeAPIReady = resolve;
+      win.onYouTubeIframeAPIReady = resolve;
     });
   };
 
@@ -56,8 +76,10 @@ export const VideoPlayer = forwardRef<
             detail: { currentTime: time, isPlaying },
           }),
         );
-      } catch (e) {}
-    }, 100);
+      } catch {
+        // YT API throws when iframe not ready - safe to ignore
+      }
+    }, TIMING.POLL_INTERVAL_MS);
   };
 
   const stopPolling = () => {
@@ -83,18 +105,22 @@ export const VideoPlayer = forwardRef<
         playerRef.current = null;
       }
 
-      playerRef.current = new (window as any).YT.Player(containerRef.current, {
-        videoId,
-        playerVars: {
-          autoplay: 0,
-          controls: 1,
-          rel: 0,
-          modestbranding: 1,
+      if (!containerRef.current) return;
+      playerRef.current = new (window as WindowWithYT).YT!.Player(
+        containerRef.current,
+        {
+          videoId,
+          playerVars: {
+            autoplay: 0,
+            controls: 1,
+            rel: 0,
+            modestbranding: 1,
+          },
+          events: {
+            onReady: () => startPolling(),
+          },
         },
-        events: {
-          onReady: () => startPolling(),
-        },
-      });
+      );
     };
 
     initPlayer();
@@ -107,7 +133,7 @@ export const VideoPlayer = forwardRef<
   }, [videoId]);
 
   return (
-    <div className="w-full aspect-video max-h-[calc(100vh-390px)] min-h-[280px] relative overflow-hidden bg-black rounded-xl border border-white/10 shadow-black shadow-2xl">
+    <div className="w-full aspect-video max-h-[calc(100vh-390px)] min-h-[250px] relative overflow-hidden bg-black rounded-xl border border-white/10 shadow-black shadow-2xl">
       {videoId ? (
         <div ref={containerRef} className="w-full h-full" />
       ) : (

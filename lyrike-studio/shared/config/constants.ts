@@ -1,9 +1,37 @@
 export const APP_NAME = "Lyrike Studio";
+export const APP_VERSION = "1.0.0";
 
-export const DEFAULT_ZOOM_PX_PER_SEC = 52;
+export const TIMING = {
+  SEEK_DELTA_SEC: 5,
+  NUDGE_DELTA_SEC: 0.1,
+  DRAG_DRIFT_THRESHOLD_SEC: 0.2,
+  TIME_SYNC_DRIFT_THRESHOLD_SEC: 0.2,
+  MIN_LINE_LENGTH_SEC: 0.24,
+  POLL_INTERVAL_MS: 100,
+  DEBOUNCE_SEARCH_MS: 300,
+} as const;
 
-export const SEEK_DELTA_SEC = 5;
+export const WAVEFORM = {
+  DEFAULT_ZOOM_PX_PER_SEC: 52,
+  MIN_ZOOM: 20,
+  MAX_ZOOM: 240,
+  ZOOM_STEP: 2,
+} as const;
 
-export const TIME_SYNC_DRIFT_THRESHOLD_SEC = 0.2;
+export const UI = {
+  SIDEBAR_WIDTH_PX: 320,
+  SIDEBAR_COLLAPSED_PX: 40,
+  HEADER_HEIGHT_PX: 60,
+  TIMELINE_HEIGHT_PX: 302,
+} as const;
 
-export const WAVEFORM_POLL_INTERVAL_MS = 100;
+export const LYRICS_GAP = {
+  MIN_GAP_PX: 4,
+  MIN_GAP_INTERACTIVE_PX: 24,
+} as const;
+
+export const LIMITS = {
+  MAX_LYRICS_LINES: 1000,
+  MAX_TITLE_LENGTH: 200,
+  MAX_FILE_SIZE_MB: 50,
+} as const;

@@ -1,57 +1,50 @@
-"use client";
-
+import { useTranslations } from "next-intl";
 import { ScrollReveal } from "./ScrollReveal";
 
-const features = [
-  {
-    label: "WAVEFORM EDITING",
-    title: "Drag. Resize. Done.",
-    description: "See every syllable on the timeline. Drag regions to align with the music. Resize with precision using intuitive handles.",
-    image: "waveform",
-    align: "left",
-  },
-  {
-    label: "AUTO TRANSCRIPTION",
-    title: "Paste a link. Get lyrics back.",
-    description: "Drop a YouTube URL and let our transcription service extract the audio and generate timed lyrics for you to fine-tune.",
-    image: "transcription",
-    align: "right",
-  },
-  {
-    label: "TAP SYNC",
-    title: "Sync with your ears, not your eyes.",
-    description: "Play the track and tap any key to mark each line. The rhythm stays in your fingers, not in tedious timestamp hunting.",
-    image: "tap",
-    align: "left",
-  },
-  {
-    label: "EXPORT",
-    title: "One click to .lrc",
-    description: "Download industry-standard LRC files. Compatible with all major lyric players, karaoke apps, and subtitle editors.",
-    image: "export",
-    align: "right",
-  },
-];
-
 export function FeatureCards() {
+  const t = useTranslations("home.features");
+
+  const features = [
+    {
+      id: "waveform",
+      image: "waveform",
+      align: "left",
+    },
+    {
+      id: "transcription",
+      image: "transcription",
+      align: "right",
+    },
+    {
+      id: "tap",
+      image: "tap",
+      align: "left",
+    },
+    {
+      id: "export",
+      image: "export",
+      align: "right",
+    },
+  ];
+
   return (
     <section className="py-20 px-8">
       <div className="max-w-[1200px] mx-auto flex flex-col gap-20">
         {features.map((feature, index) => (
           <ScrollReveal
-            key={feature.label}
+            key={feature.id}
             delay={index * 100}
             className={`grid md:grid-cols-2 gap-16 items-center ${feature.align === "right" ? "direction-rtl" : ""}`}
           >
             <div className={feature.align === "right" ? "md:order-2" : ""}>
               <span className="block text-xs font-semibold tracking-[0.2em] uppercase text-accent mb-4">
-                {feature.label}
+                {t(`${feature.id}.label`)}
               </span>
               <h3 className="font-serif text-2xl font-normal text-ink leading-tight mb-4">
-                {feature.title}
+                {t(`${feature.id}.title`)}
               </h3>
               <p className="text-base leading-relaxed text-ink-soft m-0">
-                {feature.description}
+                {t(`${feature.id}.description`)}
               </p>
             </div>
             <div className={feature.align === "right" ? "md:order-1" : ""}>
@@ -77,7 +70,7 @@ export function FeatureCards() {
                   <div className="flex flex-col gap-6 h-full">
                     <div className="flex items-center gap-4 p-4 bg-white/5 rounded-lg text-white/70 text-sm">
                       <div className="w-5 h-5 border-2 border-white/20 border-t-primary rounded-full animate-spin" />
-                      Analyzing audio...
+                      {t("transcription.analyzing")}
                     </div>
                     <div className="flex flex-col gap-2">
                       <div className="flex gap-4 font-mono text-xs">

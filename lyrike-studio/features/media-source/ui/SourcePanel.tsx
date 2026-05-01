@@ -13,7 +13,7 @@ interface SourcePanelProps {
   fetchState: "idle" | "loading" | "ready" | "error";
   sourceMessage: string;
   mediaInfo: FetchMediaResponse | null;
-  publishState: PublishFlowState;
+  publishState: PublishFlowState | null;
   transcribeState: string;
   formatTime: (seconds: number) => string;
   onFetch: () => void;
@@ -37,9 +37,9 @@ export function SourcePanel({
 }: SourcePanelProps) {
   return (
     <article
-      className={`min-h-0 h-full p-3.5 flex flex-col gap-3 overflow-x-hidden overflow-y-auto bg-transparent border-0 shadow-none ${activeTab !== "source" ? "hidden md:flex" : ""}`}
+      className={`min-h-0 h-full flex flex-col overflow-x-hidden overflow-y-auto bg-transparent ${activeTab !== "source" ? "hidden md:flex" : ""}`}
     >
-      <section className="border border-line rounded-2xl bg-bg-soft p-4 flex flex-col gap-3.5 shadow-sm">
+      <section className="p-4 flex flex-col gap-3.5 border-b border-line-soft">
         <div className="flex flex-col gap-2">
           <span className="text-[0.7rem] font-bold text-ink-light-soft uppercase tracking-widest">
             Source URL
@@ -105,35 +105,44 @@ export function SourcePanel({
 
       {mediaInfo && (
         <>
-          <section className="border border-line rounded-2xl bg-bg-soft p-4 flex flex-col gap-3.5 shadow-sm">
+          <section className="p-4 flex flex-col gap-3.5 border-b border-line-soft">
             <div className="flex items-center">
               <span className="inline-flex rounded-md bg-primary-10 text-primary px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wider border border-primary-20">
                 Metadata
               </span>
             </div>
             <div className="flex flex-col gap-3">
-              <div className="min-w-0 grid gap-1">
-                <span className="text-[0.68rem] text-ink-light-soft font-bold uppercase tracking-wider">
-                  Track
-                </span>
-                <span className="text-sm font-medium text-ink-light break-words">
-                  {mediaInfo.trackName || "Untitled"}
-                </span>
-              </div>
-              <div className="min-w-0 grid gap-1">
-                <span className="text-[0.68rem] text-ink-light-soft font-bold uppercase tracking-wider">
-                  Artist
-                </span>
-                <span className="text-sm font-medium text-ink-light break-words">
-                  {mediaInfo.artistName || "Unknown Artist"}
-                </span>
+              <div className="flex gap-4 items-start">
+                <img
+                  src={`https://i.ytimg.com/vi/${mediaInfo.videoId}/mqdefault.jpg`}
+                  className="w-28 aspect-square rounded-xl object-cover shadow-sm bg-bg-elev border border-line-soft"
+                  alt="Thumbnail"
+                />
+                <div className="flex-1 min-w-0 flex flex-col gap-3">
+                  <div className="min-w-0 grid gap-1">
+                    <span className="text-[0.68rem] text-ink-light-soft font-bold uppercase tracking-wider">
+                      Track
+                    </span>
+                    <span className="text-sm font-medium text-ink-light wrap-break-word">
+                      {mediaInfo.trackName || "Untitled"}
+                    </span>
+                  </div>
+                  <div className="min-w-0 grid gap-1">
+                    <span className="text-[0.68rem] text-ink-light-soft font-bold uppercase tracking-wider">
+                      Artist
+                    </span>
+                    <span className="text-sm font-medium text-ink-light wrap-break-word">
+                      {mediaInfo.artistName || "Unknown Artist"}
+                    </span>
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3 pt-3 border-t border-line">
                 <div className="min-w-0 grid gap-1">
                   <span className="text-[0.68rem] text-ink-light-soft font-bold uppercase tracking-wider">
                     Duration
                   </span>
-                  <span className="text-sm font-medium text-ink-light break-words font-mono">
+                  <span className="text-sm font-medium text-ink-light wrap-break-word font-mono">
                     {formatTime(mediaInfo.duration)}
                   </span>
                 </div>

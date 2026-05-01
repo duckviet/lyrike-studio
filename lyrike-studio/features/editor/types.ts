@@ -1,8 +1,9 @@
-import type { LyricsState } from "@/entities/lyrics/ui/LyricsProvider";
+import type { LyricsState } from "@/entities/lyrics/types";
 import type { FetchMediaResponse, PeaksResponse } from "@/lib/api";
 import type { PublishFlowState } from "@/features/publish";
 import type { MediaController, WaveformController } from "@/entities/media";
 import type { LyricLine, LyricsMeta } from "@/entities/lyrics";
+import type { ParsedLineEdit } from "@/features/lyrics-edit/model/useSyncedTextEdit";
 
 export type LoadState = "idle" | "loading" | "ready" | "error";
 
@@ -51,14 +52,17 @@ export interface EditorActions {
   selectLine: (lineId: string | null) => void;
   reorder: (lineId: string, direction: "up" | "down") => void;
   insertAfter: (lineId: string) => void;
+  insertAtRange: (start: number, end: number) => void;
   splitLine: (lineId: string) => void;
   mergeWithPrevious: (lineId: string) => void;
   deleteLine: (lineId: string) => void;
+  deleteGap: (gapStart: number, gapEnd: number, prevLineId: string | null, nextLineId: string | null) => void;
   nudgeLine: (lineId: string, edge: "start" | "end", delta: number) => void;
   setPlainLyrics: (value: string) => void;
   setMeta: (update: Partial<LyricsMeta>) => void;
   importFromLrc: (rawLrc: string) => void;
   exportToLrc: () => string;
+  applyTextEdits: (edits: ParsedLineEdit[]) => void;
   setLoopEnabled: (value: boolean | ((prev: boolean) => boolean)) => void;
   setLineRangeLive: (lineId: string, start: number, end: number) => void;
   setLineRangeCommit: (lineId: string, start: number, end: number, baseState?: unknown) => void;

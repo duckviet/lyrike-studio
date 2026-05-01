@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "track": "Track",
+    "artist": "Artist",
+    "album": "Album",
+    "by": "By",
+    "offset": "Offset"
+  },
+  "tabs": {
+    "synced": "Synced",
+    "plain": "Plain",
+    "meta": "Meta"
+  },
+  "toolbar": {
+    "importLrc": "Import LRC",
+    "exportLrc": "Export LRC"
+  },
+  "syncedMode": {
+    "lineEdit": "Line Edit",
+    "textEdit": "Text Edit"
+  },
+  "plainLyrics": "Plain Lyrics",
+  "textEditor": {
+    "format": "Format: [mm:ss.xx:mm:ss.xx] lyrics text"
+  }
+}

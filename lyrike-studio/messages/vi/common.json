@@ -1,0 +1,16 @@
+{
+  "nav": {
+    "home": "Trang chủ",
+    "editor": "Trình soạn thảo",
+    "projects": "Dự án",
+    "account": "Tài khoản",
+    "github": "Github"
+  },
+  "button": {
+    "save": "Lưu",
+    "cancel": "Hủy"
+  },
+  "status": {
+    "loading": "Đang tải..."
+  }
+}

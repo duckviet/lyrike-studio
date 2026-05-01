@@ -21,15 +21,7 @@ export function TabBar<T extends string>({
   className,
 }: TabBarProps<T>) {
   return (
-    <div
-      role="tablist"
-      aria-label="Tabs"
-      className={cn(
-        "flex items-center gap-1 flex-wrap",
-        "p-1 bg-bg border border-line rounded-xl",
-        className,
-      )}
-    >
+    <div role="tablist" aria-label="Tabs" className={cn(className)}>
       {tabs.map((tab) => (
         <TabButton
           key={tab.id}
@@ -57,10 +49,10 @@ export function TabButton({ label, isActive, onClick }: TabButtonProps) {
       onClick={onClick}
       className={cn(
         "rounded-lg border border-transparent bg-transparent",
-        "px-3 py-2 text-xs font-semibold",
+        "px-3 py-1.5 text-xs font-bold",
         "cursor-pointer transition-all duration-150",
         "text-ink-light-soft hover:text-ink-light",
-        isActive && "bg-bg-elev border-line text-primary shadow-sm",
+        isActive && "bg-bg border-line text-primary shadow-sm",
       )}
     >
       {label}

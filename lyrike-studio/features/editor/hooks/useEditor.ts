@@ -1,105 +1,50 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { useLyrics } from "@/entities/lyrics/ui/LyricsProvider";
+import { useMemo, useEffect, useState } from "react";
 import { MediaController, WaveformController } from "@/entities/media";
 import { formatTime } from "@/shared/utils/formatters";
-import { DEFAULT_ZOOM_PX_PER_SEC } from "@/shared/config/constants";
 import type { EditorState, EditorActions } from "../types";
 
-import { useMediaLoader } from "./useMediaLoader";
-import { useTranscription } from "./useTranscription";
-import { usePublish } from "./usePublish";
+// New smaller hooks
+import { useEditorLyricsState } from "./useEditorLyricsState";
+import { useEditorUIState } from "./useEditorUIState";
+import { useEditorMediaMutations } from "./useEditorMediaMutations";
+
+// Legacy hooks - to be migrated later
 import { usePlaybackSync } from "./usePlaybackSync";
 import { useDraft } from "./useDraft";
+import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
 
 export function useEditor(): [EditorState, EditorActions] {
-  const {
-    state: lyricsState,
-    setTab,
-    setActiveLine,
-    selectLine,
-    editText,
-    hydrateFromMedia,
-    loadDraft,
-    setLineRangeLive,
-    setLineRangeCommit,
-    insertAfter,
-    deleteLine,
-    reorder,
-    splitLine,
-    mergeWithPrevious,
-    nudgeLine,
-    setPlainLyrics,
-    setMeta,
-    importFromLrc,
-    exportToLrc,
-    undo,
-    redo,
-    getHistoryState,
-  } = useLyrics();
+  // 1. Lyrics state from Zustand store
+  const [lyricsState, lyricsActions] = useEditorLyricsState();
 
+  // 2. UI state (zoom, scroll, sidebar, loop)
+  const [uiState, uiActions] = useEditorUIState();
+
+  // 3. Media mutations (fetch, transcribe, publish)
+  const [mediaState, mediaActions] = useEditorMediaMutations({
+    lyricsState,
+    exportToLrc: lyricsActions.exportToLrc,
+    hydrateFromMedia: useLyricsStore((s) => s.hydrateFromMedia),
+    importFromLrc: lyricsActions.importFromLrc,
+  });
+
+  const loadDraft = useLyricsStore((s) => s.loadDraft);
+  const { saveDraft, maybeRestoreDraft } = useDraft(loadDraft);
+
+  // Controller instances
   const mediaController = useMemo(() => new MediaController(), []);
   const waveformController = useMemo(() => new WaveformController(), []);
 
-  const [activeTab, setActiveTab] = useState<"source" | "timeline" | "lyrics">("timeline");
-  const [sourceInput, setSourceInput] = useState("");
-  const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM_PX_PER_SEC);
-  const [loopEnabled, setLoopEnabled] = useState(false);
-  const [waveScrollLeft, setWaveScrollLeft] = useState(0);
-  const [wavePxPerSec, setWavePxPerSec] = useState(DEFAULT_ZOOM_PX_PER_SEC);
-  const [duration, setDuration] = useState(0);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  const { saveDraft, maybeRestoreDraft } = useDraft(loadDraft);
-
-  const [sourceMessage, setSourceMessage] = useState("No source loaded yet.");
-
-  const {
-    publishState,
-    handlePublish: runPublish,
-    reset: resetPublish,
-  } = usePublish({
-    lyricsState,
-    exportToLrc,
-    setSourceMessage,
-  });
-
-  const {
-    mediaInfo,
-    peaksInfo,
-    fetchState,
-    peaksState,
-    peaksMessage,
-    load: loadMedia,
-    setFetchState,
-  } = useMediaLoader({
-    mediaController,
-    waveformController,
-    onHydrateFromMedia: hydrateFromMedia,
-    maybeRestoreDraft,
-    onResetPublish: resetPublish,
-    setSourceMessage,
-  });
-
-  const {
-    transcribeState,
-    handleTranscribe,
-  } = useTranscription({
-    mediaInfo,
-    importFromLrc,
-    setSourceMessage,
-  });
-
-  const {
-    isPlaying,
-    currentTime,
-  } = usePlaybackSync({
+  // Playback sync
+  const { isPlaying, currentTime } = usePlaybackSync({
     syncedLines: lyricsState.doc.syncedLines,
-    setActiveLine,
+    setActiveLine: lyricsActions.setActiveLine,
   });
 
-  // Keep HTMLAudioElement events (duration, errors) still wired up.
+  // Duration tracking
+  const [duration, setDuration] = useState(0);
   useEffect(() => {
     const unsubDuration = mediaController.subscribe("durationchange", ({ duration: d }) => setDuration(d));
     return () => {
@@ -107,78 +52,97 @@ export function useEditor(): [EditorState, EditorActions] {
     };
   }, [mediaController]);
 
-  const handleFetch = useCallback(() => loadMedia(sourceInput), [loadMedia, sourceInput]);
-  const handlePublish = useCallback(() => runPublish(mediaInfo), [runPublish, mediaInfo]);
-
+  // Build EditorState
   const editorState: EditorState = {
-    activeTab,
+    activeTab: uiState.activeTab,
     lyricsState,
-    mediaInfo,
-    peaksInfo,
+    mediaInfo: mediaState.mediaInfo,
+    peaksInfo: mediaState.peaksInfo,
     isPlaying,
     currentTime,
-    duration,
-    zoomLevel,
-    waveScrollLeft,
-    wavePxPerSec,
-    loopEnabled,
-    fetchState,
-    sourceMessage,
-    transcribeState,
-    peaksState,
-    peaksMessage,
-    publishState,
-    isSidebarCollapsed,
+    duration: duration || mediaState.mediaInfo?.duration || 0,
+    zoomLevel: uiState.zoomLevel,
+    waveScrollLeft: uiState.waveScrollLeft,
+    wavePxPerSec: uiState.wavePxPerSec,
+    loopEnabled: uiState.loopEnabled,
+    fetchState: mediaState.fetchState,
+    sourceMessage: mediaState.sourceMessage,
+    transcribeState: mediaState.transcribeState,
+    peaksState: mediaState.peaksState,
+    peaksMessage: mediaState.peaksMessage,
+    publishState: mediaState.publishState,
+    isSidebarCollapsed: uiState.isSidebarCollapsed,
   };
 
-  const editorActions: EditorActions = {
-    setActiveTab,
-    sourceInput,
-    setSourceInput,
-    handleFetch,
-    handleTranscribe,
-    handlePublish,
-    handleZoomChange: (px: number) => {
-      setZoomLevel(px);
-      setWavePxPerSec(px);
-    },
-    handleScroll: setWaveScrollLeft,
-    handleSeekTo: (time: number) => mediaController.seek(time),
-    handleSeekBy: (delta: number) => mediaController.seekBy(delta),
-    handlePlayPause: () => mediaController.toggle(),
-    undo,
-    redo,
-    toggleSidebar: () => setIsSidebarCollapsed(!isSidebarCollapsed),
-    saveDraft: () => {
-      if (!mediaInfo) {
-        setSourceMessage("Load media before saving a draft.");
-        return;
-      }
-      saveDraft(mediaInfo.videoId, lyricsState.doc, lyricsState.selectedLineId);
-      setSourceMessage("Draft saved locally.");
-    },
-    formatTime: (seconds: number) => formatTime(seconds),
-    mediaController,
-    waveformController,
-    editText,
-    selectLine,
-    reorder,
-    insertAfter,
-    splitLine,
-    mergeWithPrevious,
-    deleteLine,
-    nudgeLine,
-    setPlainLyrics,
-    setMeta,
-    importFromLrc,
-    exportToLrc,
-    setLoopEnabled,
-    setLineRangeLive,
-    setLineRangeCommit: (lineId: string, start: number, end: number, baseState?: unknown) =>
-      setLineRangeCommit(lineId, start, end, baseState as any),
-    getHistoryState,
-    setLyricsTab: setTab,
-  };
+  // Build EditorActions
+  const editorActions: EditorActions = useMemo(
+    () => ({
+      setActiveTab: uiActions.setActiveTab,
+      sourceInput: mediaState.sourceInput,
+      setSourceInput: mediaActions.setSourceInput,
+      handleFetch: mediaActions.handleFetch,
+      handleTranscribe: mediaActions.handleTranscribe,
+      handlePublish: mediaActions.handlePublish,
+      handleZoomChange: uiActions.handleZoomChange,
+      handleScroll: uiActions.handleScroll,
+      handleSeekTo: (time: number) => mediaController.seek(time),
+      handleSeekBy: (delta: number) => mediaController.seekBy(delta),
+      handlePlayPause: () => mediaController.toggle(),
+      undo: lyricsActions.undo,
+      redo: lyricsActions.redo,
+      toggleSidebar: uiActions.toggleSidebar,
+      saveDraft: () => {
+        if (!mediaState.mediaInfo) {
+          mediaActions.setSourceInput(""); // Trigger message update
+          return;
+        }
+        saveDraft(
+          mediaState.mediaInfo.videoId,
+          lyricsState.doc,
+          lyricsState.selectedLineId,
+        );
+      },
+      formatTime: (seconds: number) => formatTime(seconds),
+      mediaController,
+      waveformController,
+      editText: lyricsActions.editText,
+      selectLine: lyricsActions.selectLine,
+      reorder: lyricsActions.reorder,
+      insertAfter: lyricsActions.insertAfter,
+      insertAtRange: lyricsActions.insertAtRange,
+      splitLine: lyricsActions.splitLine,
+      mergeWithPrevious: lyricsActions.mergeWithPrevious,
+      deleteLine: lyricsActions.deleteLine,
+      nudgeLine: lyricsActions.nudgeLine,
+      setPlainLyrics: lyricsActions.setPlainLyrics,
+      setMeta: lyricsActions.setMeta,
+      importFromLrc: lyricsActions.importFromLrc,
+      exportToLrc: lyricsActions.exportToLrc,
+      applyTextEdits: lyricsActions.applyTextEdits,
+      setLoopEnabled: uiActions.setLoopEnabled,
+      setLineRangeLive: lyricsActions.setLineRangeLive,
+      setLineRangeCommit: (lineId: string, start: number, end: number) =>
+        lyricsActions.setLineRange(lineId, start, end),
+      getHistoryState: () => ({
+        doc: lyricsState.doc,
+        selectedLineId: lyricsState.selectedLineId,
+      }),
+      setLyricsTab: lyricsActions.setTab,
+      deleteGap: lyricsActions.deleteGap,
+    }),
+    [
+      uiActions,
+      mediaState.sourceInput,
+      mediaState.mediaInfo,
+      mediaActions,
+      mediaController,
+      lyricsActions,
+      lyricsState.doc,
+      lyricsState.selectedLineId,
+      saveDraft,
+      waveformController,
+    ],
+  );
 
   return [editorState, editorActions];
 }
