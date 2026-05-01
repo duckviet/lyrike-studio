@@ -3,7 +3,7 @@ import { fetchMedia, fetchPeaks, type FetchMediaResponse, type PeaksResponse } f
 
 export const MEDIA_QUERY_KEYS = {
   media: (url: string) => ["media", url] as const,
-  peaks: (videoId: string) => ["peaks", videoId] as const,
+  peaks: (videoId: string, source: string) => ["peaks", videoId, source] as const,
 };
 
 export function useMediaQuery(sourceUrl: string | null) {
@@ -21,17 +21,21 @@ export function useMediaQuery(sourceUrl: string | null) {
   });
 }
 
-export function usePeaksQuery(videoId: string | null) {
+export function usePeaksQuery(videoId: string | null, source = "original") {
   return useQuery({
-    queryKey: MEDIA_QUERY_KEYS.peaks(videoId ?? ""),
+    queryKey: MEDIA_QUERY_KEYS.peaks(videoId ?? "", source),
     queryFn: async () => {
       if (!videoId) throw new Error("No videoId");
-      return fetchPeaks(videoId);
+      return fetchPeaks(videoId, 800, source);
     },
     enabled: !!videoId,
     staleTime: Infinity, // Peaks don't change once generated
     retry: 1,
   });
+}
+
+export function useDemucsPeaksQuery(videoId: string | null) {
+  return usePeaksQuery(videoId, "demucs");
 }
 
 export interface UseLoadMediaOptions {

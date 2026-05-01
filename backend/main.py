@@ -10,15 +10,15 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 
-from backend.core.config import MEDIA_CACHE_DIR, PEAKS_CACHE_DIR
-from backend.core.models import ExtractRequest, FetchRequest, TranscribeRequest
-from backend.core.utils import (
+from core.config import MEDIA_CACHE_DIR, PEAKS_CACHE_DIR
+from core.models import ExtractRequest, FetchRequest, TranscribeRequest
+from core.utils import (
     utc_now_iso, 
     normalize_video_id, 
     load_json, 
     save_json,
 )
-from backend.services.audio_service import (
+from services.audio_service import (
     find_cached_audio,
     fetch_video_info,
     download_audio,
@@ -26,7 +26,7 @@ from backend.services.audio_service import (
     parse_range_header,
     compute_peaks
 )
-from backend.services.transcription_service import (
+from services.transcription_service import (
     JOB_LOCK,
     TRANSCRIBE_JOBS,
     EVENT_QUEUES,
@@ -36,7 +36,7 @@ from backend.services.transcription_service import (
 )
 from extract_lyrics import run_extraction
 
-app = FastAPI(title="LRCLIB Publisher API (refactored)")
+app = FastAPI(title="LRCLIB Publisher API (refactored - backend package)")
 
 app.add_middleware(
     CORSMiddleware,
@@ -216,22 +216,26 @@ def stream_cached_audio(video_id: str, request: Request):
     return StreamingResponse(iter_file_range(audio_file, 0, file_size - 1), headers=headers, media_type=content_type)
 
 @app.get("/local-api/peaks/{video_id}")
-def get_audio_peaks(video_id: str, samples: int = 800, force: bool = False):
+def get_audio_peaks(video_id: str, source: str = "original", samples: int = 800, force: bool = False):
     safe_video_id = normalize_video_id(video_id)
     if samples < 64 or samples > 4000:
         raise HTTPException(status_code=400, detail="samples must be between 64 and 4000")
         
-    audio_file = find_cached_audio(safe_video_id)
-    if audio_file is None:
-        raise HTTPException(status_code=404, detail="Audio cache not found.")
-        
-    source = "original"
     cache_file = peaks_path(safe_video_id, source)
     if cache_file.exists() and not force:
         cached = load_json(cache_file)
         if cached and cached.get("samples") == samples:
             return {**cached, "cacheHit": True}
             
+    if source == "demucs":
+        # Demucs peaks are currently only generated during transcription.
+        # If not found in cache, we don't regenerate them here as it requires heavy processing.
+        raise HTTPException(status_code=404, detail="Demucs peaks not found in cache. Run transcription first.")
+
+    audio_file = find_cached_audio(safe_video_id)
+    if audio_file is None:
+        raise HTTPException(status_code=404, detail="Audio cache not found.")
+        
     metadata = load_metadata(safe_video_id) or {}
     duration = float(metadata.get("duration", 0) or 0)
     peaks = compute_peaks(audio_file, samples)
@@ -253,5 +257,5 @@ def serve_index():
     return FileResponse("index.html")
 
 if __name__ == "__main__":
-    logging.info("Starting backend on http://0.0.0.0:8080")
+    logging.info("Starting backend package on http://0.0.0.0:8080")
     uvicorn.run("main:app", host="0.0.0.0", port=8080, log_level="info")

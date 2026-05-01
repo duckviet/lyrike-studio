@@ -58,6 +58,14 @@
   --radius-md: 10px;
   --radius-lg: 14px;
 
+  --card-radius-outer: 16px; /* rounded-2xl - panel ngoài cùng */
+  --card-radius-inner: 12px; /* rounded-xl  - section bên trong */
+  --card-radius-control: 8px; /* rounded-lg  - buttons, inputs */
+
+  --card-padding-lg: 16px; /* p-4 - section content */
+  --card-padding-md: 12px; /* p-3 - toolbar */
+  --card-gap: 12px; /* gap-3 giữa các section */
+
   /* Shadows — ink-toned for light bg */
   --shadow-sm:
     0 1px 2px rgba(26, 26, 46, 0.08), 0 0 0 1px rgba(26, 26, 46, 0.04);
@@ -84,6 +92,28 @@
     -apple-system,
     BlinkMacSystemFont,
     sans-serif;
+}
+
+.waveform-container,
+.waveform-container * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.waveform-container::-webkit-scrollbar,
+.waveform-container *::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar,
+.no-scrollbar * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.no-scrollbar *::-webkit-scrollbar {
+  display: none;
 }
 
 /* Scrollbar Styling */

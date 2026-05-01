@@ -6,6 +6,7 @@ import { cn } from "@/shared/lib/utils";
 import { MetaForm } from "@/features/lyrics-edit/ui/MetaForm";
 import type { LyricsState, LyricsMeta } from "@/entities/lyrics";
 import type { LyricLine } from "@/entities/lyrics";
+import type { ParsedLineEdit } from "../model/useSyncedTextEdit";
 import { useLyricsPanelScroll } from "../model/useLyricsPanelScroll";
 import { useLrcFileImport } from "../model/useLrcFileImport";
 import { PlainLyricsEditor } from "./PlainLyricsEditor";
@@ -32,6 +33,7 @@ export interface LyricsPanelProps {
   onUpdateMetaField: (update: Partial<LyricsMeta>) => void;
   onImportLrc: (rawLrc: string) => void;
   onExportLrc: () => void;
+  onApplyTextEdits: (edits: ParsedLineEdit[]) => void;
 }
 
 export const LyricsPanel = memo(function LyricsPanel({
@@ -52,6 +54,7 @@ export const LyricsPanel = memo(function LyricsPanel({
   onUpdateMetaField,
   onImportLrc,
   onExportLrc,
+  onApplyTextEdits,
 }: LyricsPanelProps) {
   const { listRef } = useLyricsPanelScroll(lyricsState);
   const { fileInputRef, openFilePicker, handleFileChange } =
@@ -60,7 +63,7 @@ export const LyricsPanel = memo(function LyricsPanel({
   return (
     <article
       className={cn(
-        "min-h-0 h-full flex flex-col gap-3",
+        "min-h-0 h-full flex flex-col",
         "overflow-hidden bg-transparent border-0 shadow-none",
         activeTab !== "lyrics" && "hidden md:flex",
       )}
@@ -90,6 +93,7 @@ export const LyricsPanel = memo(function LyricsPanel({
           onMerge={onMerge}
           onDelete={onDelete}
           onNudge={onNudge}
+          onApplyTextEdits={onApplyTextEdits}
         />
       )}
 

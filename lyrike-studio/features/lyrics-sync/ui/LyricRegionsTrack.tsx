@@ -222,7 +222,11 @@ export const LyricRegionsTrack = memo(function LyricRegionsTrack({
     <div
       ref={trackRef}
       className="relative z-20 h-11 shrink-0 border-0 rounded-b-xl bg-[#050608]"
-      style={{ overflowX: "clip", overflowY: "visible", touchAction: "none" }}
+      style={{
+        overflowX: "clip",
+        overflowY: "visible",
+        touchAction: "none",
+      }}
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}

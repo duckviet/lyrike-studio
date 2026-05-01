@@ -5,6 +5,7 @@ import type { LyricsTabId } from "../config/enums";
 import type { LyricsMeta, LyricsDoc } from "../types";
 import * as utils from "../model/lyricsUtils";
 import * as actions from "../model/lyricsActions";
+import type { ParsedLineEdit } from "@/features/lyrics-edit/model/useSyncedTextEdit";
 
 export type LyricsHistoryState = {
   doc: LyricsDoc;
@@ -48,6 +49,7 @@ export type LyricsStoreActions = {
   setMeta: (update: Partial<LyricsMeta>) => void;
   importFromLrc: (rawLrc: string) => void;
   exportToLrc: () => string;
+  applyTextEdits: (edits: ParsedLineEdit[]) => void;
   hydrateFromMedia: (input: {
     duration: number;
     title?: string;
@@ -170,11 +172,15 @@ export const useLyricsStore = create<LyricsStore>()(
             id: utils.createLineId(),
           }));
 
+          const mergedMeta = { ...doc.meta };
+          if (model.meta.title) mergedMeta.title = model.meta.title;
+          if (model.meta.artist) mergedMeta.artist = model.meta.artist;
+          if (model.meta.album) mergedMeta.album = model.meta.album;
+          if (model.meta.by) mergedMeta.by = model.meta.by;
+          if (model.meta.offset !== 0) mergedMeta.offset = model.meta.offset;
+
           const nextDoc: LyricsDoc = {
-            meta: {
-              ...doc.meta,
-              ...model.meta,
-            },
+            meta: mergedMeta,
             syncedLines,
             plainLyrics: model.plainLyrics,
           };
@@ -199,6 +205,39 @@ export const useLyricsStore = create<LyricsStore>()(
             plainLyrics: doc.plainLyrics,
           });
           return utils.serializeLrc(parsed);
+        },
+
+        applyTextEdits: (edits) => {
+          const { doc, selectedLineId } = get();
+          const currentLines = doc.syncedLines;
+
+          const nextLines = edits.map((edit, index) => {
+            if (edit.id) {
+              const existing = currentLines.find((l) => l.id === edit.id);
+              if (existing) {
+                return {
+                  ...existing,
+                  start: edit.start,
+                  end: edit.end,
+                  text: edit.text,
+                };
+              }
+            }
+
+            return {
+              id: utils.createLineId(),
+              start: edit.start,
+              end: edit.end,
+              text: edit.text,
+            };
+          });
+
+          const newDoc = utils.applyDocWithSyncedLines(doc, nextLines);
+          const newSelected = utils.ensureSelectedLine(
+            newDoc.syncedLines,
+            selectedLineId,
+          );
+          set({ doc: newDoc, selectedLineId: newSelected });
         },
 
         undo: () => {

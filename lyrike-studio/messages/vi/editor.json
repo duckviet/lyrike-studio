@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "track": "Bài hát",
+    "artist": "Nghệ sĩ",
+    "album": "Album",
+    "by": "Thu cao sĩ",
+    "offset": "Độ lệch"
+  },
+  "tabs": {
+    "synced": "Đồng bộ",
+    "plain": "Văn bản",
+    "meta": "Thông tin"
+  },
+  "toolbar": {
+    "importLrc": "Nhập LRC",
+    "exportLrc": "Xuất LRC"
+  },
+  "syncedMode": {
+    "lineEdit": "Sửa dòng",
+    "textEdit": "Sửa text"
+  },
+  "plainLyrics": "Lời bài hát",
+  "textEditor": {
+    "format": "Định dạng: [phút.giây.phút.giây] lời bài hát"
+  }
+}

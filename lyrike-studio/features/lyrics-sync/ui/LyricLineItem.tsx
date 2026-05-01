@@ -5,8 +5,14 @@ import { useTranslations } from "next-intl";
 import type { LyricLine } from "@/entities/lyrics";
 import { TIMING } from "@/shared/config/constants";
 import { cn } from "@/shared/lib/utils";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import {
+  ArrowDown,
+  ArrowUpIcon,
+  DeleteIcon,
+  MergeIcon,
+  Plus,
+  SplitSquareHorizontal,
+} from "lucide-react";
 
 interface LyricLineItemProps {
   line: LyricLine;
@@ -25,12 +31,6 @@ interface LyricLineItemProps {
   onNudge: (line: LyricLine, edge: "start" | "end", delta: number) => void;
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-/**
- * A segmented button group — bordered pill with dividers between children.
- * All children share the same rounded container.
- */
 function ButtonGroup({ children }: { children: React.ReactNode }) {
   return (
     <div className="inline-flex overflow-hidden border border-line rounded-lg bg-bg">
@@ -50,8 +50,6 @@ const segmentWithDivider = cn(segmentBase, "border-l border-line");
 
 const nudgeBase = cn(segmentBase, "font-mono");
 const nudgeWithDivider = cn(segmentWithDivider, "font-mono");
-
-// ─── Main component ───────────────────────────────────────────────────────────
 
 export const LyricLineItem = memo(function LyricLineItem({
   line,
@@ -128,14 +126,14 @@ export const LyricLineItem = memo(function LyricLineItem({
             title={t("moveUp")}
             className={segmentBase}
           >
-            ↑
+            <ArrowUpIcon size={13} />
           </button>
           <button
             onClick={() => onReorder(line.id, "down")}
             title={t("moveDown")}
             className={segmentWithDivider}
           >
-            ↓
+            <ArrowDown size={13} />
           </button>
         </ButtonGroup>
 
@@ -146,21 +144,21 @@ export const LyricLineItem = memo(function LyricLineItem({
             title={t("insertAfter")}
             className={segmentBase}
           >
-            +
+            <Plus size={13} />
           </button>
           <button
             onClick={() => onSplit(line.id)}
             title={t("split")}
             className={segmentWithDivider}
           >
-            ⎘
+            <SplitSquareHorizontal size={13} />
           </button>
           <button
             onClick={() => onMerge(line.id)}
             title={t("merge")}
             className={segmentWithDivider}
           >
-            ⊕
+            <MergeIcon size={13} />
           </button>
           <button
             onClick={() => onDelete(line.id)}
@@ -170,7 +168,7 @@ export const LyricLineItem = memo(function LyricLineItem({
               "hover:bg-danger/10 hover:text-danger",
             )}
           >
-            ✕
+            <DeleteIcon size={13} />
           </button>
         </ButtonGroup>
 

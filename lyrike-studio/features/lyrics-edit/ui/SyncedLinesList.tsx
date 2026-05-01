@@ -1,8 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { LyricLineItem } from "@/features/lyrics-sync/ui/LyricLineItem";
+import { SyncedTextEditor } from "@/features/lyrics-edit/ui/SyncedTextEditor";
+import { useSyncedTextEdit } from "../model/useSyncedTextEdit";
 import type { LyricLine } from "@/entities/lyrics";
+import type { ParsedLineEdit } from "../model/useSyncedTextEdit";
 import { LyricsPanelProps } from "./LyricsPanel";
+import { cn } from "@/shared/lib/utils";
+import { useTranslations } from "next-intl";
+
+type SyncedMode = "line" | "text";
 
 interface SyncedLinesListProps {
   lines: LyricLine[];
@@ -19,6 +27,7 @@ interface SyncedLinesListProps {
   onMerge: LyricsPanelProps["onMerge"];
   onDelete: LyricsPanelProps["onDelete"];
   onNudge: LyricsPanelProps["onNudge"];
+  onApplyTextEdits: (edits: ParsedLineEdit[]) => void;
 }
 
 export default function SyncedLinesList({
@@ -36,31 +45,80 @@ export default function SyncedLinesList({
   onMerge,
   onDelete,
   onNudge,
+  onApplyTextEdits,
 }: SyncedLinesListProps) {
+  const [mode, setMode] = useState<SyncedMode>("line");
+
+  const { textValue, handleTextChange, handleTextBlur } = useSyncedTextEdit(
+    lines,
+    onApplyTextEdits,
+  );
+
+  const t = useTranslations("editor.syncedMode");
+
   return (
-    <ul
-      ref={listRef}
-      className="min-h-0 flex-1 m-0 p-2 list-none flex flex-col gap-2 overflow-y-auto scroll-smooth"
-    >
-      {lines.map((line, index) => (
-        <LyricLineItem
-          key={line.id}
-          line={line}
-          index={index}
-          isActive={line.id === activeLineId}
-          isSelected={line.id === selectedLineId}
-          formatTime={formatTime}
-          onSeekLine={onSeekLine}
-          onSelectLine={onSelectLine}
-          onEditLineText={onEditLineText}
-          onReorder={onReorder}
-          onInsertAfter={onInsertAfter}
-          onSplit={onSplit}
-          onMerge={onMerge}
-          onDelete={onDelete}
-          onNudge={onNudge}
+    <div className="relative flex-1 min-h-0 flex flex-col">
+      {/* Mode toggle tabs */}
+      <div className="sticky top-0 z-10 flex border-b border-border bg-background">
+        <button
+          type="button"
+          onClick={() => setMode("line")}
+          className={cn(
+            "flex-1 text-center text-sm px-3 py-2 font-medium transition-colors cursor-pointer",
+            mode === "line"
+              ? "bg-primary/10 text-primary border-b-2 border-primary"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+          )}
+        >
+          {t("lineEdit")}
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("text")}
+          className={cn(
+            "flex-1 text-center text-sm px-3 py-2 font-medium transition-colors cursor-pointer",
+            mode === "text"
+              ? "bg-primary/10 text-primary border-b-2 border-primary"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+          )}
+        >
+          {t("textEdit")}
+        </button>
+      </div>
+
+      {/* Content */}
+      {mode === "line" ? (
+        <ul
+          ref={listRef}
+          className="min-h-0 flex-1 m-0 p-2 list-none flex flex-col gap-2 overflow-y-auto scroll-smooth"
+        >
+          {lines.map((line, index) => (
+            <LyricLineItem
+              key={line.id}
+              line={line}
+              index={index}
+              isActive={line.id === activeLineId}
+              isSelected={line.id === selectedLineId}
+              formatTime={formatTime}
+              onSeekLine={onSeekLine}
+              onSelectLine={onSelectLine}
+              onEditLineText={onEditLineText}
+              onReorder={onReorder}
+              onInsertAfter={onInsertAfter}
+              onSplit={onSplit}
+              onMerge={onMerge}
+              onDelete={onDelete}
+              onNudge={onNudge}
+            />
+          ))}
+        </ul>
+      ) : (
+        <SyncedTextEditor
+          value={textValue}
+          onChange={handleTextChange}
+          onBlur={handleTextBlur}
         />
-      ))}
-    </ul>
+      )}
+    </div>
   );
 }

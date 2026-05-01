@@ -17,6 +17,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
     auth: (await import(`../../../messages/${locale}/auth.json`)).default,
     settings: (await import(`../../../messages/${locale}/settings.json`)).default,
     validation: (await import(`../../../messages/${locale}/validation.json`)).default,
+    editor: (await import(`../../../messages/${locale}/editor.json`)).default,
   };
 
 

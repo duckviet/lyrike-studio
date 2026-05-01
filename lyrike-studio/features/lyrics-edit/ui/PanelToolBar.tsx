@@ -2,13 +2,10 @@
 import type { LyricsState } from "@/entities/lyrics";
 import { TabBar, TabItem } from "./Tabbar";
 import { IconButton } from "./IconButton";
-type LyricsTabId = LyricsState["tab"];
+import { FileUpIcon, FileDownIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 
-const LYRICS_TABS: TabItem<LyricsTabId>[] = [
-  { id: "synced", label: "Synced" },
-  { id: "plain", label: "Plain" },
-  { id: "meta", label: "Meta" },
-];
+type LyricsTabId = LyricsState["tab"];
 
 interface PanelToolbarProps {
   activeTab: LyricsTabId;
@@ -27,8 +24,17 @@ export default function PanelToolbar({
   fileInputRef,
   onFileChange,
 }: PanelToolbarProps) {
+  const t = useTranslations("editor");
+  const tabs = useTranslations("editor.tabs");
+
+  const LYRICS_TABS: TabItem<LyricsTabId>[] = [
+    { id: "synced", label: tabs("synced") },
+    { id: "plain", label: tabs("plain") },
+    { id: "meta", label: tabs("meta") },
+  ];
+
   return (
-    <div className="shrink-0 flex items-center justify-between gap-2 border-b border-line p-2">
+    <div className="h-12 px-4 shrink-0 flex items-center justify-between gap-2 border-b border-line bg-bg-elev">
       <TabBar
         tabs={LYRICS_TABS}
         activeTab={activeTab}
@@ -36,11 +42,11 @@ export default function PanelToolbar({
       />
 
       <div className="flex gap-1.5">
-        <IconButton label="Import LRC" onClick={onImportClick}>
-          ⬆
+        <IconButton label={t("importLrc")} onClick={onImportClick}>
+          <FileUpIcon size={16} />
         </IconButton>
-        <IconButton label="Export LRC" onClick={onExportClick}>
-          ⬇
+        <IconButton label={t("exportLrc")} onClick={onExportClick}>
+          <FileDownIcon size={16} />
         </IconButton>
         {/* Hidden file input — triggered by Import button above */}
         <input

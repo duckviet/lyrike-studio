@@ -10,6 +10,18 @@ import { UI } from "@/shared/config/constants";
 import type { LyricLine } from "@/entities/lyrics";
 import { useTimelineHandlers } from "@/features/editor";
 
+function downloadLrc(content: string, filename: string) {
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export default function StudioPage() {
   const [state, actions] = useEditor();
   const videoRef = useRef<{
@@ -67,19 +79,16 @@ export default function StudioPage() {
     <main className="flex flex-col overflow-hidden h-[calc(100vh-60px)] w-full bg-transparent">
       <div className="flex-1 flex flex-col min-h-0 p-2 gap-2">
         <div
-          className="min-h-0 flex-1 grid gap-2 "
+          className="min-h-0 flex-1 grid gap-2"
           style={{
-            gridTemplateColumns: `auto minmax(460px, 1fr) ${UI.SIDEBAR_WIDTH_PX}px`,
+            gridTemplateColumns: `${
+              state.isSidebarCollapsed
+                ? `${UI.SIDEBAR_COLLAPSED_PX}px`
+                : `${UI.SIDEBAR_WIDTH_PX}px`
+            } minmax(460px, auto) minmax(0, 1fr)`,
           }}
         >
-          <div
-            className="w-80 min-w-10 h-full flex flex-row-reverse overflow-hidden border border-line rounded-2xl bg-bg-soft shadow-sm transition-all duration-200"
-            style={{
-              width: state.isSidebarCollapsed
-                ? `${UI.SIDEBAR_COLLAPSED_PX}px`
-                : `${UI.SIDEBAR_WIDTH_PX}px`,
-            }}
-          >
+          <div className="min-w-0 h-full flex flex-row-reverse overflow-hidden border border-line rounded-2xl bg-bg-soft shadow-sm transition-all duration-200">
             <aside
               className={`min-w-0 flex-1 overflow-y-auto opacity-100 transition-opacity duration-150 ${state.isSidebarCollapsed ? "opacity-0 pointer-events-none" : ""}`}
             >
@@ -99,13 +108,13 @@ export default function StudioPage() {
               />
             </aside>
             <button
-              className="w-9 shrink-0 border-0 border-r border-line bg-bg-elev text-ink-light-soft text-sm cursor-pointer transition-all duration-150 hover:bg-[#2c313c] hover:text-primary"
+              className="w-9 shrink-0 border-0 border-r border-line bg-bg-elev text-ink-light-soft text-sm cursor-pointer transition-all duration-150 hover:bg-[#2c313c] hover:text-white"
               onClick={actions.toggleSidebar}
             >
               {state.isSidebarCollapsed ? "→" : "←"}
             </button>
           </div>
-          <section className="min-w-0 min-h-0 flex items-center justify-center p-4 border border-line rounded-2xl overflow-hidden bg-linear-to-b from-[#050608] to-black shadow-glass">
+          <section className="min-w-[720px] min-h-0 flex items-center justify-center p-4 border border-line rounded-2xl overflow-hidden bg-linear-to-b from-[#050608] to-black shadow-glass">
             <VideoPlayer
               ref={videoRef}
               videoId={state.mediaInfo?.videoId ?? null}
@@ -129,7 +138,13 @@ export default function StudioPage() {
               onSetPlainLyrics={actions.setPlainLyrics}
               onUpdateMetaField={actions.setMeta}
               onImportLrc={actions.importFromLrc}
-              onExportLrc={actions.exportToLrc}
+              onExportLrc={() => {
+                const lrcContent = actions.exportToLrc();
+                const title = state.lyricsState.doc.meta.title || "lyrics";
+                const artist = state.lyricsState.doc.meta.artist || "unknown";
+                downloadLrc(lrcContent, `${artist} - ${title}.lrc`);
+              }}
+              onApplyTextEdits={actions.applyTextEdits}
             />
           </aside>
         </div>

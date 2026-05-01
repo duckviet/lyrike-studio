@@ -10,7 +10,7 @@ export function PublishCard({ publishState, onPublish }: PublishCardProps) {
   const t = useTranslations("dashboard.publish");
 
   return (
-    <section className="border border-line rounded-2xl bg-bg-soft p-4 flex flex-col gap-3 shadow-sm">
+    <section className="p-4 flex flex-col gap-3">
       <div className="flex items-center">
         <span className="inline-flex rounded-md bg-primary-10 text-primary px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wider border border-primary-20">
           {t("label")}

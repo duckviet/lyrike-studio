@@ -3,6 +3,7 @@ import type { FetchMediaResponse, PeaksResponse } from "@/lib/api";
 import type { PublishFlowState } from "@/features/publish";
 import type { MediaController, WaveformController } from "@/entities/media";
 import type { LyricLine, LyricsMeta } from "@/entities/lyrics";
+import type { ParsedLineEdit } from "@/features/lyrics-edit/model/useSyncedTextEdit";
 
 export type LoadState = "idle" | "loading" | "ready" | "error";
 
@@ -61,6 +62,7 @@ export interface EditorActions {
   setMeta: (update: Partial<LyricsMeta>) => void;
   importFromLrc: (rawLrc: string) => void;
   exportToLrc: () => string;
+  applyTextEdits: (edits: ParsedLineEdit[]) => void;
   setLoopEnabled: (value: boolean | ((prev: boolean) => boolean)) => void;
   setLineRangeLive: (lineId: string, start: number, end: number) => void;
   setLineRangeCommit: (lineId: string, start: number, end: number, baseState?: unknown) => void;

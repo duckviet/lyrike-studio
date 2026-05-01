@@ -1,12 +1,16 @@
 "use client";
 
-import { forwardRef, useEffect, useRef, memo } from "react";
+import { forwardRef, useEffect, useRef, memo, useState } from "react";
 import { LyricRegionsTrack } from "@/features/lyrics-sync/ui/LyricRegionsTrack";
 import type { FetchMediaResponse, PeaksResponse } from "@/lib/api";
 import type { LyricsState } from "@/entities/lyrics";
 import type { WaveformController } from "@/entities/media";
 import type { MediaController } from "@/entities/media";
 import { WAVEFORM, TIMING } from "@/shared/config/constants";
+import {
+  usePeaksQuery,
+  useDemucsPeaksQuery,
+} from "@/features/media/queries/mediaQueries";
 
 type TabId = "source" | "timeline" | "lyrics";
 
@@ -114,6 +118,37 @@ export const TimelinePanel = memo(
     const timelineHostRef = useRef<HTMLDivElement>(null);
     const isInitialized = useRef(false);
 
+    const [peakSource, setPeakSource] = useState<"original" | "demucs">(
+      "original",
+    );
+
+    const videoId = mediaInfo?.videoId ?? null;
+    const originalPeaksQuery = usePeaksQuery(videoId, "original");
+    const demucsPeaksQuery = useDemucsPeaksQuery(videoId);
+
+    const currentPeaksInfo =
+      peakSource === "demucs"
+        ? demucsPeaksQuery.data
+        : originalPeaksQuery.data || peaksInfo;
+
+    const currentPeaksState =
+      peakSource === "demucs"
+        ? demucsPeaksQuery.isLoading
+          ? "loading"
+          : demucsPeaksQuery.isError
+            ? "error"
+            : "ready"
+        : peaksState;
+
+    const currentPeaksMessage =
+      peakSource === "demucs"
+        ? demucsPeaksQuery.isLoading
+          ? "Loading demucs peaks..."
+          : demucsPeaksQuery.isError
+            ? "Demucs peaks not found. Run transcription first."
+            : "Demucs peaks loaded."
+        : peaksMessage;
+
     useEffect(() => {
       if (!waveHostRef.current || !timelineHostRef.current) return;
       isInitialized.current = false;
@@ -137,10 +172,10 @@ export const TimelinePanel = memo(
       if (!audioUrl || !mediaInfo) return;
       waveformController.load(
         audioUrl,
-        peaksInfo?.peaks ?? null,
+        currentPeaksInfo?.peaks ?? null,
         mediaInfo.duration,
       );
-    }, [audioUrl, peaksInfo, mediaInfo, waveformController]);
+    }, [audioUrl, currentPeaksInfo, mediaInfo, waveformController]);
 
     useEffect(() => {
       waveformController.syncTime(currentTime);
@@ -154,7 +189,7 @@ export const TimelinePanel = memo(
       <article
         className={`h-full flex flex-col overflow-hidden border border-line rounded-2xl bg-bg-soft shadow-sm ${activeTab !== "timeline" ? "hidden md:block" : ""}`}
       >
-        <div className="min-h-[54px] p-3 shrink-0 flex justify-between items-center gap-4 bg-bg-elev border-b border-line">
+        <div className="h-12 px-4 shrink-0 flex justify-between items-center gap-4 bg-bg-elev border-b border-line">
           <div className="min-w-0 flex items-center gap-2">
             <button
               type="button"
@@ -182,6 +217,24 @@ export const TimelinePanel = memo(
                 +5s
               </button>
             </div>
+            <div className="inline-flex items-center gap-0.5 p-1 border border-line rounded-lg bg-bg ml-1">
+              <button
+                type="button"
+                className={`h-6 px-3 rounded border-0 text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-150 ${peakSource === "original" ? "bg-bg-elev text-primary shadow-sm" : "bg-transparent text-ink-light-soft hover:bg-bg-elev"}`}
+                onClick={() => setPeakSource("original")}
+                title="Use original audio waveform"
+              >
+                Full
+              </button>
+              <button
+                type="button"
+                className={`h-6 px-3 rounded border-0 text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-150 ${peakSource === "demucs" ? "bg-bg-elev text-primary shadow-sm" : "bg-transparent text-ink-light-soft hover:bg-bg-elev"}`}
+                onClick={() => setPeakSource("demucs")}
+                title="Use vocal-only waveform (requires transcription)"
+              >
+                Vocals
+              </button>
+            </div>
           </div>
 
           <div className="min-w-[180px] flex items-center justify-center gap-3">
@@ -202,18 +255,18 @@ export const TimelinePanel = memo(
           <div className="min-w-0 flex items-center justify-end gap-2">
             <button
               type="button"
-              className={`h-7 px-3 rounded border border-line bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 ${loopEnabled ? "bg-primary text-[#002633] border-primary shadow-md" : "text-ink-light-soft hover:bg-bg-elev"}`}
+              className={`h-8 px-3 rounded-lg border border-line bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 ${loopEnabled ? "bg-primary text-[#002633] border-primary shadow-md" : "text-ink-light-soft hover:bg-bg-elev"}`}
               onClick={onToggleLoop}
             >
               {t("loop")}
             </button>
-            <div className="min-w-[142px] px-3 py-2 border border-line rounded-lg bg-bg text-center text-primary font-mono text-sm font-medium tabular-nums">
+            <div className="h-8 min-w-[142px] px-3 inline-flex items-center justify-center border border-line rounded-lg bg-bg text-center text-primary font-mono text-sm font-medium tabular-nums">
               {formatTime(currentTime)} / {formatTime(duration)}
             </div>
             <div className="inline-flex items-center gap-0.5 p-1 border border-line rounded-lg bg-bg">
               <button
                 type="button"
-                className="h-7 px-3 rounded border-0 bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev disabled:opacity-40 disabled:cursor-not-allowed text-ink-light-soft"
+                className="h-6 px-3 rounded border-0 bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev disabled:opacity-40 disabled:cursor-not-allowed text-ink-light-soft"
                 disabled={!canUndo}
                 onClick={onUndo}
               >
@@ -221,7 +274,7 @@ export const TimelinePanel = memo(
               </button>
               <button
                 type="button"
-                className="h-7 px-3 rounded border-0 bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev disabled:opacity-40 disabled:cursor-not-allowed text-ink-light-soft"
+                className="h-6 px-3 rounded border-0 bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev disabled:opacity-40 disabled:cursor-not-allowed text-ink-light-soft"
                 disabled={!canRedo}
                 onClick={onRedo}
               >
@@ -229,7 +282,7 @@ export const TimelinePanel = memo(
               </button>
               <button
                 type="button"
-                className="h-7 px-3 rounded border-0 bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev text-ink-light-soft"
+                className="h-6 px-3 rounded border-0 bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev text-ink-light-soft"
                 onClick={onSaveDraft}
               >
                 {t("draft")}
@@ -244,7 +297,8 @@ export const TimelinePanel = memo(
             ref={timelineHostRef}
           />
           <div
-            className="min-h-0 flex-1 overflow-hidden border-x border-b border-white/5 bg-[#050608] shadow-inner"
+            id="waveform"
+            className="min-h-0 flex-1 overflow-hidden border-x border-b border-white/5 bg-[#050608] shadow-inner no-scrollbar waveform-container "
             ref={waveHostRef}
           >
             {!mediaInfo && (
@@ -281,15 +335,6 @@ export const TimelinePanel = memo(
                   : undefined
               }
             />
-          )}
-
-          {mediaInfo && peaksState !== "idle" && (
-            <p
-              className="absolute right-5 top-2 m-0 rounded-full bg-[#0f1115]/85 text-ink-light-soft backdrop-blur-sm border border-line px-2 py-1 text-[10px]"
-              data-state={peaksState}
-            >
-              {peaksMessage}
-            </p>
           )}
         </div>
       </article>

@@ -122,10 +122,11 @@ export function streamTranscription(videoId: string): EventSource {
 export async function fetchPeaks(
   videoId: string,
   samples = 800,
+  source = "original"
 ): Promise<PeaksResponse> {
   const encodedVideoId = encodeURIComponent(videoId);
   const response = await fetch(
-    buildUrl(`/local-api/peaks/${encodedVideoId}?samples=${samples}`),
+    buildUrl(`/local-api/peaks/${encodedVideoId}?samples=${samples}&source=${source}`),
     {
       method: "GET",
     },

@@ -106,18 +106,21 @@ export const VideoPlayer = forwardRef<
       }
 
       if (!containerRef.current) return;
-      playerRef.current = new (window as WindowWithYT).YT!.Player(containerRef.current, {
-        videoId,
-        playerVars: {
-          autoplay: 0,
-          controls: 1,
-          rel: 0,
-          modestbranding: 1,
+      playerRef.current = new (window as WindowWithYT).YT!.Player(
+        containerRef.current,
+        {
+          videoId,
+          playerVars: {
+            autoplay: 0,
+            controls: 1,
+            rel: 0,
+            modestbranding: 1,
+          },
+          events: {
+            onReady: () => startPolling(),
+          },
         },
-        events: {
-          onReady: () => startPolling(),
-        },
-      });
+      );
     };
 
     initPlayer();
@@ -130,7 +133,7 @@ export const VideoPlayer = forwardRef<
   }, [videoId]);
 
   return (
-    <div className="w-full aspect-video max-h-[calc(100vh-390px)] min-h-[280px] relative overflow-hidden bg-black rounded-xl border border-white/10 shadow-black shadow-2xl">
+    <div className="w-full aspect-video max-h-[calc(100vh-390px)] min-h-[250px] relative overflow-hidden bg-black rounded-xl border border-white/10 shadow-black shadow-2xl">
       {videoId ? (
         <div ref={containerRef} className="w-full h-full" />
       ) : (

@@ -2,6 +2,7 @@
 
 import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
 import type { LyricsState, LyricsDoc, LyricsTabId, LyricLine } from "@/entities/lyrics";
+import type { ParsedLineEdit } from "@/features/lyrics-edit/model/useSyncedTextEdit";
 
 export interface EditorLyricsState {
   doc: LyricsDoc;
@@ -32,6 +33,7 @@ export interface EditorLyricsActions {
   setMeta: (update: Partial<{ title: string; artist: string; album: string; by: string; offset: number }>) => void;
   importFromLrc: (rawLrc: string) => void;
   exportToLrc: () => string;
+  applyTextEdits: (edits: ParsedLineEdit[]) => void;
   undo: () => void;
   redo: () => void;
 }
@@ -61,6 +63,7 @@ export function useEditorLyricsState(): [EditorLyricsState, EditorLyricsActions]
   const setMeta = useLyricsStore((s) => s.setMeta);
   const importFromLrc = useLyricsStore((s) => s.importFromLrc);
   const exportToLrc = useLyricsStore((s) => s.exportToLrc);
+  const applyTextEdits = useLyricsStore((s) => s.applyTextEdits);
   const undo = useLyricsStore((s) => s.undo);
   const redo = useLyricsStore((s) => s.redo);
 
@@ -101,6 +104,7 @@ export function useEditorLyricsState(): [EditorLyricsState, EditorLyricsActions]
     setMeta,
     importFromLrc,
     exportToLrc,
+    applyTextEdits,
     undo,
     redo,
   };

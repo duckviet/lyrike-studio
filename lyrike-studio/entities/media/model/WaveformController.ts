@@ -34,6 +34,12 @@ export class WaveformController {
 
   init(options: InitOptions): void {
     this.destroy();
+    options.container.style.scrollbarWidth = "none";
+    (
+      options.container.style as CSSStyleDeclaration & {
+        msOverflowStyle?: string;
+      }
+    ).msOverflowStyle = "none";
 
     const timelinePlugin = TimelinePlugin.create({
       container: options.timelineContainer,
@@ -63,6 +69,7 @@ export class WaveformController {
       barRadius: 2,
       normalize: true,
       interact: true,
+      hideScrollbar: true,
       plugins: [timelinePlugin, hoverPlugin],
     });
 

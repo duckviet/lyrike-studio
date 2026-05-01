@@ -118,6 +118,7 @@ export function useEditor(): [EditorState, EditorActions] {
       setMeta: lyricsActions.setMeta,
       importFromLrc: lyricsActions.importFromLrc,
       exportToLrc: lyricsActions.exportToLrc,
+      applyTextEdits: lyricsActions.applyTextEdits,
       setLoopEnabled: uiActions.setLoopEnabled,
       setLineRangeLive: lyricsActions.setLineRangeLive,
       setLineRangeCommit: (lineId: string, start: number, end: number) =>

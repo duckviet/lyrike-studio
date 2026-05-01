@@ -25,7 +25,7 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
       }
 
       if (response.status === "failed") {
-        throw new Error(response.message || "Transcription failed");
+        throw new Error(response.message || (response as any).error || "Transcription failed");
       }
 
       // Poll for completion using EventSource
@@ -35,7 +35,7 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
 
         eventSource.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data) as TranscribeResponse;
+            const data = JSON.parse(event.data) as TranscribeResponse & { error?: string };
             
             options?.onStatusChange?.(data.status);
 
@@ -46,7 +46,7 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
             } else if (data.status === "failed") {
               resolved = true;
               eventSource.close();
-              reject(new Error(data.message || "Transcription failed"));
+              reject(new Error(data.message || data.error || "Transcription failed"));
             }
           } catch {
             // Ignore parse errors

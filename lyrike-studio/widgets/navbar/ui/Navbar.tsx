@@ -135,7 +135,7 @@ export const Navbar = () => {
             <EditorIcon />
             <span>{t("editor")}</span>
           </Link>
-          <Link
+          {/* <Link
             href="/projects"
             className="flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-ink/5 px-3 py-2 rounded-lg transition-all"
           >
@@ -148,7 +148,7 @@ export const Navbar = () => {
           >
             <AccountIcon />
             <span>{t("account")}</span>
-          </Link>
+          </Link> */}
           <div className="w-px h-4 bg-ink/10 mx-2" />
           <a
             href="https://github.com/duckviet/lyrike-studio"

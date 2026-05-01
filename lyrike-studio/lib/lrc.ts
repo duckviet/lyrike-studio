@@ -53,7 +53,7 @@ function formatTimestamp(seconds: number): string {
 }
 
 function parseTimestamp(raw: string): number | null {
-  const match = raw.trim().match(/^(\d{2}):(\d{2}(?:\.\d{1,3})?)$/);
+  const match = raw.trim().match(/^(\d{1,3}):(\d{2}(?:\.\d+)?)$/);
   if (!match) {
     return null;
   }
@@ -68,7 +68,7 @@ function parseTimestamp(raw: string): number | null {
 }
 
 function parseEnhancedTokens(text: string): EnhancedWordToken[] {
-  const regex = /<(\d{2}:\d{2}(?:\.\d{1,3})?)>([^<]*)/g;
+  const regex = /<(\d{1,3}:\d{2}(?:\.\d+)?)>([^<]*)/g;
   const tokens: EnhancedWordToken[] = [];
 
   let match: RegExpExecArray | null;
@@ -88,17 +88,17 @@ function parseEnhancedTokens(text: string): EnhancedWordToken[] {
 }
 
 function removeEnhancedMarkers(text: string): string {
-  return text.replace(/<\d{2}:\d{2}(?:\.\d{1,3})?>/g, "").trim();
+  return text.replace(/<\d{1,3}:\d{2}(?:\.\d+)?>/g, "").trim();
 }
 
 function parseLine(line: string): ParsedLrcLine[] {
-  const matches = [...line.matchAll(/\[(\d{2}:\d{2}(?:\.\d{1,3})?)\]/g)];
+  const matches = [...line.matchAll(/\[(\d{1,3}:\d{2}(?:\.\d+)?)\]/g)];
   if (matches.length === 0) {
     return [];
   }
 
   const text = removeEnhancedMarkers(
-    line.replace(/\[(\d{2}:\d{2}(?:\.\d{1,3})?)\]/g, "").trim(),
+    line.replace(/\[(\d{1,3}:\d{2}(?:\.\d+)?)\]/g, "").trim(),
   );
   const enhanced = parseEnhancedTokens(line);
 
