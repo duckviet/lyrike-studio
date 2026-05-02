@@ -133,7 +133,7 @@ export const VideoPlayer = forwardRef<
   }, [videoId]);
 
   return (
-    <div className="w-full aspect-video max-h-[calc(100vh-390px)] min-h-[250px] relative overflow-hidden bg-black rounded-xl border border-white/10 shadow-black shadow-2xl">
+    <div className="w-full aspect-video max-h-[calc(100vh-390px)] min-h-[150px] md:min-h-[250px] relative overflow-hidden bg-black rounded-xl border border-white/10 shadow-black shadow-2xl">
       {videoId ? (
         <div ref={containerRef} className="w-full h-full" />
       ) : (

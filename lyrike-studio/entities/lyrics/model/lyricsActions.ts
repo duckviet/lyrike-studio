@@ -1,6 +1,6 @@
 import { TIMING } from "@/shared/config/constants";
 import { LYRICS_DEFAULTS } from "../config/constants";
-import type { LyricLine, LyricsDoc, LyricsMeta } from "../types";
+import type { LyricLine, LyricsDoc } from "./types";
 import * as utils from "./lyricsUtils";
 import { buildSeedLyrics } from "./lyricsTimeline";
 
@@ -8,9 +8,16 @@ import { buildSeedLyrics } from "./lyricsTimeline";
  * We use any for get/set to avoid circular dependency with the main store file.
  * The main store will provide the typed get/set.
  */
+type MinimalState = {
+  doc: LyricsDoc;
+  selectedLineId: string | null;
+  activeLineId: string | null;
+  isAutoSyncEnabled: boolean;
+};
+
 type StoreApi = {
-  set: (patch: any) => void;
-  get: () => any;
+  set: (patch: Partial<MinimalState>) => void;
+  get: () => MinimalState;
 };
 
 export const buildTapSyncAction =
@@ -181,6 +188,53 @@ export const buildSplitLineAction =
         first.end + TIMING.MIN_LINE_LENGTH_SEC,
         line.end - TIMING.MIN_LINE_LENGTH_SEC,
       ),
+      end: line.end,
+      text: rightText,
+    };
+
+    const nextLines = [
+      ...lines.slice(0, index),
+      first,
+      second,
+      ...lines.slice(index + 1),
+    ];
+    set({
+      doc: utils.applyDocWithSyncedLines(doc, nextLines),
+      selectedLineId: second.id,
+    });
+  };
+
+export const buildSplitAtTimeAction =
+  (set: StoreApi["set"], get: StoreApi["get"]) => (time: number) => {
+    const { doc } = get();
+    const lines = doc.syncedLines;
+    const index = lines.findIndex(
+      (line: LyricLine) => time > line.start && time < line.end,
+    );
+    if (index < 0) return;
+
+    const line = lines[index];
+    if (
+      time < line.start + TIMING.MIN_LINE_LENGTH_SEC ||
+      time > line.end - TIMING.MIN_LINE_LENGTH_SEC
+    ) {
+      return;
+    }
+
+    const parts = line.text.trim().split(/\s+/);
+    const cutAt = Math.max(1, Math.floor(parts.length / 2));
+    const leftText = parts.slice(0, cutAt).join(" ") || line.text;
+    const rightText =
+      parts.slice(cutAt).join(" ") || LYRICS_DEFAULTS.SPLIT_FALLBACK_TEXT;
+
+    const first: LyricLine = {
+      ...line,
+      end: time,
+      text: leftText,
+    };
+    const second: LyricLine = {
+      id: utils.createLineId(),
+      start: time,
       end: line.end,
       text: rightText,
     };

@@ -2,7 +2,7 @@ import type {
   FetchMediaResponse,
   PeaksResponse,
   TranscribeResponse,
-} from "../api";
+} from "../../../lib/api";
 import type { MediaController } from "@/entities/media";
 import type { WaveformController } from "@/entities/media";
 
@@ -48,7 +48,11 @@ export async function fetchMediaForEditor(params: {
   getAudioUrlFn: (path: string) => string;
   mediaController: MediaController;
   waveformController: WaveformController;
-  onHydrateFromMedia: (input: { duration: number; title?: string; artist?: string }) => void;
+  onHydrateFromMedia: (input: {
+    duration: number;
+    title?: string;
+    artist?: string;
+  }) => void;
   restoreDraft: (videoId: string) => void;
 }): Promise<{
   mediaInfo: FetchMediaResponse;
@@ -160,7 +164,8 @@ export async function runTranscriptionFlow(params: {
             cleanup();
             resolve({
               transcribeState: "completed",
-              sourceMessage: "Transcription complete! Lyrics imported to editor.",
+              sourceMessage:
+                "Transcription complete! Lyrics imported to editor.",
             });
           } else if (data.status === "failed") {
             cleanup();
@@ -197,7 +202,9 @@ export async function runTranscriptionFlow(params: {
     return {
       transcribeState: "failed",
       sourceMessage:
-        error instanceof Error ? error.message : "Failed to start transcription.",
+        error instanceof Error
+          ? error.message
+          : "Failed to start transcription.",
     };
   }
 }

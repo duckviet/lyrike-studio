@@ -25,12 +25,17 @@ export class WaveformController {
   private pendingZoom: number | null = null;
   private isReady = false;
   private currentPxPerSec = 0;
+  private hoverTime = 0;
 
   private pendingLoad: {
     sourceUrl: string;
     peaks: number[] | null;
     duration: number;
   } | null = null;
+
+  private wheelHandler: ((e: WheelEvent) => void) | null = null;
+  private pointerMoveHandler: ((e: PointerEvent) => void) | null = null;
+  private initializedContainers: HTMLElement[] = [];
 
   init(options: InitOptions): void {
     this.destroy();
@@ -108,6 +113,57 @@ export class WaveformController {
         this.waveSurfer.setTime(this.loopRange.start);
         this.seekHandler(this.loopRange.start);
       }
+    });
+
+    this.pointerMoveHandler = (e: PointerEvent) => {
+      if (!this.waveSurfer || !this.currentPxPerSec) return;
+      const scrollLeft = this.waveSurfer.getScroll();
+      const rect = options.container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      this.hoverTime = (scrollLeft + x) / this.currentPxPerSec;
+    };
+
+    this.wheelHandler = (e: WheelEvent) => {
+      if (!this.waveSurfer || this.currentPxPerSec <= 0) return;
+
+      if (e.ctrlKey || e.metaKey) {
+        // Zoom with touchpad pinch or Ctrl + Wheel
+        e.preventDefault();
+
+        const rect = options.container.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const oldPxPerSec = this.currentPxPerSec;
+        const scrollLeft = this.waveSurfer.getScroll();
+        const timeAtCursor = (scrollLeft + mouseX) / oldPxPerSec;
+
+        // deltaY > 0 is zoom out, deltaY < 0 is zoom in
+        const factor = Math.pow(1.1, -e.deltaY / 50);
+        let newPxPerSec = oldPxPerSec * factor;
+
+        // Clamp to the same range as the UI slider (20-240)
+        newPxPerSec = Math.max(20, Math.min(240, newPxPerSec));
+
+        if (newPxPerSec !== oldPxPerSec) {
+          this.setZoom(newPxPerSec);
+
+          // Re-adjust scroll to keep the time under the mouse position
+          const newScrollLeft = timeAtCursor * newPxPerSec - mouseX;
+          this.waveSurfer.setScroll(newScrollLeft);
+        }
+      } else if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        // Horizontal scroll with touchpad swipe (two fingers)
+        e.preventDefault();
+        const scrollLeft = this.waveSurfer.getScroll();
+        this.waveSurfer.setScroll(scrollLeft + e.deltaX);
+      }
+    };
+
+    this.initializedContainers = [options.container, options.timelineContainer];
+    this.initializedContainers.forEach((container) => {
+      container.addEventListener("pointermove", this.pointerMoveHandler!);
+      container.addEventListener("wheel", this.wheelHandler!, {
+        passive: false,
+      });
     });
 
     if (this.pendingLoad) {
@@ -194,6 +250,10 @@ export class WaveformController {
     return this.currentPxPerSec;
   }
 
+  getHoverTime(): number {
+    return this.hoverTime;
+  }
+
   destroy(): void {
     this.loopLineId = null;
     this.loopRange = null;
@@ -201,6 +261,17 @@ export class WaveformController {
     this.pendingZoom = null;
     this.pendingLoad = null;
     this.currentPxPerSec = 0;
+
+    if (this.wheelHandler || this.pointerMoveHandler) {
+      this.initializedContainers.forEach((container) => {
+        if (this.wheelHandler) container.removeEventListener("wheel", this.wheelHandler);
+        if (this.pointerMoveHandler) container.removeEventListener("pointermove", this.pointerMoveHandler);
+      });
+    }
+    this.wheelHandler = null;
+    this.pointerMoveHandler = null;
+    this.initializedContainers = [];
+
     if (this.waveSurfer) {
       this.waveSurfer.destroy();
       this.waveSurfer = null;

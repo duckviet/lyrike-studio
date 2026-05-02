@@ -1,5 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
-import { requestTranscription, streamTranscription, type TranscribeResponse } from "@/lib/api";
+import {
+  requestTranscription,
+  streamTranscription,
+  type TranscribeResponse,
+} from "@/lib/api";
 
 export const TRANSCRIBE_QUERY_KEYS = {
   transcribe: (videoId: string) => ["transcribe", videoId] as const,
@@ -18,14 +22,14 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
 
       // Request transcription
       const response = await requestTranscription(videoId);
-      
+
       if (response.status === "completed" && response.synced) {
         options?.onStatusChange?.("completed");
         return response.synced;
       }
 
       if (response.status === "failed") {
-        throw new Error(response.message || (response as any).error || "Transcription failed");
+        throw new Error(response.message || "Transcription failed");
       }
 
       // Poll for completion using EventSource
@@ -35,8 +39,10 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
 
         eventSource.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data) as TranscribeResponse & { error?: string };
-            
+            const data = JSON.parse(event.data) as TranscribeResponse & {
+              error?: string;
+            };
+
             options?.onStatusChange?.(data.status);
 
             if (data.status === "completed" && data.synced) {
@@ -46,7 +52,9 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
             } else if (data.status === "failed") {
               resolved = true;
               eventSource.close();
-              reject(new Error(data.message || data.error || "Transcription failed"));
+              reject(
+                new Error(data.message || data.error || "Transcription failed"),
+              );
             }
           } catch {
             // Ignore parse errors

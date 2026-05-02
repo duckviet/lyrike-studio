@@ -185,7 +185,7 @@ function solvePoW(
 
     nonce += stride;
     if (nonce >= nextReport) {
-      (self as any).postMessage({ type: "progress", attempts: nonce });
+      self.postMessage({ type: "progress", attempts: nonce });
       nextReport += BATCH_SIZE;
     }
   }
@@ -195,9 +195,9 @@ self.onmessage = (e: MessageEvent<WorkerStartMessage>) => {
   const { prefix, targetHex, startNonce = 0, stride = 1 } = e.data;
   try {
     const nonce = solvePoW(prefix, targetHex, startNonce, stride);
-    (self as any).postMessage({ type: "done", nonce });
+    self.postMessage({ type: "done", nonce });
   } catch (err) {
-    (self as any).postMessage({
+    self.postMessage({
       type: "error",
       message: err instanceof Error ? err.message : "Unknown error",
     });

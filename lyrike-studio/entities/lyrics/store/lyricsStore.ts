@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
-import { temporal } from "zundo";
+import { HistoryManager } from "@/shared/utils/HistoryManager";
 import type { LyricsTabId } from "../config/enums";
-import type { LyricsMeta, LyricsDoc } from "../types";
+import type { LyricsMeta, LyricsDoc } from "../model/types";
 import * as utils from "../model/lyricsUtils";
 import * as actions from "../model/lyricsActions";
 import type { ParsedLineEdit } from "@/features/lyrics-edit/model/useSyncedTextEdit";
@@ -16,6 +16,8 @@ export type LyricsStoreState = LyricsHistoryState & {
   tab: LyricsTabId;
   activeLineId: string | null;
   isAutoSyncEnabled: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
 };
 
 export type LyricsStoreActions = {
@@ -26,7 +28,12 @@ export type LyricsStoreActions = {
   loadDraft: (doc: LyricsDoc, selectedLineId: string | null) => void;
   selectByOffset: (offset: number) => void;
   setLineRangeLive: (lineId: string, start: number, end: number) => void;
-  setLineRange: (lineId: string, start: number, end: number) => void;
+  setLineRange: (
+    lineId: string,
+    start: number,
+    end: number,
+    baseState?: LyricsHistoryState | null,
+  ) => void;
   tapSync: (currentTime: number) => void;
   toggleAutoSyncMode: () => void;
   editText: (lineId: string, text: string) => void;
@@ -40,6 +47,7 @@ export type LyricsStoreActions = {
   ) => void;
   deleteLine: (lineId: string) => void;
   reorder: (lineId: string, direction: "up" | "down") => void;
+  splitAtTime: (time: number) => void;
   splitLine: (lineId: string) => void;
   mergeWithPrevious: (lineId: string) => void;
   nudgeLine: (lineId: string, edge: "start" | "end", delta: number) => void;
@@ -62,117 +70,205 @@ export type LyricsStore = LyricsStoreState & LyricsStoreActions;
 const initialDoc = utils.buildInitialDoc();
 
 export const useLyricsStore = create<LyricsStore>()(
-  subscribeWithSelector(
-    temporal(
-      (set, get) => ({
-        doc: initialDoc,
-        selectedLineId: initialDoc.syncedLines[0]?.id ?? null,
-        tab: "synced",
-        activeLineId: null,
-        isAutoSyncEnabled: false,
+  subscribeWithSelector((set, get) => {
+    const historyManager = new HistoryManager<LyricsHistoryState>();
+    const lastEditTimes = new Map<string, number>();
 
-        setTab: (tab) => set({ tab }),
+    const commit = (
+      label: string,
+      updater: (state: LyricsHistoryState) => LyricsHistoryState,
+      debounceKey?: string,
+      baseState?: LyricsHistoryState | null,
+    ) => {
+      const { doc, selectedLineId } = get();
+      const current: LyricsHistoryState = baseState || { doc, selectedLineId };
 
-        setActiveLine: (lineId) => {
-          const { activeLineId } = get();
-          if (activeLineId === lineId) return;
-          set({ activeLineId: lineId });
-        },
+      const now = Date.now();
+      const lastEditTime = debounceKey
+        ? (lastEditTimes.get(debounceKey) ?? 0)
+        : 0;
+      const replaceLast = debounceKey ? now - lastEditTime < 1500 : false;
+      if (debounceKey) lastEditTimes.set(debounceKey, now);
 
-        selectLine: (lineId) => {
-          const { doc } = get();
-          const exists = doc.syncedLines.some((line) => line.id === lineId);
-          if (!exists) return;
-          set({ selectedLineId: lineId });
-        },
+      const next = historyManager.execute(
+        { label, apply: updater },
+        current,
+        replaceLast,
+      );
+      set({
+        ...next,
+        canUndo: historyManager.canUndo(),
+        canRedo: historyManager.canRedo(),
+      });
+    };
 
-        clearSelection: () => set({ selectedLineId: null }),
+    const actionSet = (label: string) => (patch: Partial<LyricsStoreState>) => {
+      const trackedPatch: Partial<LyricsHistoryState> = {};
+      const otherPatch: Partial<LyricsStoreState> = {};
+      let hasTracked = false;
 
-        loadDraft: (doc, selectedLineId) => {
-          const selected = utils.ensureSelectedLine(
-            doc.syncedLines,
-            selectedLineId,
-          );
-          set({
-            doc,
-            selectedLineId: selected,
-            activeLineId: selected,
-          });
-        },
+      Object.keys(patch).forEach((key) => {
+        const k = key as keyof LyricsStoreState;
+        if (k === "doc") {
+          trackedPatch.doc = patch.doc;
+          hasTracked = true;
+        } else if (k === "selectedLineId") {
+          trackedPatch.selectedLineId = patch.selectedLineId;
+          hasTracked = true;
+        } else {
+          // @ts-expect-error - dynamic assignment
+          otherPatch[k] = patch[k];
+        }
+      });
 
-        selectByOffset: (offset) => {
-          const { doc, selectedLineId } = get();
-          const lines = doc.syncedLines;
-          if (lines.length === 0) return;
-          const currentIndex = lines.findIndex(
-            (line) => line.id === selectedLineId,
-          );
-          const safeCurrent = currentIndex >= 0 ? currentIndex : 0;
-          const nextIndex = utils.clampNumber(
-            safeCurrent + offset,
-            0,
-            lines.length - 1,
-          );
-          set({ selectedLineId: lines[nextIndex].id });
-        },
+      if (hasTracked) {
+        commit(label, (state) => ({ ...state, ...trackedPatch }));
+        if (Object.keys(otherPatch).length > 0) {
+          set(otherPatch);
+        }
+      } else {
+        set(patch);
+      }
+    };
 
-        setLineRangeLive: (lineId, start, end) => {
-          const { doc } = get();
-          const nextLines = utils.updateLyricTiming(doc.syncedLines, lineId, {
+    return {
+      doc: initialDoc,
+      selectedLineId: initialDoc.syncedLines[0]?.id ?? null,
+      tab: "synced",
+      activeLineId: null,
+      isAutoSyncEnabled: false,
+      canUndo: false,
+      canRedo: false,
+
+      setTab: (tab) => set({ tab }),
+
+      setActiveLine: (lineId) => {
+        const { activeLineId } = get();
+        if (activeLineId === lineId) return;
+        set({ activeLineId: lineId });
+      },
+
+      selectLine: (lineId) => {
+        const { doc } = get();
+        const exists = doc.syncedLines.some((line) => line.id === lineId);
+        if (!exists) return;
+        set({ selectedLineId: lineId });
+      },
+
+      clearSelection: () => set({ selectedLineId: null }),
+
+      loadDraft: (doc, selectedLineId) => {
+        const selected = utils.ensureSelectedLine(
+          doc.syncedLines,
+          selectedLineId,
+        );
+        set({
+          doc,
+          selectedLineId: selected,
+          activeLineId: selected,
+        });
+      },
+
+      selectByOffset: (offset) => {
+        const { doc, selectedLineId } = get();
+        const lines = doc.syncedLines;
+        if (lines.length === 0) return;
+        const currentIndex = lines.findIndex(
+          (line) => line.id === selectedLineId,
+        );
+        const safeCurrent = currentIndex >= 0 ? currentIndex : 0;
+        const nextIndex = utils.clampNumber(
+          safeCurrent + offset,
+          0,
+          lines.length - 1,
+        );
+        set({ selectedLineId: lines[nextIndex].id });
+      },
+
+      setLineRangeLive: (lineId, start, end) => {
+        const { doc } = get();
+        const nextLines = utils.updateLyricTimingWithPush(
+          doc.syncedLines,
+          lineId,
+          {
             start,
             end,
-          });
-          set({ doc: utils.applyDocLive(doc, nextLines) });
-        },
+          },
+        );
+        set({ doc: utils.applyDocLive(doc, nextLines) });
+      },
 
-        setLineRange: (lineId, start, end) => {
-          const { doc, selectedLineId } = get();
-          const nextLines = utils.updateLyricTiming(doc.syncedLines, lineId, {
-            start,
-            end,
-          });
-          const newDoc = utils.applyDocWithSyncedLines(doc, nextLines);
-          const newSelected = utils.ensureSelectedLine(
-            newDoc.syncedLines,
-            selectedLineId,
-          );
-          set({ doc: newDoc, selectedLineId: newSelected });
-        },
+      setLineRange: (lineId, start, end, baseState) => {
+        commit(
+          "Resize region",
+          (state) => {
+            const nextLines = utils.updateLyricTimingWithPush(
+              state.doc.syncedLines,
+              lineId,
+              { start, end },
+            );
+            const newDoc = utils.applyDocWithSyncedLines(state.doc, nextLines);
+            const newSelected = utils.ensureSelectedLine(
+              newDoc.syncedLines,
+              state.selectedLineId,
+            );
+            return { doc: newDoc, selectedLineId: newSelected };
+          },
+          undefined,
+          baseState,
+        );
+      },
 
-        toggleAutoSyncMode: () => {
-          const { isAutoSyncEnabled } = get();
-          set({ isAutoSyncEnabled: !isAutoSyncEnabled });
-        },
+      toggleAutoSyncMode: () => {
+        const { isAutoSyncEnabled } = get();
+        set({ isAutoSyncEnabled: !isAutoSyncEnabled });
+      },
 
-        editText: (lineId, text) => {
-          const { doc } = get();
-          const nextLines = doc.syncedLines.map((line) =>
-            line.id === lineId ? { ...line, text } : line,
-          );
-          set({ doc: utils.applyDocWithSyncedLines(doc, nextLines) });
-        },
+      editText: (lineId, text) => {
+        commit(
+          "Edit text",
+          (state) => {
+            const nextLines = state.doc.syncedLines.map((line) =>
+              line.id === lineId ? { ...line, text } : line,
+            );
+            return {
+              ...state,
+              doc: utils.applyDocWithSyncedLines(state.doc, nextLines),
+            };
+          },
+          "edit-text",
+        );
+      },
 
-        setPlainLyrics: (text) => {
-          const { doc } = get();
-          set({ doc: { ...doc, plainLyrics: text } });
-        },
+      setPlainLyrics: (text) => {
+        commit(
+          "Edit plain lyrics",
+          (state) => ({
+            ...state,
+            doc: { ...state.doc, plainLyrics: text },
+          }),
+          "edit-plain",
+        );
+      },
 
-        setMeta: (update) => {
-          const { doc } = get();
-          set({ doc: { ...doc, meta: { ...doc.meta, ...update } } });
-        },
+      setMeta: (update) => {
+        commit("Update meta", (state) => ({
+          ...state,
+          doc: { ...state.doc, meta: { ...state.doc.meta, ...update } },
+        }));
+      },
 
-        importFromLrc: (rawLrc) => {
-          const { doc, selectedLineId } = get();
+      importFromLrc: (rawLrc) => {
+        commit("Import LRC", (state) => {
           const parsed = utils.parseLrc(rawLrc);
           const model = utils.lrcToLyricsModel(parsed);
 
-          const syncedLines = model.lines.map((l: any) => ({
+          const syncedLines = model.lines.map((l) => ({
             ...l,
             id: utils.createLineId(),
           }));
 
-          const mergedMeta = { ...doc.meta };
+          const mergedMeta = { ...state.doc.meta };
           if (model.meta.title) mergedMeta.title = model.meta.title;
           if (model.meta.artist) mergedMeta.artist = model.meta.artist;
           if (model.meta.album) mergedMeta.album = model.meta.album;
@@ -187,86 +283,109 @@ export const useLyricsStore = create<LyricsStore>()(
 
           const newSelected = utils.ensureSelectedLine(
             nextDoc.syncedLines,
-            selectedLineId,
+            state.selectedLineId,
           );
 
-          set({
+          return {
             doc: nextDoc,
             selectedLineId: newSelected,
-            activeLineId: newSelected,
-          });
-        },
-
-        exportToLrc: () => {
-          const { doc } = get();
-          const parsed = utils.lyricsModelToLrc({
-            meta: doc.meta,
-            lines: doc.syncedLines,
-            plainLyrics: doc.plainLyrics,
-          });
-          return utils.serializeLrc(parsed);
-        },
-
-        applyTextEdits: (edits) => {
-          const { doc, selectedLineId } = get();
-          const currentLines = doc.syncedLines;
-
-          const nextLines = edits.map((edit, index) => {
-            if (edit.id) {
-              const existing = currentLines.find((l) => l.id === edit.id);
-              if (existing) {
-                return {
-                  ...existing,
-                  start: edit.start,
-                  end: edit.end,
-                  text: edit.text,
-                };
-              }
-            }
-
-            return {
-              id: utils.createLineId(),
-              start: edit.start,
-              end: edit.end,
-              text: edit.text,
-            };
-          });
-
-          const newDoc = utils.applyDocWithSyncedLines(doc, nextLines);
-          const newSelected = utils.ensureSelectedLine(
-            newDoc.syncedLines,
-            selectedLineId,
-          );
-          set({ doc: newDoc, selectedLineId: newSelected });
-        },
-
-        undo: () => {
-          /* TODO: temporal store integration */
-        },
-
-        redo: () => {
-          /* TODO: temporal store integration */
-        },
-
-        // Complex actions delegated to actions builder
-        tapSync: actions.buildTapSyncAction(set, get),
-        insertAfter: actions.buildInsertAfterAction(set, get),
-        insertAtRange: actions.buildInsertAtRangeAction(set, get),
-        deleteGap: actions.buildDeleteGapAction(set, get),
-        deleteLine: actions.buildDeleteLineAction(set, get),
-        reorder: actions.buildReorderAction(set, get),
-        splitLine: actions.buildSplitLineAction(set, get),
-        mergeWithPrevious: actions.buildMergeAction(set, get),
-        nudgeLine: actions.buildNudgeLineAction(set, get),
-        hydrateFromMedia: actions.buildHydrateFromMediaAction(set),
-      }),
-      {
-        limit: 50,
-        partialize: (state) => ({
-          doc: state.doc,
-          selectedLineId: state.selectedLineId,
-        }),
+          };
+        });
       },
-    ),
-  ),
+
+      exportToLrc: () => {
+        const { doc } = get();
+        const parsed = utils.lyricsModelToLrc({
+          meta: doc.meta,
+          lines: doc.syncedLines,
+          plainLyrics: doc.plainLyrics,
+        });
+        return utils.serializeLrc(parsed);
+      },
+
+      applyTextEdits: (edits) => {
+        commit(
+          "Apply text edits",
+          (state) => {
+            const currentLines = state.doc.syncedLines;
+
+            const nextLines = edits.map((edit) => {
+              if (edit.id) {
+                const existing = currentLines.find((l) => l.id === edit.id);
+                if (existing) {
+                  return {
+                    ...existing,
+                    start: edit.start,
+                    end: edit.end,
+                    text: edit.text,
+                  };
+                }
+              }
+
+              return {
+                id: utils.createLineId(),
+                start: edit.start,
+                end: edit.end,
+                text: edit.text,
+              };
+            });
+
+            const newDoc = utils.applyDocWithSyncedLines(state.doc, nextLines);
+            const newSelected = utils.ensureSelectedLine(
+              newDoc.syncedLines,
+              state.selectedLineId,
+            );
+            return { doc: newDoc, selectedLineId: newSelected };
+          },
+          "apply-text-edits",
+        );
+      },
+
+      undo: () => {
+        const { doc, selectedLineId } = get();
+        const current = { doc, selectedLineId };
+        const next = historyManager.undo(current);
+        set({
+          ...next,
+          canUndo: historyManager.canUndo(),
+          canRedo: historyManager.canRedo(),
+        });
+      },
+
+      redo: () => {
+        const { doc, selectedLineId } = get();
+        const current = { doc, selectedLineId };
+        const next = historyManager.redo(current);
+        set({
+          ...next,
+          canUndo: historyManager.canUndo(),
+          canRedo: historyManager.canRedo(),
+        });
+      },
+
+      // Complex actions delegated to actions builder
+      tapSync: actions.buildTapSyncAction(actionSet("Tap sync"), get),
+      insertAfter: actions.buildInsertAfterAction(
+        actionSet("Insert line"),
+        get,
+      ),
+      insertAtRange: actions.buildInsertAtRangeAction(
+        actionSet("Insert gap"),
+        get,
+      ),
+      deleteGap: actions.buildDeleteGapAction(actionSet("Delete gap"), get),
+      deleteLine: actions.buildDeleteLineAction(actionSet("Delete line"), get),
+      reorder: actions.buildReorderAction(actionSet("Reorder line"), get),
+      splitAtTime: actions.buildSplitAtTimeAction(actionSet("Split line"), get),
+      splitLine: actions.buildSplitLineAction(actionSet("Split line"), get),
+      mergeWithPrevious: actions.buildMergeAction(
+        actionSet("Merge lines"),
+        get,
+      ),
+      nudgeLine: actions.buildNudgeLineAction(actionSet("Nudge line"), get),
+      hydrateFromMedia: actions.buildHydrateFromMediaAction(
+        actionSet("Hydrate media"),
+      ),
+    };
+  }),
 );

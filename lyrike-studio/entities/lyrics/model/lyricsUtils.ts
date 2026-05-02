@@ -1,6 +1,5 @@
-import { TIMING } from "@/shared/config/constants";
 import { buildSeedLyrics } from "./lyricsTimeline";
-import type { LyricLine, LyricsMeta, LyricsDoc } from "../types";
+import type { LyricLine, LyricsMeta, LyricsDoc } from "./types";
 
 export function createMeta(seed?: Partial<LyricsMeta>): LyricsMeta {
   return {
@@ -58,7 +57,10 @@ export function applyDocRaw(doc: LyricsDoc, nextLines: LyricLine[]): LyricsDoc {
   };
 }
 
-export function applyDocLive(doc: LyricsDoc, nextLines: LyricLine[]): LyricsDoc {
+export function applyDocLive(
+  doc: LyricsDoc,
+  nextLines: LyricLine[],
+): LyricsDoc {
   return {
     ...doc,
     syncedLines: nextLines,
@@ -73,6 +75,42 @@ export function updateLyricTiming(
   return lines.map((line) =>
     line.id === lineId ? { ...line, ...patch } : line,
   );
+}
+
+/**
+ * Cập nhật timing của một line, và cascade-push tất cả các line phía sau
+ * nếu chúng bị overlap bởi line vừa được resize.
+ */
+export function updateLyricTimingWithPush(
+  lines: LyricLine[],
+  lineId: string,
+  patch: Partial<Pick<LyricLine, "start" | "end">>,
+): LyricLine[] {
+  const sorted = sortByStart(lines);
+  const idx = sorted.findIndex((l) => l.id === lineId);
+  if (idx < 0) return lines;
+
+  const result = [...sorted];
+  result[idx] = { ...result[idx], ...patch };
+
+  // Cascade push: nếu end của line hiện tại đè lên line tiếp theo,
+  // đẩy tất cả line phía sau một khoảng bằng phần overlap.
+  let pushFront = result[idx].end;
+
+  for (let i = idx + 1; i < result.length; i++) {
+    const line = result[i];
+    if (line.start >= pushFront) break; // không overlap → dừng
+
+    const delta = pushFront - line.start;
+    result[i] = {
+      ...line,
+      start: Number((line.start + delta).toFixed(2)),
+      end: Number((line.end + delta).toFixed(2)),
+    };
+    pushFront = result[i].end; // cập nhật để check line kế tiếp
+  }
+
+  return result;
 }
 
 export function buildInitialDoc(): LyricsDoc {

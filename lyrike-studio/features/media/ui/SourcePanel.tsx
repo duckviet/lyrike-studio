@@ -1,40 +1,146 @@
 "use client";
 
-import type { FetchMediaResponse } from "@/lib/api";
-import type { PublishFlowState } from "@/features/publish";
 import { PublishCard } from "@/features/publish";
 
-type TabId = "source" | "timeline" | "lyrics";
+import { useEditorUIStore } from "@/features/editor/store/editorUIStore";
+import { useEditorMediaStore } from "@/features/editor/store/editorMediaStore";
+import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
+import {
+  useLoadMedia,
+  useTranscribeMutation,
+  usePublishMutation,
+} from "@/features/media/queries";
+import { useCallback } from "react";
+import { formatTime } from "@/shared/utils/formatters";
 
-interface SourcePanelProps {
-  activeTab: TabId;
-  sourceInput: string;
-  setSourceInput: (value: string) => void;
-  fetchState: "idle" | "loading" | "ready" | "error";
-  sourceMessage: string;
-  mediaInfo: FetchMediaResponse | null;
-  publishState: PublishFlowState | null;
-  transcribeState: string;
-  formatTime: (seconds: number) => string;
-  onFetch: () => void;
-  onPublish: () => void;
-  onTranscribe: () => void;
-}
+export function SourcePanel() {
+  const activeTab = useEditorUIStore((s) => s.activeTab);
 
-export function SourcePanel({
-  activeTab,
-  sourceInput,
-  setSourceInput,
-  fetchState,
-  sourceMessage,
-  mediaInfo,
-  publishState,
-  transcribeState,
-  formatTime,
-  onFetch,
-  onPublish,
-  onTranscribe,
-}: SourcePanelProps) {
+  const sourceInput = useEditorMediaStore((s) => s.sourceInput);
+  const setSourceInput = useEditorMediaStore((s) => s.setSourceInput);
+  const sourceMessage = useEditorMediaStore((s) => s.sourceMessage);
+  const setSourceMessage = useEditorMediaStore((s) => s.setSourceMessage);
+  const mediaInfo = useEditorMediaStore((s) => s.mediaInfo);
+  const setMediaInfo = useEditorMediaStore((s) => s.setMediaInfo);
+  const setPeaksInfo = useEditorMediaStore((s) => s.setPeaksInfo);
+  const fetchState = useEditorMediaStore((s) => s.fetchState);
+  const setFetchState = useEditorMediaStore((s) => s.setFetchState);
+  const transcribeState = useEditorMediaStore((s) => s.transcribeState);
+  const setTranscribeState = useEditorMediaStore((s) => s.setTranscribeState);
+  const setPeaksState = useEditorMediaStore((s) => s.setPeaksState);
+  const setPeaksMessage = useEditorMediaStore((s) => s.setPeaksMessage);
+
+  const hydrateFromMedia = useLyricsStore((s) => s.hydrateFromMedia);
+  const importFromLrc = useLyricsStore((s) => s.importFromLrc);
+  const exportToLrc = useLyricsStore((s) => s.exportToLrc);
+  const doc = useLyricsStore((s) => s.doc);
+  const selectedLineId = useLyricsStore((s) => s.selectedLineId);
+  const activeLineId = useLyricsStore((s) => s.activeLineId);
+  const tab = useLyricsStore((s) => s.tab);
+  const isAutoSyncEnabled = useLyricsStore((s) => s.isAutoSyncEnabled);
+
+  const lyricsState = {
+    doc,
+    selectedLineId,
+    activeLineId,
+    tab,
+    isAutoSyncEnabled,
+    canUndo: false,
+    canRedo: false,
+  };
+
+  const loadMediaMutation = useLoadMedia({
+    onSuccess: (info) => {
+      hydrateFromMedia({
+        duration: info.duration,
+        title: info.trackName,
+        artist: info.artistName,
+      });
+    },
+    onError: (error) => {
+      setSourceMessage(error.message);
+    },
+  });
+
+  const transcribeMutation = useTranscribeMutation({
+    onSuccess: (lrc) => {
+      importFromLrc(lrc);
+      setSourceMessage("Transcription completed.");
+    },
+    onError: (error) => {
+      setSourceMessage(`Transcription failed: ${error.message}`);
+    },
+    onStatusChange: (status) => {
+      if (status === "starting" || status === "running") {
+        setSourceMessage(`Transcribing... ${status}`);
+      }
+    },
+  });
+
+  const publishMutation = usePublishMutation({
+    onSuccess: () => {
+      setSourceMessage("Lyrics published successfully!");
+    },
+    onError: (error) => {
+      setSourceMessage(`Publish failed: ${error.message}`);
+    },
+  });
+
+  const onFetch = useCallback(async () => {
+    if (!sourceInput.trim()) {
+      setSourceMessage("Please enter a valid source URL.");
+      setFetchState("error");
+      return;
+    }
+    setSourceMessage("Fetching metadata and caching audio...");
+    setFetchState("loading");
+    try {
+      const data = await loadMediaMutation.mutateAsync(sourceInput);
+      setMediaInfo(data.mediaInfo);
+      setPeaksInfo(data.peaksInfo);
+      setPeaksState(data.peaksState);
+      setPeaksMessage(data.peaksMessage);
+      setFetchState("ready");
+    } catch (e) {
+      setFetchState("error");
+    }
+  }, [
+    sourceInput,
+    loadMediaMutation,
+    setSourceMessage,
+    setFetchState,
+    setMediaInfo,
+    setPeaksInfo,
+    setPeaksState,
+    setPeaksMessage,
+  ]);
+
+  const onTranscribe = useCallback(async () => {
+    if (!mediaInfo) {
+      setSourceMessage("Load media before transcribing.");
+      return;
+    }
+    setTranscribeState("loading");
+    try {
+      await transcribeMutation.transcribeAsync(mediaInfo.videoId);
+      setTranscribeState("ready");
+    } catch (e) {
+      setTranscribeState("error");
+    }
+  }, [mediaInfo, transcribeMutation, setSourceMessage, setTranscribeState]);
+
+  const onPublish = useCallback(async () => {
+    if (!mediaInfo) {
+      setSourceMessage("Load media before publishing.");
+      return;
+    }
+    await publishMutation.publishAsync({
+      lyricsState,
+      mediaInfo,
+      exportToLrc,
+    });
+  }, [lyricsState, mediaInfo, publishMutation, exportToLrc, setSourceMessage]);
+
   return (
     <article
       className={`min-h-0 h-full flex flex-col overflow-x-hidden overflow-y-auto bg-transparent ${activeTab !== "source" ? "hidden md:flex" : ""}`}
@@ -159,7 +265,10 @@ export function SourcePanel({
           </section>
 
           {mediaInfo && (
-            <PublishCard publishState={publishState} onPublish={onPublish} />
+            <PublishCard
+              publishState={publishMutation.state}
+              onPublish={onPublish}
+            />
           )}
         </>
       )}

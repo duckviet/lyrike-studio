@@ -7,6 +7,8 @@ interface RegionBoxProps {
   isActive: boolean;
   isSelected: boolean;
   pxPerSec: number;
+  isDragging?: boolean; // thêm prop
+
   onBeginDrag: (
     event: React.PointerEvent,
     line: LyricLine,
@@ -20,6 +22,7 @@ export const RegionBox = memo(function RegionBox({
   isActive,
   isSelected,
   pxPerSec,
+  isDragging,
   onBeginDrag,
   onSelect,
 }: RegionBoxProps) {
@@ -30,7 +33,8 @@ export const RegionBox = memo(function RegionBox({
     <div
       className={cn(
         "absolute top-1.5 bottom-1.5 flex items-stretch",
-        "border rounded-md overflow-hidden transition-all duration-150",
+        "border rounded-md overflow-hidden",
+        !isDragging && "transition-all duration-150", // ← chỉ transition khi không drag
         isActive
           ? "bg-primary-20 border-primary shadow-active"
           : isSelected
@@ -52,10 +56,11 @@ export const RegionBox = memo(function RegionBox({
         type="button"
         className="flex-1 min-w-0 p-2 border-0 bg-transparent text-left cursor-grab text-xs font-medium text-white/80 overflow-hidden active:cursor-grabbing transition-colors hover:text-white"
         onPointerDown={(e) => onBeginDrag(e, line, "move")}
+        onDragStart={(e) => e.preventDefault()} // ← thêm
         onClick={() => onSelect(line.id)}
         title={line.text}
       >
-        <span className="block whitespace-nowrap overflow-hidden text-ellipsis">
+        <span className="block whitespace-nowrap overflow-hidden text-ellipsis select-none">
           {line.text}
         </span>
       </button>

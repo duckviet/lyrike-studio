@@ -42,10 +42,10 @@ export default function PanelToolbar({
       />
 
       <div className="flex gap-1.5">
-        <IconButton label={t("importLrc")} onClick={onImportClick}>
+        <IconButton label={t("toolbar.importLrc")} onClick={onImportClick}>
           <FileUpIcon size={16} />
         </IconButton>
-        <IconButton label={t("exportLrc")} onClick={onExportClick}>
+        <IconButton label={t("toolbar.exportLrc")} onClick={onExportClick}>
           <FileDownIcon size={16} />
         </IconButton>
         {/* Hidden file input — triggered by Import button above */}
