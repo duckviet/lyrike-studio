@@ -2,6 +2,7 @@ import asyncio
 import threading
 import json
 import logging
+import httpx
 from pathlib import Path
 from typing import Optional
 
@@ -247,6 +248,45 @@ def get_audio_peaks(video_id: str, samples: int = 800, force: bool = False):
     }
     save_json(cache_file, payload)
     return {**payload, "cacheHit": False}
+
+LRCLIB_API_BASE = "https://lrclib.net"
+
+@app.post("/api/request-challenge")
+async def request_challenge():
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(f"{LRCLIB_API_BASE}/api/request-challenge")
+            return StreamingResponse(
+                resp.aiter_bytes(),
+                status_code=resp.status_code,
+                media_type=resp.headers.get("Content-Type")
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/publish")
+async def publish(request: Request):
+    payload = await request.json()
+    token = request.headers.get("X-Publish-Token")
+    async with httpx.AsyncClient() as client:
+        try:
+            headers = {"Content-Type": "application/json"}
+            if token:
+                headers["X-Publish-Token"] = token
+            
+            resp = await client.post(
+                f"{LRCLIB_API_BASE}/api/publish",
+                json=payload,
+                headers=headers,
+                timeout=30.0
+            )
+            return StreamingResponse(
+                resp.aiter_bytes(),
+                status_code=resp.status_code,
+                media_type=resp.headers.get("Content-Type")
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
 def serve_index():

@@ -1,11 +1,13 @@
-import type { PublishLyricsPayload } from "../api";
-import type { FetchMediaResponse } from "../api";
 import type { LyricsState } from "@/entities/lyrics";
+import { FetchMediaResponse, PublishLyricsPayload } from "@/lib/api";
 
 const SYNCED_TIMESTAMP_REGEX = /\[\d{2}:\d{2}(?:\.\d{2,3})?\]/;
 
 function getFallbackDuration(lyricsState: LyricsState): number {
-  const maxEnd = lyricsState.doc.syncedLines.reduce((acc, line) => Math.max(acc, line.end), 0);
+  const maxEnd = lyricsState.doc.syncedLines.reduce(
+    (acc, line) => Math.max(acc, line.end),
+    0,
+  );
   return Math.max(0, Math.round(maxEnd));
 }
 
@@ -38,8 +40,13 @@ function assertValidPayload(payload: PublishLyricsPayload): void {
   if (!payload.plainLyrics && !payload.syncedLyrics) {
     throw new Error("You must provide either Plain Lyrics or Synced Lyrics.");
   }
-  if (payload.syncedLyrics && !SYNCED_TIMESTAMP_REGEX.test(payload.syncedLyrics)) {
-    throw new Error("Synced Lyrics must contain at least one timestamp like [00:12.34].");
+  if (
+    payload.syncedLyrics &&
+    !SYNCED_TIMESTAMP_REGEX.test(payload.syncedLyrics)
+  ) {
+    throw new Error(
+      "Synced Lyrics must contain at least one timestamp like [00:12.34].",
+    );
   }
 }
 
@@ -48,8 +55,16 @@ export function buildPublishPayload(params: {
   mediaInfo: FetchMediaResponse | null;
   exportLrc: () => string;
 }): PublishLyricsPayload {
-  const trackName = (params.lyricsState.doc.meta.title || params.mediaInfo?.trackName || "").trim();
-  const artistName = (params.lyricsState.doc.meta.artist || params.mediaInfo?.artistName || "").trim();
+  const trackName = (
+    params.lyricsState.doc.meta.title ||
+    params.mediaInfo?.trackName ||
+    ""
+  ).trim();
+  const artistName = (
+    params.lyricsState.doc.meta.artist ||
+    params.mediaInfo?.artistName ||
+    ""
+  ).trim();
   const albumName = params.lyricsState.doc.meta.album.trim();
 
   const syncedLyrics = params.exportLrc().trim();

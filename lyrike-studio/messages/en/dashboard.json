@@ -6,6 +6,7 @@
     "loop": "Loop",
     "undo": "Undo",
     "redo": "Redo",
+    "split": "Split",
     "draft": "Draft",
     "loadWaveform": "Load a video to see the waveform"
   },

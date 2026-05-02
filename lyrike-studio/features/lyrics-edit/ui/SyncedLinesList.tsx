@@ -6,7 +6,6 @@ import { SyncedTextEditor } from "@/features/lyrics-edit/ui/SyncedTextEditor";
 import { useSyncedTextEdit } from "../model/useSyncedTextEdit";
 import type { LyricLine } from "@/entities/lyrics";
 import type { ParsedLineEdit } from "../model/useSyncedTextEdit";
-import { LyricsPanelProps } from "./LyricsPanel";
 import { cn } from "@/shared/lib/utils";
 import { useTranslations } from "next-intl";
 
@@ -18,15 +17,15 @@ interface SyncedLinesListProps {
   selectedLineId: string | null;
   listRef: React.RefObject<HTMLUListElement | null>;
   formatTime: (seconds: number) => string;
-  onSeekLine: LyricsPanelProps["onSeekLine"];
-  onSelectLine: LyricsPanelProps["onSelectLine"];
-  onEditLineText: LyricsPanelProps["onEditLineText"];
-  onReorder: LyricsPanelProps["onReorder"];
-  onInsertAfter: LyricsPanelProps["onInsertAfter"];
-  onSplit: LyricsPanelProps["onSplit"];
-  onMerge: LyricsPanelProps["onMerge"];
-  onDelete: LyricsPanelProps["onDelete"];
-  onNudge: LyricsPanelProps["onNudge"];
+  onSeekLine: (line: LyricLine) => void;
+  onSelectLine: (lineId: string | null) => void;
+  onEditLineText: (lineId: string, text: string) => void;
+  onReorder: (lineId: string, direction: "up" | "down") => void;
+  onInsertAfter: (lineId: string) => void;
+  onSplit: (lineId: string) => void;
+  onMerge: (lineId: string) => void;
+  onDelete: (lineId: string) => void;
+  onNudge: (line: LyricLine, edge: "start" | "end", delta: number) => void;
   onApplyTextEdits: (edits: ParsedLineEdit[]) => void;
 }
 

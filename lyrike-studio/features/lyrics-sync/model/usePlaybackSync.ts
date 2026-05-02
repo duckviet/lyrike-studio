@@ -11,7 +11,9 @@ export function usePlaybackSync({ syncedLines, setActiveLine }: UsePlaybackSyncP
   const [currentTime, setCurrentTime] = useState(0);
 
   const syncedLinesRef = useRef(syncedLines);
-  syncedLinesRef.current = syncedLines;
+  useEffect(() => {
+    syncedLinesRef.current = syncedLines;
+  }, [syncedLines]);
 
   useEffect(() => {
     const handleVideoTimeUpdate = (e: Event) => {

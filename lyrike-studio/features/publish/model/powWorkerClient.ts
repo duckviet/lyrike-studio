@@ -31,12 +31,9 @@ type WorkerOutboundMessage =
   | WorkerErrorMessage;
 
 export function solvePowInWorker(input: SolvePowInput): Promise<string> {
-  const worker = new Worker(
-    new URL("../workers/powWorker.ts", import.meta.url),
-    {
-      type: "module",
-    },
-  );
+  const worker = new Worker(new URL("./powWorker.ts", import.meta.url), {
+    type: "module",
+  });
 
   return new Promise((resolve, reject) => {
     worker.onmessage = (event: MessageEvent<WorkerOutboundMessage>) => {

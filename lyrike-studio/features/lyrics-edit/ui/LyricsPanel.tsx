@@ -1,64 +1,74 @@
 "use client";
 
-import { memo } from "react";
 import { cn } from "@/shared/lib/utils";
 
 import { MetaForm } from "@/features/lyrics-edit/ui/MetaForm";
-import type { LyricsState, LyricsMeta } from "@/entities/lyrics";
+import type { LyricsState } from "@/entities/lyrics";
 import type { LyricLine } from "@/entities/lyrics";
-import type { ParsedLineEdit } from "../model/useSyncedTextEdit";
 import { useLyricsPanelScroll } from "../model/useLyricsPanelScroll";
 import { useLrcFileImport } from "../model/useLrcFileImport";
 import { PlainLyricsEditor } from "./PlainLyricsEditor";
 import PanelToolbar from "./PanelToolBar";
 import SyncedLinesList from "./SyncedLinesList";
+import { useEditorUIStore } from "@/features/editor/store/editorUIStore";
+import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
+import { formatTime } from "@/shared/utils/formatters";
 
-type LyricsTabId = LyricsState["tab"];
-
-export interface LyricsPanelProps {
-  activeTab: "source" | "timeline" | "lyrics";
-  lyricsState: LyricsState;
-  formatTime: (seconds: number) => string;
-  onSetTab: (tab: LyricsTabId) => void;
-  onSeekLine: (line: LyricLine) => void;
-  onEditLineText: (lineId: string, text: string) => void;
-  onSelectLine: (lineId: string | null) => void;
-  onReorder: (lineId: string, direction: "up" | "down") => void;
-  onInsertAfter: (lineId: string) => void;
-  onSplit: (lineId: string) => void;
-  onMerge: (lineId: string) => void;
-  onDelete: (lineId: string) => void;
-  onNudge: (line: LyricLine, edge: "start" | "end", delta: number) => void;
-  onSetPlainLyrics: (value: string) => void;
-  onUpdateMetaField: (update: Partial<LyricsMeta>) => void;
-  onImportLrc: (rawLrc: string) => void;
-  onExportLrc: () => void;
-  onApplyTextEdits: (edits: ParsedLineEdit[]) => void;
-}
-
-export const LyricsPanel = memo(function LyricsPanel({
-  activeTab,
-  lyricsState,
-  formatTime,
-  onSetTab,
+export function LyricsPanel({
   onSeekLine,
-  onEditLineText,
-  onSelectLine,
-  onReorder,
-  onInsertAfter,
-  onSplit,
-  onMerge,
-  onDelete,
   onNudge,
-  onSetPlainLyrics,
-  onUpdateMetaField,
-  onImportLrc,
   onExportLrc,
-  onApplyTextEdits,
-}: LyricsPanelProps) {
+}: {
+  onSeekLine: (line: LyricLine) => void;
+  onNudge: (line: LyricLine, edge: "start" | "end", delta: number) => void;
+  onExportLrc: () => void;
+}) {
+  const activeTab = useEditorUIStore((s) => s.activeTab);
+  const doc = useLyricsStore((s) => s.doc);
+  const selectedLineId = useLyricsStore((s) => s.selectedLineId);
+  const tab = useLyricsStore((s) => s.tab);
+  const activeLineId = useLyricsStore((s) => s.activeLineId);
+  const isAutoSyncEnabled = useLyricsStore((s) => s.isAutoSyncEnabled);
+
+  const setTab = useLyricsStore((s) => s.setTab);
+  const selectLine = useLyricsStore((s) => s.selectLine);
+  const clearSelection = useLyricsStore((s) => s.clearSelection);
+  const editText = useLyricsStore((s) => s.editText);
+  const reorder = useLyricsStore((s) => s.reorder);
+  const insertAfter = useLyricsStore((s) => s.insertAfter);
+  const splitLine = useLyricsStore((s) => s.splitLine);
+  const mergeWithPrevious = useLyricsStore((s) => s.mergeWithPrevious);
+  const deleteLine = useLyricsStore((s) => s.deleteLine);
+  const setPlainLyrics = useLyricsStore((s) => s.setPlainLyrics);
+  const setMeta = useLyricsStore((s) => s.setMeta);
+  const importFromLrc = useLyricsStore((s) => s.importFromLrc);
+  const applyTextEdits = useLyricsStore((s) => s.applyTextEdits);
+
+  const lyricsState: LyricsState = {
+    doc,
+    selectedLineId,
+    tab,
+    activeLineId,
+    isAutoSyncEnabled,
+    canUndo: false,
+    canRedo: false,
+  };
+
   const { listRef } = useLyricsPanelScroll(lyricsState);
   const { fileInputRef, openFilePicker, handleFileChange } =
-    useLrcFileImport(onImportLrc);
+    useLrcFileImport(importFromLrc);
+
+  const formatTimeStr = (seconds: number) => {
+    return formatTime(seconds);
+  };
+
+  const handleSelectLine = (lineId: string | null) => {
+    if (lineId === null) {
+      clearSelection();
+    } else {
+      selectLine(lineId);
+    }
+  };
 
   return (
     <article
@@ -70,7 +80,7 @@ export const LyricsPanel = memo(function LyricsPanel({
     >
       <PanelToolbar
         activeTab={lyricsState.tab}
-        onTabChange={onSetTab}
+        onTabChange={setTab}
         onImportClick={openFilePicker}
         onExportClick={onExportLrc}
         fileInputRef={fileInputRef}
@@ -83,33 +93,30 @@ export const LyricsPanel = memo(function LyricsPanel({
           activeLineId={lyricsState.activeLineId}
           selectedLineId={lyricsState.selectedLineId}
           listRef={listRef}
-          formatTime={formatTime}
+          formatTime={formatTimeStr}
           onSeekLine={onSeekLine}
-          onSelectLine={onSelectLine}
-          onEditLineText={onEditLineText}
-          onReorder={onReorder}
-          onInsertAfter={onInsertAfter}
-          onSplit={onSplit}
-          onMerge={onMerge}
-          onDelete={onDelete}
+          onSelectLine={handleSelectLine}
+          onEditLineText={editText}
+          onReorder={reorder}
+          onInsertAfter={insertAfter}
+          onSplit={splitLine}
+          onMerge={mergeWithPrevious}
+          onDelete={deleteLine}
           onNudge={onNudge}
-          onApplyTextEdits={onApplyTextEdits}
+          onApplyTextEdits={applyTextEdits}
         />
       )}
 
       {lyricsState.tab === "plain" && (
         <PlainLyricsEditor
           value={lyricsState.doc.plainLyrics}
-          onChange={onSetPlainLyrics}
+          onChange={setPlainLyrics}
         />
       )}
 
       {lyricsState.tab === "meta" && (
-        <MetaForm
-          meta={lyricsState.doc.meta}
-          onUpdateMetaField={onUpdateMetaField}
-        />
+        <MetaForm meta={lyricsState.doc.meta} onUpdateMetaField={setMeta} />
       )}
     </article>
   );
-});
+}

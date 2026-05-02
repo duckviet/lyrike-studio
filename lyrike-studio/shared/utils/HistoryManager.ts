@@ -20,15 +20,19 @@ export class HistoryManager<T> {
   private readonly past: HistoryEntry<T>[] = [];
   private readonly future: HistoryEntry<T>[] = [];
 
-  execute(command: HistoryCommand<T>, current: T): T {
+  execute(command: HistoryCommand<T>, current: T, replaceLast = false): T {
     const before = cloneState(current);
     const after = command.apply(cloneState(current));
 
-    this.past.push({
-      label: command.label,
-      before,
-      after: cloneState(after),
-    });
+    if (replaceLast && this.past.length > 0) {
+      this.past[this.past.length - 1].after = cloneState(after);
+    } else {
+      this.past.push({
+        label: command.label,
+        before,
+        after: cloneState(after),
+      });
+    }
     this.future.length = 0;
     return after;
   }

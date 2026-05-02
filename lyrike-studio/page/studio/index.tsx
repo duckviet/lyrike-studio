@@ -1,14 +1,16 @@
 "use client";
 
-import { useRef, useCallback } from "react";
-import { useEditor } from "@/features/editor/hooks/useEditor";
-import { VideoPlayer } from "@/features/playback/ui/VideoPlayer";
-import { SourcePanel } from "@/features/media-source/ui/SourcePanel";
+import { useRef, useEffect, useCallback } from "react";
+import { VideoPlayer } from "@/features/playback";
+import { SourcePanel } from "@/features/media";
 import { LyricsPanel } from "@/features/lyrics-edit/ui/LyricsPanel";
 import { TimelinePanel } from "@/features/playback/ui/TimelinePanel";
 import { UI } from "@/shared/config/constants";
 import type { LyricLine } from "@/entities/lyrics";
-import { useTimelineHandlers } from "@/features/editor";
+import { useEditorUIStore } from "@/features/editor/store/editorUIStore";
+import { useEditorMediaStore } from "@/features/editor/store/editorMediaStore";
+import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
+import { editorMediaController } from "@/features/editor/store/editorControllers";
 
 function downloadLrc(content: string, filename: string) {
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -23,7 +25,10 @@ function downloadLrc(content: string, filename: string) {
 }
 
 export default function StudioPage() {
-  const [state, actions] = useEditor();
+  const isSidebarCollapsed = useEditorUIStore((s) => s.isSidebarCollapsed);
+  const toggleSidebar = () => useEditorUIStore.getState().toggleSidebar();
+  const mediaInfo = useEditorMediaStore((s) => s.mediaInfo);
+
   const videoRef = useRef<{
     play: () => void;
     pause: () => void;
@@ -31,49 +36,42 @@ export default function StudioPage() {
     seekBy: (delta: number) => void;
   } | null>(null);
 
-  const seekBothTo = useCallback(
-    (time: number) => {
-      videoRef.current?.seekTo(time);
-      actions.handleSeekTo(time);
-    },
-    [actions],
-  );
-
-  const seekBothBy = useCallback(
-    (delta: number) => {
-      videoRef.current?.seekBy(delta);
-      actions.handleSeekBy(delta);
-    },
-    [actions],
-  );
-
-  const toggleBothPlayback = useCallback(() => {
-    if (state.isPlaying) {
+  // Sync handlers for both VideoPlayer and MediaController
+  const handleTogglePlayback = useCallback(() => {
+    const isPlaying = !editorMediaController.getMediaElement().paused;
+    if (isPlaying) {
       videoRef.current?.pause();
     } else {
       videoRef.current?.play();
     }
-    actions.handlePlayPause();
-  }, [state.isPlaying, actions]);
+    editorMediaController.toggle();
+  }, []);
 
-  const handleSeekLine = useCallback(
-    (line: LyricLine) => seekBothTo(line.start),
-    [seekBothTo],
-  );
+  const handleSeekTo = useCallback((time: number) => {
+    videoRef.current?.seekTo(time);
+    editorMediaController.seek(time);
+  }, []);
 
-  const handleNudge = useCallback(
-    (line: LyricLine, edge: "start" | "end", delta: number) =>
-      actions.nudgeLine(line.id, edge, delta),
-    [actions],
-  );
+  const handleSeekBy = useCallback((delta: number) => {
+    videoRef.current?.seekBy(delta);
+    editorMediaController.seekBy(delta);
+  }, []);
 
-  const timelineHandlers = useTimelineHandlers(
-    state,
-    actions,
-    seekBothTo,
-    seekBothBy,
-    toggleBothPlayback,
-  );
+  const onSeekLine = (line: LyricLine) => {
+    handleSeekTo(line.start);
+  };
+
+  const onNudge = (line: LyricLine, edge: "start" | "end", delta: number) => {
+    useLyricsStore.getState().nudgeLine(line.id, edge, delta);
+  };
+
+  const onExportLrc = () => {
+    const lrcContent = useLyricsStore.getState().exportToLrc();
+    const doc = useLyricsStore.getState().doc;
+    const title = doc.meta.title || "lyrics";
+    const artist = doc.meta.artist || "unknown";
+    downloadLrc(lrcContent, `${artist} - ${title}.lrc`);
+  };
 
   return (
     <main className="flex flex-col overflow-hidden h-[calc(100vh-60px)] w-full bg-transparent">
@@ -82,7 +80,7 @@ export default function StudioPage() {
           className="min-h-0 flex-1 grid gap-2"
           style={{
             gridTemplateColumns: `${
-              state.isSidebarCollapsed
+              isSidebarCollapsed
                 ? `${UI.SIDEBAR_COLLAPSED_PX}px`
                 : `${UI.SIDEBAR_WIDTH_PX}px`
             } minmax(460px, auto) minmax(0, 1fr)`,
@@ -90,69 +88,33 @@ export default function StudioPage() {
         >
           <div className="min-w-0 h-full flex flex-row-reverse overflow-hidden border border-line rounded-2xl bg-bg-soft shadow-sm transition-all duration-200">
             <aside
-              className={`min-w-0 flex-1 overflow-y-auto opacity-100 transition-opacity duration-150 ${state.isSidebarCollapsed ? "opacity-0 pointer-events-none" : ""}`}
+              className={`min-w-0 flex-1 overflow-y-auto opacity-100 transition-opacity duration-150 ${isSidebarCollapsed ? "opacity-0 pointer-events-none" : ""}`}
             >
-              <SourcePanel
-                activeTab={state.activeTab}
-                sourceInput={actions.sourceInput}
-                setSourceInput={actions.setSourceInput}
-                fetchState={state.fetchState}
-                sourceMessage={state.sourceMessage}
-                mediaInfo={state.mediaInfo}
-                publishState={state.publishState}
-                transcribeState={state.transcribeState}
-                formatTime={actions.formatTime}
-                onFetch={actions.handleFetch}
-                onPublish={actions.handlePublish}
-                onTranscribe={actions.handleTranscribe}
-              />
+              <SourcePanel />
             </aside>
             <button
               className="w-9 shrink-0 border-0 border-r border-line bg-bg-elev text-ink-light-soft text-sm cursor-pointer transition-all duration-150 hover:bg-[#2c313c] hover:text-white"
-              onClick={actions.toggleSidebar}
+              onClick={toggleSidebar}
             >
-              {state.isSidebarCollapsed ? "→" : "←"}
+              {isSidebarCollapsed ? "→" : "←"}
             </button>
           </div>
-          <section className="min-w-[720px] min-h-0 flex items-center justify-center p-4 border border-line rounded-2xl overflow-hidden bg-linear-to-b from-[#050608] to-black shadow-glass">
-            <VideoPlayer
-              ref={videoRef}
-              videoId={state.mediaInfo?.videoId ?? null}
-            />
+          <section className="min-w-[360px] md:min-w-[720px] min-h-0 flex items-center justify-center p-4 border border-line rounded-2xl overflow-hidden bg-linear-to-b from-[#050608] to-black shadow-glass">
+            <VideoPlayer ref={videoRef} videoId={mediaInfo?.videoId ?? null} />
           </section>
           <aside className="min-w-0 min-h-0 h-full overflow-hidden border border-line rounded-2xl bg-bg-soft shadow-sm">
             <LyricsPanel
-              activeTab={state.activeTab}
-              lyricsState={state.lyricsState}
-              formatTime={actions.formatTime}
-              onSetTab={actions.setLyricsTab}
-              onSeekLine={handleSeekLine}
-              onEditLineText={actions.editText}
-              onSelectLine={actions.selectLine}
-              onReorder={actions.reorder}
-              onInsertAfter={actions.insertAfter}
-              onSplit={actions.splitLine}
-              onMerge={actions.mergeWithPrevious}
-              onDelete={actions.deleteLine}
-              onNudge={handleNudge}
-              onSetPlainLyrics={actions.setPlainLyrics}
-              onUpdateMetaField={actions.setMeta}
-              onImportLrc={actions.importFromLrc}
-              onExportLrc={() => {
-                const lrcContent = actions.exportToLrc();
-                const title = state.lyricsState.doc.meta.title || "lyrics";
-                const artist = state.lyricsState.doc.meta.artist || "unknown";
-                downloadLrc(lrcContent, `${artist} - ${title}.lrc`);
-              }}
-              onApplyTextEdits={actions.applyTextEdits}
+              onSeekLine={onSeekLine}
+              onNudge={onNudge}
+              onExportLrc={onExportLrc}
             />
           </aside>
         </div>
         <div className="h-[302px] shrink-0 p-0 pb-2.5">
           <TimelinePanel
-            {...timelineHandlers}
-            currentTime={state.currentTime}
-            isPlaying={state.isPlaying}
+            onTogglePlayback={handleTogglePlayback}
+            onSeekTo={handleSeekTo}
+            onSeekBy={handleSeekBy}
           />
         </div>
       </div>

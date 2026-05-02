@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { requestPublishChallenge, publishLyrics } from "@/lib/api";
-import { buildPublishPayload } from "@/lib/app/publishPayload";
-import { solvePowInWorker } from "@/lib/app/powWorkerClient";
+import { buildPublishPayload } from "@/features/publish/model/publishPayload";
+import { solvePowInWorker } from "@/features/publish/model/powWorkerClient";
 import type { FetchMediaResponse } from "@/lib/api";
 import type { LyricsState } from "@/entities/lyrics";
 import {
@@ -20,8 +20,8 @@ export function usePublishMutation(options?: UsePublishOptions) {
     null,
   );
 
-  const machineRef = useRef<ReturnType<typeof createPublishFlowMachine>>(null!);
-  if (!machineRef.current) {
+  const machineRef = useRef<ReturnType<typeof createPublishFlowMachine>>(null);
+  if (machineRef.current === null) {
     machineRef.current = createPublishFlowMachine((next) =>
       setPublishState(next),
     );
@@ -37,7 +37,7 @@ export function usePublishMutation(options?: UsePublishOptions) {
       mediaInfo: FetchMediaResponse;
       exportToLrc: () => string;
     }) => {
-      await machineRef.current.run({
+      await machineRef.current!.run({
         buildPayload: () =>
           buildPublishPayload({
             lyricsState,
@@ -51,7 +51,7 @@ export function usePublishMutation(options?: UsePublishOptions) {
           publishLyrics({ payload, publishToken }),
       });
 
-      const finalState = machineRef.current.getState();
+      const finalState = machineRef.current!.getState();
       if (finalState.status === "error") {
         throw new Error(finalState.message);
       }
@@ -78,7 +78,7 @@ export function usePublishMutation(options?: UsePublishOptions) {
   );
 
   const reset = useCallback(() => {
-    machineRef.current.reset();
+    machineRef.current!.reset();
     mutation.reset();
   }, [mutation]);
 

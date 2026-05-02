@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import type { LyricsState } from "@/entities/lyrics";
 
 /**
@@ -53,7 +53,7 @@ export function useLyricsPanelScroll(lyricsState: LyricsState) {
 
     lastScrolledSelectedIdRef.current = selectedLineId;
     scrollLineIntoView(selectedLineId);
-  }, [lyricsState.selectedLineId, lyricsState.tab]);
+  }, [lyricsState, lyricsState.selectedLineId, lyricsState.tab]);
 
   return { listRef };
 }
