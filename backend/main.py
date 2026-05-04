@@ -92,6 +92,13 @@ app.include_router(cache_proxy.router)
 def health():
     return {"status": "ok", "message": "LRCLIB Publisher API is running"}
 
+from core.config import write_cookies_from_env
+
+@app.on_event("startup")
+async def startup_event():
+    write_cookies_from_env()
+    logging.info("[STARTUP] Allowed CORS origins: %s", ALLOWED_ORIGINS)
+
 # ---------------------------------------------------------------------------
 # Dev entry point
 # ---------------------------------------------------------------------------

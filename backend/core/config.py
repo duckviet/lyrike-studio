@@ -68,3 +68,18 @@ CDN_ENABLED = bool(CDN_ACCOUNT_ID and CDN_ACCESS_KEY_ID and CDN_SECRET_ACCESS_KE
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
 # Stricter limit for expensive transcription endpoint
 RATE_LIMIT_TRANSCRIBE_PER_MINUTE = int(os.getenv("RATE_LIMIT_TRANSCRIBE_PER_MINUTE", "5"))
+# --- YouTube Blocking Workaround ---
+YOUTUBE_COOKIES_PATH = Path("/tmp/yt_cookies.txt")
+
+def write_cookies_from_env():
+    """Write cookies from YOUTUBE_COOKIES env var to a temporary file for yt-dlp."""
+    import os
+    cookie_content = os.getenv("YOUTUBE_COOKIES", "")
+    if cookie_content:
+        try:
+            YOUTUBE_COOKIES_PATH.write_text(cookie_content, encoding="utf-8")
+            print(f"[CONFIG] YouTube cookies written to {YOUTUBE_COOKIES_PATH}")
+            return True
+        except Exception as e:
+            print(f"[CONFIG] Error writing YouTube cookies: {e}")
+    return False

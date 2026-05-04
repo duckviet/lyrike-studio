@@ -6,8 +6,14 @@ from pathlib import Path
 from typing import Optional, List
 from fastapi import HTTPException
 
-from core.config import MEDIA_CACHE_DIR, AUDIO_CACHE_DIR
+from core.config import MEDIA_CACHE_DIR, AUDIO_CACHE_DIR, YOUTUBE_COOKIES_PATH
 from core.utils import utc_now_iso
+
+def _get_cookie_opt() -> dict:
+    """Return cookiefile option if the file exists."""
+    if YOUTUBE_COOKIES_PATH.exists():
+        return {"cookiefile": str(YOUTUBE_COOKIES_PATH)}
+    return {}
 
 def find_cached_audio(video_id: str) -> Optional[Path]:
     audio_dir = AUDIO_CACHE_DIR / video_id
@@ -33,12 +39,14 @@ def fetch_video_info(url: str) -> dict:
         "no_warnings": True, 
         "noplaylist": True, 
         "skip_download": True,
-        # Add headers to look like a browser
+        # iOS client simulation is very effective against center-IP blocks
+        "extractor_args": {"youtube": {"player_client": ["ios", "web"]}},
         "http_headers": {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
-        }
+        },
+        **_get_cookie_opt(),
     }
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -47,7 +55,7 @@ def fetch_video_info(url: str) -> dict:
         logging.error(f"yt-dlp fetch error: {str(e)}")
         raise HTTPException(
             status_code=403, 
-            detail="YouTube is blocking access from this server. Please try a different video or try again later."
+            detail="YouTube is blocking access. Try setting YOUTUBE_COOKIES env var or try later."
         )
 
 def download_audio(url: str, video_id: str) -> Path:
@@ -60,9 +68,11 @@ def download_audio(url: str, video_id: str) -> Path:
         "outtmpl": outtmpl,
         "quiet": True,
         "no_warnings": True,
+        "extractor_args": {"youtube": {"player_client": ["ios", "web"]}},
         "http_headers": {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        }
+        },
+        **_get_cookie_opt(),
     }
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
