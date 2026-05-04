@@ -1,2 +1,2 @@
 export const LOCAL_API_BASE =
-  process.env.NEXT_PUBLIC_LOCAL_API_BASE?.trim() || "http://localhost:8080";
+  process.env.NEXT_PUBLIC_BACKEND_URL?.trim() || "http://localhost:8080";
