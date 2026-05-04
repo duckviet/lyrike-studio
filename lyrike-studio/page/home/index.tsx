@@ -1,5 +1,6 @@
-import { ScrollReveal } from "./_components/ScrollReveal";
+"use client";
 import { Hero } from "./_components/Hero";
+import { MetricsBar } from "./_components/MetricsBar";
 import { FeatureOverview } from "./_components/FeatureOverview";
 import { FeatureCards } from "./_components/FeatureCards";
 import { WorkflowSteps } from "./_components/WorkflowSteps";
@@ -10,8 +11,8 @@ export const HomePage = () => {
   return (
     <div className="min-h-screen bg-cream text-ink">
       <Hero />
+      <MetricsBar />
       <FeatureOverview />
-      <FeatureCards />
       <WorkflowSteps />
       <FinalCTA />
       <Footer />

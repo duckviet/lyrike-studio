@@ -10,8 +10,9 @@ import {
   useTranscribeMutation,
   usePublishMutation,
 } from "@/features/media/queries";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { formatTime } from "@/shared/utils/formatters";
+import Image from "next/image";
 
 export function SourcePanel() {
   const activeTab = useEditorUIStore((s) => s.activeTab);
@@ -39,15 +40,18 @@ export function SourcePanel() {
   const tab = useLyricsStore((s) => s.tab);
   const isAutoSyncEnabled = useLyricsStore((s) => s.isAutoSyncEnabled);
 
-  const lyricsState = {
-    doc,
-    selectedLineId,
-    activeLineId,
-    tab,
-    isAutoSyncEnabled,
-    canUndo: false,
-    canRedo: false,
-  };
+  const lyricsState = useMemo(
+    () => ({
+      doc,
+      selectedLineId,
+      activeLineId,
+      tab,
+      isAutoSyncEnabled,
+      canUndo: false,
+      canRedo: false,
+    }),
+    [doc, selectedLineId, activeLineId, tab, isAutoSyncEnabled],
+  );
 
   const loadMediaMutation = useLoadMedia({
     onSuccess: (info) => {
@@ -219,7 +223,9 @@ export function SourcePanel() {
             </div>
             <div className="flex flex-col gap-3">
               <div className="flex gap-4 items-start">
-                <img
+                <Image
+                  width={112}
+                  height={112}
                   src={`https://i.ytimg.com/vi/${mediaInfo.videoId}/mqdefault.jpg`}
                   className="w-28 aspect-square rounded-xl object-cover shadow-sm bg-bg-elev border border-line-soft"
                   alt="Thumbnail"

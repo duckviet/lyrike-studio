@@ -19,24 +19,45 @@ type StoreApi = {
   set: (patch: Partial<MinimalState>) => void;
   get: () => MinimalState;
 };
-
 export const buildTapSyncAction =
   (set: StoreApi["set"], get: StoreApi["get"]) => (currentTime: number) => {
     const { selectedLineId, doc } = get();
     if (!selectedLineId) return;
+
     const lines = doc.syncedLines;
-    const selectedIndex = lines.findIndex(
-      (line: LyricLine) => line.id === selectedLineId,
-    );
+    const selectedIndex = lines.findIndex((l) => l.id === selectedLineId);
     if (selectedIndex < 0) return;
 
-    const baseLine = lines[selectedIndex];
-    const patchedLines = utils.updateLyricTiming(lines, selectedLineId, {
-      start: currentTime,
-      end: Math.max(baseLine.end, currentTime + TIMING.MIN_LINE_LENGTH_SEC),
+    const updatedLines = lines.map((line, idx) => {
+      // Line hiện tại: set start = currentTime
+      if (idx === selectedIndex) {
+        return {
+          ...line,
+          start: currentTime,
+          // end chỉ extend nếu đang bị overlap với start mới
+          end: Math.max(line.end, currentTime + TIMING.MIN_LINE_LENGTH_SEC),
+        };
+      }
+      // Line trước: set end = currentTime
+      if (idx === selectedIndex - 1) {
+        return {
+          ...line,
+          end: Math.min(
+            currentTime,
+            Math.max(line.start + TIMING.MIN_LINE_LENGTH_SEC, currentTime),
+          ),
+        };
+      }
+      return line;
     });
-    const nextLines = utils.sortByStart(patchedLines);
-    const nextIndex = Math.min(selectedIndex + 1, nextLines.length - 1);
+
+    const nextLines = utils.sortByStart(updatedLines);
+
+    //  Tìm lại index SAU khi sort
+    const sortedCurrentIndex = nextLines.findIndex(
+      (l) => l.id === selectedLineId,
+    );
+    const nextIndex = Math.min(sortedCurrentIndex + 1, nextLines.length - 1);
 
     set({
       doc: utils.applyDocWithSyncedLines(doc, nextLines),

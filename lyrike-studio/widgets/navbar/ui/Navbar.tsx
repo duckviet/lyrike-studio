@@ -111,7 +111,7 @@ export const Navbar = () => {
 
   return (
     <nav className="sticky top-0 left-0 right-0 z-50 px-8 py-3 bg-cream/85 backdrop-blur-md border-b border-line">
-      <div className="max-w-[1200px] mx-auto flex items-center justify-between">
+      <div className="max-w-[90vw] mx-auto flex items-center justify-between">
         <Link
           href="/"
           className="text-xl font-serif font-normal text-ink tracking-tight flex items-center gap-2"

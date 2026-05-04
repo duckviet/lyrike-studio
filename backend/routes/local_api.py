@@ -1,25 +1,19 @@
 import asyncio
 import threading
 import json
-import logging
-import httpx
-from pathlib import Path
-from typing import Optional
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 
-import uvicorn
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from core.config import RATE_LIMIT_PER_MINUTE, RATE_LIMIT_TRANSCRIBE_PER_MINUTE
+from core.rate_limit import limiter
 
-from backend.core.config import MEDIA_CACHE_DIR, PEAKS_CACHE_DIR
-from backend.core.models import ExtractRequest, FetchRequest, TranscribeRequest
-from backend.core.utils import (
+from core.models import FetchRequest, TranscribeRequest
+from core.utils import (
     utc_now_iso, 
     normalize_video_id, 
     load_json, 
-    save_json,
 )
-from backend.services.audio_service import (
+from services.audio_service import (
     find_cached_audio,
     fetch_video_info,
     download_audio,
@@ -27,57 +21,28 @@ from backend.services.audio_service import (
     parse_range_header,
     compute_peaks
 )
-from backend.services.transcription_service import (
+from services.transcription_service import (
     JOB_LOCK,
     TRANSCRIBE_JOBS,
     EVENT_QUEUES,
-    set_main_loop,
     run_transcription_job,
     transcript_path
 )
-from extract_lyrics import run_extraction
-
-app = FastAPI(title="LRCLIB Publisher API (refactored)")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+from services.metadata_service import (
+    load_metadata,
+    save_metadata,
+    peaks_path
 )
 
-def metadata_path(video_id: str) -> Path:
-    return MEDIA_CACHE_DIR / f"{video_id}.json"
+router = APIRouter(prefix="/local-api", tags=["local-api"])
 
-def peaks_path(video_id: str, source: str = "original") -> Path:
-    return PEAKS_CACHE_DIR / f"{video_id}_{source}.json"
-
-def load_metadata(video_id: str) -> Optional[dict]:
-    return load_json(metadata_path(video_id))
-
-def save_metadata(video_id: str, payload: dict) -> None:
-    save_json(metadata_path(video_id), payload)
-
-@app.on_event("startup")
-async def startup_event():
-    set_main_loop(asyncio.get_running_loop())
-
-@app.post("/local-api/extract")
-def extract_lyrics_api(body: ExtractRequest):
-    try:
-        if not body.url:
-            raise HTTPException(status_code=400, detail="Missing YouTube URL")
-        return run_extraction(body.url)
-    except Exception as exc:
-        return {"error": str(exc)}
-
-@app.post("/local-api/fetch")
-def fetch_media(body: FetchRequest):
+@router.post("/fetch")
+@limiter.limit(lambda: f"{RATE_LIMIT_PER_MINUTE}/minute")
+def fetch_media(request: Request, body: FetchRequest):
     if not body.url and not body.videoId:
         raise HTTPException(status_code=400, detail="Provide url or videoId")
     
-    normalized_vid: Optional[str] = None
+    normalized_vid: str | None = None
     info = None
     
     if body.videoId:
@@ -129,8 +94,9 @@ def fetch_media(body: FetchRequest):
         "sourceUrl": metadata.get("sourceUrl")
     }
 
-@app.post("/local-api/transcribe")
-def transcribe_media(body: TranscribeRequest):
+@router.post("/transcribe")
+@limiter.limit(lambda: f"{RATE_LIMIT_TRANSCRIBE_PER_MINUTE}/minute")
+def transcribe_media(request: Request, body: TranscribeRequest):
     video_id = normalize_video_id(body.videoId)
     if not video_id:
         raise HTTPException(status_code=400, detail="Invalid videoId")
@@ -139,14 +105,11 @@ def transcribe_media(body: TranscribeRequest):
     if output_file.exists() and not body.force:
         cached = load_json(output_file)
         if cached:
+            # Keys match what transcription_service.py saves: "synced" / "plain"
+            job_data = {**cached, "status": "completed"}
             with JOB_LOCK:
-                TRANSCRIBE_JOBS[video_id] = {
-                    "status": "completed",
-                    "synced": cached.get("syncedLyrics"),
-                    "plain": cached.get("plainLyrics"),
-                    "updatedAt": cached.get("updatedAt")
-                }
-            return {"videoId": video_id, "status": "completed", **TRANSCRIBE_JOBS[video_id]}
+                TRANSCRIBE_JOBS[video_id] = job_data
+            return {"videoId": video_id, **job_data}
 
     with JOB_LOCK:
         current_job = TRANSCRIBE_JOBS.get(video_id)
@@ -159,11 +122,11 @@ def transcribe_media(body: TranscribeRequest):
     if audio_file is None:
         raise HTTPException(status_code=404, detail="Audio cache not found. Call /local-api/fetch first.")
 
-    worker = threading.Thread(target=run_transcription_job, args=(video_id, audio_file, True), daemon=True)
+    worker = threading.Thread(target=run_transcription_job, args=(video_id, audio_file, True, body.enableRefinement), daemon=True)
     worker.start()
     return {"videoId": video_id, "status": "queued", "message": "Transcription started."}
 
-@app.get("/local-api/transcribe/stream/{video_id}")
+@router.get("/transcribe/stream/{video_id}")
 async def stream_transcribe_status(video_id: str):
     safe_video_id = normalize_video_id(video_id)
     if not safe_video_id:
@@ -179,6 +142,9 @@ async def stream_transcribe_status(video_id: str):
                 current = TRANSCRIBE_JOBS.get(safe_video_id)
                 if current:
                     yield f"data: {json.dumps({'videoId': safe_video_id, **current})}\n\n"
+                    if current.get("status") in ["completed", "failed"]:
+                        return
+
             while True:
                 data = await q.get()
                 yield f"data: {json.dumps(data)}\n\n"
@@ -191,7 +157,7 @@ async def stream_transcribe_status(video_id: str):
                 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-@app.get("/local-api/audio/{video_id}")
+@router.get("/audio/{video_id}")
 def stream_cached_audio(video_id: str, request: Request):
     safe_video_id = normalize_video_id(video_id)
     audio_file = find_cached_audio(safe_video_id)
@@ -216,23 +182,25 @@ def stream_cached_audio(video_id: str, request: Request):
     headers = {"Accept-Ranges": "bytes", "Content-Length": str(file_size)}
     return StreamingResponse(iter_file_range(audio_file, 0, file_size - 1), headers=headers, media_type=content_type)
 
-@app.get("/local-api/peaks/{video_id}")
-def get_audio_peaks(video_id: str, samples: int = 800, force: bool = False):
+@router.get("/peaks/{video_id}")
+def get_audio_peaks(video_id: str, source: str = "original", samples: int = 800, force: bool = False):
     safe_video_id = normalize_video_id(video_id)
     if samples < 64 or samples > 4000:
         raise HTTPException(status_code=400, detail="samples must be between 64 and 4000")
         
-    audio_file = find_cached_audio(safe_video_id)
-    if audio_file is None:
-        raise HTTPException(status_code=404, detail="Audio cache not found.")
-        
-    source = "original"
     cache_file = peaks_path(safe_video_id, source)
     if cache_file.exists() and not force:
         cached = load_json(cache_file)
         if cached and cached.get("samples") == samples:
             return {**cached, "cacheHit": True}
             
+    if source == "demucs":
+        raise HTTPException(status_code=404, detail="Demucs peaks not found in cache. Run transcription first.")
+
+    audio_file = find_cached_audio(safe_video_id)
+    if audio_file is None:
+        raise HTTPException(status_code=404, detail="Audio cache not found.")
+        
     metadata = load_metadata(safe_video_id) or {}
     duration = float(metadata.get("duration", 0) or 0)
     peaks = compute_peaks(audio_file, samples)
@@ -246,52 +214,5 @@ def get_audio_peaks(video_id: str, samples: int = 800, force: bool = False):
         "generatedAt": utc_now_iso(),
         "source": source
     }
-    save_json(cache_file, payload)
+    save_metadata(safe_video_id, payload)
     return {**payload, "cacheHit": False}
-
-LRCLIB_API_BASE = "https://lrclib.net"
-
-@app.post("/api/request-challenge")
-async def request_challenge():
-    async with httpx.AsyncClient() as client:
-        try:
-            resp = await client.post(f"{LRCLIB_API_BASE}/api/request-challenge")
-            return StreamingResponse(
-                resp.aiter_bytes(),
-                status_code=resp.status_code,
-                media_type=resp.headers.get("Content-Type")
-            )
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/api/publish")
-async def publish(request: Request):
-    payload = await request.json()
-    token = request.headers.get("X-Publish-Token")
-    async with httpx.AsyncClient() as client:
-        try:
-            headers = {"Content-Type": "application/json"}
-            if token:
-                headers["X-Publish-Token"] = token
-            
-            resp = await client.post(
-                f"{LRCLIB_API_BASE}/api/publish",
-                json=payload,
-                headers=headers,
-                timeout=30.0
-            )
-            return StreamingResponse(
-                resp.aiter_bytes(),
-                status_code=resp.status_code,
-                media_type=resp.headers.get("Content-Type")
-            )
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/")
-def serve_index():
-    return FileResponse("index.html")
-
-if __name__ == "__main__":
-    logging.info("Starting backend on http://0.0.0.0:8080")
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, log_level="info")
