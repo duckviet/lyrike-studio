@@ -20,7 +20,7 @@ export function useTapSyncLoop() {
   const [clock, setClock] = useState("00:00");
   const [waveformAnimating, setWaveformAnimating] = useState(false);
   const startTimeRef = useRef<number>(0);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(0);
 
   useEffect(() => {
     const sequence = [
