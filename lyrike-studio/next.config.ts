@@ -8,6 +8,9 @@ const withNextIntlSplit = createNextIntlSplitPlugin(
 
 const _nextConfig: NextConfig = {
   /* config options here */
+  images: {
+    domains: ["i.ytimg.com"],
+  },
 };
 
 const nextConfig: NextConfig = withNextIntlSplit(_nextConfig);

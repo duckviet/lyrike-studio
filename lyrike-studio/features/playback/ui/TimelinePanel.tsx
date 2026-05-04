@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import type { LyricsHistoryState } from "@/entities/lyrics";
 import { LyricRegionsTrack } from "@/features/lyrics-sync/ui/LyricRegionsTrack";
 import {
   usePeaksQuery,
@@ -14,21 +15,27 @@ import {
   editorWaveformController,
   editorMediaController,
 } from "@/features/editor/store/editorControllers";
-import { usePlaybackSync } from "@/features/lyrics-sync/model/usePlaybackSync";
 import { calcExtendLinePatch } from "@/features/playback/model/extendLine";
 import { getAudioUrl } from "@/lib/api";
 import { useTranslations } from "next-intl";
-import { useDraft } from "@/features/playback/model/useDraft";
 import { TimelineActionsBar } from "./TimelineActionsBar";
 
 export const TimelinePanel = ({
+  isPlaying = false,
+  currentTime = 0,
+  onSaveDraft,
   onTogglePlayback,
   onSeekTo,
   onSeekBy,
+  onOpenShortcutsHelp,
 }: {
+  isPlaying?: boolean;
+  currentTime?: number;
+  onSaveDraft?: () => void;
   onTogglePlayback?: () => void;
   onSeekTo?: (time: number) => void;
   onSeekBy?: (delta: number) => void;
+  onOpenShortcutsHelp?: () => void;
 } = {}) => {
   const t = useTranslations("dashboard.editor");
   const waveHostRef = useRef<HTMLDivElement>(null);
@@ -52,77 +59,58 @@ export const TimelinePanel = ({
   const doc = useLyricsStore((s) => s.doc);
   const selectedLineId = useLyricsStore((s) => s.selectedLineId);
   const activeLineId = useLyricsStore((s) => s.activeLineId);
-  const setActiveLine = useLyricsStore((s) => s.setActiveLine);
   const selectLine = useLyricsStore((s) => s.selectLine);
   const clearSelection = useLyricsStore((s) => s.clearSelection);
   const onSelectLine = (lineId: string | null) => {
     if (lineId === null) clearSelection();
     else selectLine(lineId);
   };
-  const onGetBaseState = () => ({
+  const onGetBaseState = (): LyricsHistoryState => ({
     doc: useLyricsStore.getState().doc,
     selectedLineId: useLyricsStore.getState().selectedLineId,
   });
   const onInsertAtGap = useLyricsStore((s) => s.insertAtRange);
   const onDeleteGap = useLyricsStore((s) => s.deleteGap);
 
-  const hasSelectedLine = Boolean(selectedLineId);
-  const syncedLines = doc.syncedLines;
-
   const onExtendLine = useCallback(
     (lineId: string, edge: "start" | "end", newTime: number) => {
-      const doc = useLyricsStore.getState().doc;
-      const line = doc.syncedLines.find((l) => l.id === lineId);
-      if (line) {
-        useLyricsStore
-          .getState()
-          .setLineRange(
-            lineId,
-            edge === "start" ? newTime : line.start,
-            edge === "end" ? newTime : line.end,
-          );
-      }
+      const { doc, setLineRange } = useLyricsStore.getState();
+      const patch = calcExtendLinePatch(doc.syncedLines, lineId, edge, newTime);
+      if (!patch) return;
+      setLineRange(lineId, patch.start, patch.end);
     },
     [],
   );
 
-  const { isPlaying, currentTime } = usePlaybackSync({
-    syncedLines,
-    setActiveLine,
-  });
-
   const handleTogglePlayback = useCallback(() => {
-    editorMediaController.toggle();
-    onTogglePlayback?.();
+    if (onTogglePlayback) {
+      onTogglePlayback();
+      return;
+    }
+    void editorMediaController.toggle();
   }, [onTogglePlayback]);
 
   const handleSeekTo = useCallback(
     (time: number) => {
+      if (onSeekTo) {
+        onSeekTo(time);
+        return;
+      }
       editorMediaController.seek(time);
-      onSeekTo?.(time);
     },
     [onSeekTo],
   );
 
   const handleSeekBy = useCallback(
     (delta: number) => {
+      if (onSeekBy) {
+        onSeekBy(delta);
+        return;
+      }
       editorMediaController.seekBy(delta);
-      onSeekBy?.(delta);
     },
     [onSeekBy],
   );
-
-  const loadDraft = useLyricsStore((s) => s.loadDraft);
-  const { saveDraft } = useDraft(loadDraft);
-
-  const onSaveDraft = () => {
-    if (!mediaInfo) return;
-    saveDraft(
-      mediaInfo.videoId,
-      useLyricsStore.getState().doc,
-      useLyricsStore.getState().selectedLineId,
-    );
-  };
 
   const [peakSource, setPeakSource] = useState<"original" | "demucs">(
     "original",
@@ -182,10 +170,11 @@ export const TimelinePanel = ({
         currentTime={currentTime}
         duration={duration}
         peakSource={peakSource}
+        onOpenShortcutsHelp={onOpenShortcutsHelp ?? (() => undefined)}
         setPeakSource={setPeakSource}
         onTogglePlayback={handleTogglePlayback}
         onSeekBy={handleSeekBy}
-        onSaveDraft={onSaveDraft}
+        onSaveDraft={onSaveDraft ?? (() => undefined)}
       />
 
       <div className="min-h-0 flex-1 p-3 flex flex-col relative bg-[#050608]">

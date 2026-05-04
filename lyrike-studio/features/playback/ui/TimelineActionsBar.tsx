@@ -5,7 +5,7 @@ import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
 import { TIMING } from "@/shared/config/constants";
 import { formatTime } from "@/shared/utils/formatters";
 import { editorWaveformController } from "@/features/editor/store/editorControllers";
-import { SplitSquareHorizontalIcon } from "lucide-react";
+import { CircleQuestionMark, SplitSquareHorizontalIcon } from "lucide-react";
 
 interface TimelineActionsBarProps {
   isPlaying: boolean;
@@ -16,6 +16,7 @@ interface TimelineActionsBarProps {
   onTogglePlayback: () => void;
   onSeekBy: (delta: number) => void;
   onSaveDraft: () => void;
+  onOpenShortcutsHelp: () => void;
 }
 
 export function TimelineActionsBar({
@@ -27,6 +28,7 @@ export function TimelineActionsBar({
   onTogglePlayback,
   onSeekBy,
   onSaveDraft,
+  onOpenShortcutsHelp,
 }: TimelineActionsBarProps) {
   const t = useTranslations("dashboard.editor");
 
@@ -154,6 +156,13 @@ export function TimelineActionsBar({
             {t("draft")}
           </button>
         </div>
+        <button
+          type="button"
+          className={` text-xs font-semibold cursor-pointer transition-all duration-150 ${loopEnabled ? "bg-primary text-[#002633] border-primary shadow-md" : "text-ink-light-soft hover:bg-bg-elev"}`}
+          onClick={onOpenShortcutsHelp}
+        >
+          <CircleQuestionMark size={16} />
+        </button>
       </div>
     </div>
   );

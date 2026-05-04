@@ -6,14 +6,23 @@ from pathlib import Path
 from typing import Optional, List
 from fastapi import HTTPException
 
-from core.config import MEDIA_CACHE_DIR
+from core.config import MEDIA_CACHE_DIR, AUDIO_CACHE_DIR
 from core.utils import utc_now_iso
 
 def find_cached_audio(video_id: str) -> Optional[Path]:
-    candidates = sorted(MEDIA_CACHE_DIR.glob(f"{video_id}.*"))
+    audio_dir = AUDIO_CACHE_DIR / video_id
+    if not audio_dir.exists():
+        # Fallback to old flat structure if needed during migration period
+        candidates = sorted(MEDIA_CACHE_DIR.glob(f"{video_id}.*"))
+        for path in candidates:
+            if path.suffix.lower() == ".json":
+                continue
+            if path.is_file():
+                return path
+        return None
+        
+    candidates = sorted(audio_dir.glob("original.*"))
     for path in candidates:
-        if path.suffix.lower() == ".json":
-            continue
         if path.is_file():
             return path
     return None
@@ -24,7 +33,10 @@ def fetch_video_info(url: str) -> dict:
         return ydl.extract_info(url, download=False)
 
 def download_audio(url: str, video_id: str) -> Path:
-    outtmpl = str(MEDIA_CACHE_DIR / f"{video_id}.%(ext)s")
+    target_dir = AUDIO_CACHE_DIR / video_id
+    target_dir.mkdir(parents=True, exist_ok=True)
+    
+    outtmpl = str(target_dir / "original.%(ext)s")
     ydl_opts = {
         "format": "bestaudio[ext=m4a]/bestaudio/best",
         "outtmpl": outtmpl,

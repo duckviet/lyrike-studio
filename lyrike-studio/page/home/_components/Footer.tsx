@@ -14,13 +14,15 @@ export function Footer() {
           <p className="text-sm text-ink-soft mt-1">{t("tagline")}</p>
         </div>
         <div className="flex items-center gap-4">
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-soft hover:text-ink transition-colors">
+          <a
+            href="https://github.com/duckviet/lyrike-studio"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-ink-soft hover:text-ink transition-colors"
+          >
             GitHub
           </a>
           <span className="text-ink-soft/30">|</span>
-          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-sm text-ink-soft hover:text-ink transition-colors">
-            Twitter
-          </a>
         </div>
         <p className="text-sm text-ink-soft m-0">{t("copyright")}</p>
       </div>
