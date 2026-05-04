@@ -74,9 +74,20 @@ YOUTUBE_COOKIES_PATH = Path("/tmp/yt_cookies.txt")
 def write_cookies_from_env():
     """Write cookies from YOUTUBE_COOKIES env var to a temporary file for yt-dlp."""
     import os
-    cookie_content = os.getenv("YOUTUBE_COOKIES", "")
+    import base64
+    cookie_content = os.getenv("YOUTUBE_COOKIES", "").strip()
     if cookie_content:
         try:
+            # Check if it's base64 encoded
+            # Base64 strings of Netscape cookies usually start with 'IyBOZXRzY2FwZ' ('# Netscape')
+            if not cookie_content.startswith("#") and len(cookie_content) > 20:
+                try:
+                    decoded = base64.b64decode(cookie_content).decode("utf-8")
+                    cookie_content = decoded
+                except Exception:
+                    # Not base64 or failed to decode, keep original
+                    pass
+            
             YOUTUBE_COOKIES_PATH.write_text(cookie_content, encoding="utf-8")
             print(f"[CONFIG] YouTube cookies written to {YOUTUBE_COOKIES_PATH}")
             return True
