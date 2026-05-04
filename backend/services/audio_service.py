@@ -28,9 +28,27 @@ def find_cached_audio(video_id: str) -> Optional[Path]:
     return None
 
 def fetch_video_info(url: str) -> dict:
-    ydl_opts = {"quiet": True, "no_warnings": True, "noplaylist": True, "skip_download": True}
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        return ydl.extract_info(url, download=False)
+    ydl_opts = {
+        "quiet": True, 
+        "no_warnings": True, 
+        "noplaylist": True, 
+        "skip_download": True,
+        # Add headers to look like a browser
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            return ydl.extract_info(url, download=False)
+    except Exception as e:
+        logging.error(f"yt-dlp fetch error: {str(e)}")
+        raise HTTPException(
+            status_code=403, 
+            detail="YouTube is blocking access from this server. Please try a different video or try again later."
+        )
 
 def download_audio(url: str, video_id: str) -> Path:
     target_dir = AUDIO_CACHE_DIR / video_id
@@ -42,19 +60,26 @@ def download_audio(url: str, video_id: str) -> Path:
         "outtmpl": outtmpl,
         "quiet": True,
         "no_warnings": True,
-        "noplaylist": True
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        }
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        downloaded = Path(ydl.prepare_filename(info))
-
-    if downloaded.exists():
-        return downloaded
-
-    cached = find_cached_audio(video_id)
-    if cached is None:
-        raise HTTPException(status_code=500, detail="Audio download failed")
-    return cached
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+            
+        cached = find_cached_audio(video_id)
+        if cached and cached.exists():
+            return cached
+        raise HTTPException(status_code=500, detail="Audio download completed but file not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"yt-dlp download error: {str(e)}")
+        raise HTTPException(
+            status_code=403,
+            detail="Failed to download audio from YouTube. The server might be restricted."
+        )
 
 def iter_file_range(path: Path, start: int, end: int, chunk_size: int = 64 * 1024):
     with path.open("rb") as handle:
