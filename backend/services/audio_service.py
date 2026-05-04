@@ -39,12 +39,15 @@ def fetch_video_info(url: str) -> dict:
         "no_warnings": True, 
         "noplaylist": True, 
         "skip_download": True,
-        # iOS client simulation is very effective against center-IP blocks
-        "extractor_args": {"youtube": {"player_client": ["ios", "web"]}},
+        "nocheckcertificate": True,
+        # Switching to Android and Mobile Web as they currently bypass blocks better than iOS
+        "extractor_args": {"youtube": {"player_client": ["android", "mweb", "web"]}},
         "http_headers": {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+            "Accept": "*/*",
             "Accept-Language": "en-US,en;q=0.9",
+            "Origin": "https://www.youtube.com",
+            "Referer": "https://www.youtube.com/",
         },
         **_get_cookie_opt(),
     }
@@ -55,7 +58,7 @@ def fetch_video_info(url: str) -> dict:
         logging.error(f"yt-dlp fetch error: {str(e)}")
         raise HTTPException(
             status_code=403, 
-            detail="YouTube is blocking access. Try setting YOUTUBE_COOKIES env var or try later."
+            detail="YouTube is blocking access. Try updating YOUTUBE_COOKIES or check if video is restricted."
         )
 
 def download_audio(url: str, video_id: str) -> Path:
@@ -68,9 +71,10 @@ def download_audio(url: str, video_id: str) -> Path:
         "outtmpl": outtmpl,
         "quiet": True,
         "no_warnings": True,
-        "extractor_args": {"youtube": {"player_client": ["ios", "web"]}},
+        "nocheckcertificate": True,
+        "extractor_args": {"youtube": {"player_client": ["android", "mweb", "web"]}},
         "http_headers": {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
         },
         **_get_cookie_opt(),
     }
