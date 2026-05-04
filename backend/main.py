@@ -38,7 +38,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=[
         "Content-Type",
         "Authorization",
@@ -87,8 +87,8 @@ app.include_router(lrclib_proxy.router)
 app.include_router(cache_proxy.router)
 
 # Health check — used by Render and Cloudflare health monitors
-@app.get("/", tags=["health"])
-@app.get("/health", tags=["health"])
+@app.api_route("/", methods=["GET", "HEAD"], tags=["health"])
+@app.api_route("/health", methods=["GET", "HEAD"], tags=["health"])
 def health():
     return {"status": "ok", "message": "LRCLIB Publisher API is running"}
 
