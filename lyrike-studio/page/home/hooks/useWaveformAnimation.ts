@@ -4,7 +4,7 @@ export function useWaveformAnimation() {
   const [playheadPosition, setPlayheadPosition] = useState(0);
   const [timeDisplay, setTimeDisplay] = useState("0:00");
   const [activeRegion, setActiveRegion] = useState(-1);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
