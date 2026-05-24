@@ -5,26 +5,26 @@ export function Footer() {
   const t = useTranslations("home.footer");
 
   return (
-    <footer className="py-10 px-8 border-t border-ink/8">
-      <div className="max-w-[1200px] mx-auto flex items-center justify-between flex-wrap gap-4">
+    <footer className="border-t border-home-border bg-home-canvas px-6 py-10 md:px-8">
+      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-4">
         <div>
-          <Link href="/" className="font-serif text-xl text-ink">
+          <Link className="font-serif text-xl text-home-forest" href="/">
             LyricSync
           </Link>
-          <p className="text-sm text-ink-soft mt-1">{t("tagline")}</p>
+          <p className="mt-1 text-sm text-home-charcoal">{t("tagline")}</p>
         </div>
         <div className="flex items-center gap-4">
           <a
+            className="text-sm text-home-charcoal transition-colors hover:text-home-forest"
             href="https://github.com/duckviet/lyrike-studio"
-            target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-ink-soft hover:text-ink transition-colors"
+            target="_blank"
           >
             GitHub
           </a>
-          <span className="text-ink-soft/30">|</span>
+          <span className="text-home-border">|</span>
         </div>
-        <p className="text-sm text-ink-soft m-0">{t("copyright")}</p>
+        <p className="m-0 text-sm text-home-charcoal">{t("copyright")}</p>
       </div>
     </footer>
   );

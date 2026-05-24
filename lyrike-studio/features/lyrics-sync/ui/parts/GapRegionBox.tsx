@@ -39,14 +39,14 @@ export const GapRegionBox = memo(function GapRegionBox({
       className={cn(
         "absolute top-1.5 bottom-1.5",
         // Gap visual — dashed border to distinguish from lyric regions
-        "border rounded-md",
+        "border rounded-control",
         "transition-all duration-150",
         isSelected
-          ? "z-30 border-white/30 bg-white/8 shadow-[0_0_0_1px_rgba(255,255,255,0.15)]"
-          : "z-10 border-dashed border-white/10 bg-transparent",
+          ? "z-30 border-amber/70 bg-amber-25 shadow-selected"
+          : "z-10 border-dashed border-white/15 bg-transparent",
         isInteractive &&
           !isSelected &&
-          "hover:border-white/25 hover:bg-white/5 cursor-pointer",
+          "hover:border-amber/50 hover:bg-white/5 cursor-pointer",
         !isInteractive && "pointer-events-none",
       )}
       style={{ left: `${left}px`, width: `${widthPx}px` }}
@@ -62,7 +62,7 @@ export const GapRegionBox = memo(function GapRegionBox({
       {/* Center icon — only shown when wide enough */}
       {isInteractive && !isSelected && (
         <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-150">
-          <span className="text-[10px] text-white/40 font-mono leading-none select-none">
+          <span className="select-none font-mono text-[10px] leading-none text-white/45">
             ···
           </span>
         </div>

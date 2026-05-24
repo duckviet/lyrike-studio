@@ -31,7 +31,7 @@ export function PlainLyricsEditor({
         className={cn(
           "w-full min-h-[260px] resize-y",
           "p-4 text-sm leading-relaxed font-[inherit]",
-          "border border-line rounded-lg",
+          "border border-line rounded-inner",
           "bg-bg text-ink-light",
           "outline-none transition-all duration-150",
           "focus:border-primary focus:ring-1 focus:ring-primary/20",

@@ -1,9 +1,8 @@
 "use client";
 import type { LyricsState } from "@/entities/lyrics";
-import { TabBar, TabItem } from "./Tabbar";
-import { IconButton } from "./IconButton";
 import { FileUpIcon, FileDownIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { EditorButton, EditorSegmentedControl } from "@/features/editor";
 
 type LyricsTabId = LyricsState["tab"];
 
@@ -27,27 +26,37 @@ export default function PanelToolbar({
   const t = useTranslations("editor");
   const tabs = useTranslations("editor.tabs");
 
-  const LYRICS_TABS: TabItem<LyricsTabId>[] = [
+  const LYRICS_TABS = [
     { id: "synced", label: tabs("synced") },
     { id: "plain", label: tabs("plain") },
     { id: "meta", label: tabs("meta") },
-  ];
+  ] satisfies { id: LyricsTabId; label: string }[];
 
   return (
-    <div className="h-12 px-4 shrink-0 flex items-center justify-between gap-2 border-b border-line bg-bg-elev">
-      <TabBar
-        tabs={LYRICS_TABS}
-        activeTab={activeTab}
-        onTabChange={onTabChange}
+    <div className="flex min-h-14 shrink-0 items-center justify-between gap-2 px-4 py-2">
+      <EditorSegmentedControl
+        items={LYRICS_TABS}
+        onChange={onTabChange}
+        value={activeTab}
       />
 
       <div className="flex gap-1.5">
-        <IconButton label={t("toolbar.importLrc")} onClick={onImportClick}>
-          <FileUpIcon size={16} />
-        </IconButton>
-        <IconButton label={t("toolbar.exportLrc")} onClick={onExportClick}>
-          <FileDownIcon size={16} />
-        </IconButton>
+        <EditorButton
+          aria-label={t("toolbar.importLrc")}
+          icon={<FileUpIcon size={16} />}
+          onClick={onImportClick}
+          size="icon"
+          title={t("toolbar.importLrc")}
+          variant="ghost"
+        />
+        <EditorButton
+          aria-label={t("toolbar.exportLrc")}
+          icon={<FileDownIcon size={16} />}
+          onClick={onExportClick}
+          size="icon"
+          title={t("toolbar.exportLrc")}
+          variant="ghost"
+        />
         {/* Hidden file input — triggered by Import button above */}
         <input
           ref={fileInputRef}

@@ -6,24 +6,24 @@ export function FeatureOverview() {
   const t = useTranslations("home.overview");
 
   return (
-    <section className="py-20 px-8 bg-linear-to-b from-cream-dark via-cream to-cream-dark">
-      <div className="max-w-[1200px] mx-auto">
+    <section className="bg-home-canvas py-20" id="demo">
+      <div className="mx-auto max-w-[1200px] px-6 md:px-8">
         <ScrollReveal>
-          <span className="block text-xs font-semibold tracking-[0.2em] uppercase text-ink-soft mb-4">
+          <span className="mb-4 block text-xs font-semibold uppercase text-home-forest">
             {t("label")}
           </span>
         </ScrollReveal>
 
         <ScrollReveal delay={100}>
-          <h2 className="font-serif text-3xl md:text-4xl font-normal text-ink leading-snug mb-6">
+          <h2 className="mb-6 max-w-3xl font-serif text-4xl font-normal leading-tight text-home-forest md:text-5xl">
             {t("title1")}
             <br />
-            <em className="italic bg-cream-dark px-1">{t("title2")}</em>
+            <em className="italic">{t("title2")}</em>
           </h2>
         </ScrollReveal>
 
         <ScrollReveal delay={200}>
-          <p className="text-lg leading-relaxed text-ink/65 max-w-[600px] mb-12">
+          <p className="mb-12 max-w-[680px] text-lg leading-relaxed text-home-charcoal">
             {t("description")}
           </p>
         </ScrollReveal>

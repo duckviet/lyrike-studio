@@ -1,7 +1,5 @@
 "use client";
 
-import { cn } from "@/shared/lib/utils";
-
 import { MetaForm } from "@/features/lyrics-edit/ui/MetaForm";
 import type { LyricsState } from "@/entities/lyrics";
 import type { LyricLine } from "@/entities/lyrics";
@@ -10,7 +8,6 @@ import { useLrcFileImport } from "../model/useLrcFileImport";
 import { PlainLyricsEditor } from "./PlainLyricsEditor";
 import PanelToolbar from "./PanelToolBar";
 import SyncedLinesList from "./SyncedLinesList";
-import { useEditorUIStore } from "@/features/editor/store/editorUIStore";
 import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
 import { formatTime } from "@/shared/utils/formatters";
 
@@ -23,7 +20,6 @@ export function LyricsPanel({
   onNudge: (line: LyricLine, edge: "start" | "end", delta: number) => void;
   onExportLrc: () => void;
 }) {
-  const activeTab = useEditorUIStore((s) => s.activeTab);
   const doc = useLyricsStore((s) => s.doc);
   const selectedLineId = useLyricsStore((s) => s.selectedLineId);
   const tab = useLyricsStore((s) => s.tab);
@@ -71,13 +67,7 @@ export function LyricsPanel({
   };
 
   return (
-    <article
-      className={cn(
-        "min-h-0 h-full flex flex-col",
-        "overflow-hidden bg-transparent border-0 shadow-none",
-        activeTab !== "lyrics" && "hidden md:flex",
-      )}
-    >
+    <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-outer bg-[#f4f5f4]">
       <PanelToolbar
         activeTab={lyricsState.tab}
         onTabChange={setTab}

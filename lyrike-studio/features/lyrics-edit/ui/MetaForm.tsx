@@ -17,7 +17,7 @@ export function MetaForm({ meta, onUpdateMetaField }: MetaFormProps) {
         {t("track")}
         <input
           type="text"
-          className="w-full p-3 text-sm border border-line rounded-lg bg-bg text-ink-light outline-none transition-all duration-150"
+          className="w-full rounded-control border border-line bg-bg p-3 text-sm text-ink-light outline-none transition-all duration-150 focus:border-primary focus:ring-2 focus:ring-primary/15"
           value={meta.title}
           onChange={(e) => onUpdateMetaField({ title: e.target.value })}
         />
@@ -26,7 +26,7 @@ export function MetaForm({ meta, onUpdateMetaField }: MetaFormProps) {
         {t("artist")}
         <input
           type="text"
-          className="w-full p-3 text-sm border border-line rounded-lg bg-bg text-ink-light outline-none transition-all duration-150"
+          className="w-full rounded-control border border-line bg-bg p-3 text-sm text-ink-light outline-none transition-all duration-150 focus:border-primary focus:ring-2 focus:ring-primary/15"
           value={meta.artist}
           onChange={(e) => onUpdateMetaField({ artist: e.target.value })}
         />
@@ -35,7 +35,7 @@ export function MetaForm({ meta, onUpdateMetaField }: MetaFormProps) {
         {t("album")}
         <input
           type="text"
-          className="w-full p-3 text-sm border border-line rounded-lg bg-bg text-ink-light outline-none transition-all duration-150"
+          className="w-full rounded-control border border-line bg-bg p-3 text-sm text-ink-light outline-none transition-all duration-150 focus:border-primary focus:ring-2 focus:ring-primary/15"
           value={meta.album}
           onChange={(e) => onUpdateMetaField({ album: e.target.value })}
         />
@@ -44,7 +44,7 @@ export function MetaForm({ meta, onUpdateMetaField }: MetaFormProps) {
         {t("by")}
         <input
           type="text"
-          className="w-full p-3 text-sm border border-line rounded-lg bg-bg text-ink-light outline-none transition-all duration-150"
+          className="w-full rounded-control border border-line bg-bg p-3 text-sm text-ink-light outline-none transition-all duration-150 focus:border-primary focus:ring-2 focus:ring-primary/15"
           value={meta.by}
           onChange={(e) => onUpdateMetaField({ by: e.target.value })}
         />
@@ -54,7 +54,7 @@ export function MetaForm({ meta, onUpdateMetaField }: MetaFormProps) {
         <input
           type="number"
           step="1"
-          className="w-full p-3 text-sm border border-line rounded-lg bg-bg text-ink-light outline-none transition-all duration-150"
+          className="w-full rounded-control border border-line bg-bg p-3 text-sm text-ink-light outline-none transition-all duration-150 focus:border-primary focus:ring-2 focus:ring-primary/15"
           value={meta.offset}
           onChange={(e) =>
             onUpdateMetaField({ offset: Number(e.target.value) })

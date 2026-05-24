@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import { Clapperboard } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TIMING } from "@/shared/config/constants";
 
 interface VideoPlayerProps {
@@ -34,6 +36,7 @@ export const VideoPlayer = forwardRef<
   },
   VideoPlayerProps
 >(function VideoPlayer({ videoId }, ref) {
+  const t = useTranslations("editor.video");
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -133,13 +136,15 @@ export const VideoPlayer = forwardRef<
   }, [videoId]);
 
   return (
-    <div className="w-full aspect-video max-h-[calc(100vh-390px)] min-h-[150px] md:min-h-[250px] relative overflow-hidden bg-black rounded-xl border border-white/10 shadow-black shadow-2xl">
+    <div className="relative aspect-video max-h-[calc(100vh-390px)] min-h-[150px] w-full overflow-hidden rounded-inner border border-line bg-primary shadow-inner md:min-h-[250px] mt-2">
       {videoId ? (
         <div ref={containerRef} className="w-full h-full" />
       ) : (
-        <div className="w-full h-full grid place-items-center gap-3 bg-linear-to-br from-[#151821] to-[#050609]">
-          <span className="text-4xl opacity-90">📺</span>
-          <p className="text-white/60 text-sm">No source loaded</p>
+        <div className="grid h-full w-full place-items-center bg-[#092a0e]">
+          <div className="grid place-items-center gap-3 text-white/60">
+            <Clapperboard size={38} strokeWidth={1.5} />
+            <p className="m-0 text-sm">{t("empty")}</p>
+          </div>
         </div>
       )}
     </div>

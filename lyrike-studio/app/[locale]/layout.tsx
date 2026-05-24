@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
-import { DM_Serif_Display, Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
 
-const dmSerif = DM_Serif_Display({
+const playfair = Playfair_Display({
   variable: "--font-serif",
-  weight: "400",
-  subsets: ["latin"],
+  subsets: ["latin", "vietnamese"],
 });
 
 const inter = Inter({
   variable: "--font-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "vietnamese"],
 });
 
 const jetbrains = JetBrains_Mono({
@@ -44,7 +43,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={`${dmSerif.variable} ${inter.variable} ${jetbrains.variable} h-full antialiased`}
+      className={`${playfair.variable} ${inter.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
