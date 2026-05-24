@@ -1,37 +1,59 @@
 @import "tailwindcss";
 
 :root {
-  /* White palette — source of truth */
-  --cream: #ffffff;
-  --cream-dark: #f5f6f8;
-  --cream-deeper: #eceef2;
-  --ink: #111827;
-  --ink-soft: #6b7280;
-  --accent: #2d5a3d;
-  --accent-deep: #1e3d2a;
-  --accent-warm: #c4956a;
-  --accent-warm-deep: #a87850;
+  /* DESIGN.md tokens — single source of truth */
+    --color-forest-green: #0f3e17;
+    --color-cream-canvas: #fffefc;
+    --color-mint-glaze: #b1dbb8;
+    --color-slate-mist: #b6ced5;
+    --color-keylime-wash: #e1f4df;
+    --color-mint-kiss: #cfe7d3;
+    --color-border-grey: #e5e7eb;
+    --color-ink-text: #222222;
+    --color-dark-charcoal: #333333;
 
-  /* Editor page — clean white */
-  --bg: var(--cream); /* #ffffff */
-  --bg-soft: var(--cream-dark); /* #f5f6f8 */
-  --bg-elev: var(--cream-deeper); /* #eceef2 */
+  /* Typography aliases from DESIGN.md substitutes */
+    --font-suisseintl:
+      var(--font-sans), "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-faire-octave:
+      var(--font-serif), "Playfair Display", ui-serif, Georgia, serif;
 
-  /* Editor text — dark on white */
-  --ink-light: var(--ink); /* #111827 */
-  --ink-light-soft: var(--ink-soft); /* #6b7280 */
+  /* Shared surface aliases for existing components */
+    --cream: var(--color-cream-canvas);
+    --cream-dark: var(--color-keylime-wash);
+    --cream-deeper: var(--color-mint-kiss);
+    --ink: var(--color-ink-text);
+    --ink-soft: var(--color-dark-charcoal);
+    --accent: var(--color-forest-green);
+    --accent-deep: var(--color-forest-green);
+    --accent-warm: var(--color-slate-mist);
+    --accent-warm-deep: var(--color-forest-green);
 
-  /* Borders — cool neutral lines */
-  --line: #cbced2; /* was #2a2f3a */
-  --line-soft: #eceef2; /* was #1f242d */
+  /* Landing aliases kept for Tailwind classes already in use */
+    --home-forest: var(--color-forest-green);
+    --home-canvas: var(--color-cream-canvas);
+    --home-mint: var(--color-mint-glaze);
+    --home-slate: var(--color-slate-mist);
+    --home-keylime: var(--color-keylime-wash);
+    --home-mint-kiss: var(--color-mint-kiss);
+    --home-border: var(--color-border-grey);
+    --home-ink: var(--color-ink-text);
+    --home-charcoal: var(--color-dark-charcoal);
+    --home-radius: 14px;
+    --home-section-gap: 42px;
 
-  /* Primary — green accent (replaces cyan) */
-  --primary: var(--accent); /* was #00d4ff */
-  --primary-deep: var(--accent-deep); /* was #0099cc */
-
-  /* Secondary accent — warm amber (replaces purple) */
-  --amber: #c4956a;
-  --amber-soft: #f5ede0;
+  /* Editor aliases point to the same DESIGN.md palette */
+    --bg: var(--color-cream-canvas);
+    --bg-soft: var(--color-cream-canvas);
+    --bg-elev: var(--color-keylime-wash);
+    --ink-light: var(--color-ink-text);
+    --ink-light-soft: var(--color-dark-charcoal);
+    --line: var(--color-border-grey);
+    --line-soft: var(--color-border-grey);
+    --primary: var(--color-forest-green);
+    --primary-deep: var(--color-forest-green);
+    --amber: var(--color-slate-mist);
+    --amber-soft: var(--color-mint-kiss);
 
   /* Status colors — unchanged */
   --success: #22c55e;
@@ -39,19 +61,19 @@
   --warning: #f59e0b;
   --danger: #ef4444;
 
-  /* Translucent states — re-keyed to green & amber */
-  --primary-10: rgba(45, 90, 61, 0.1);
-  --primary-20: rgba(45, 90, 61, 0.2);
-  --primary-8: rgba(45, 90, 61, 0.08);
-  --primary-5: rgba(45, 90, 61, 0.05);
-  --amber-25: rgba(196, 149, 106, 0.25);
+  /* Translucent states from DESIGN.md colors */
+    --primary-10: rgba(15, 62, 23, 0.1);
+    --primary-20: rgba(15, 62, 23, 0.2);
+    --primary-8: rgba(15, 62, 23, 0.08);
+    --primary-5: rgba(15, 62, 23, 0.05);
+    --amber-25: rgba(182, 206, 213, 0.25);
   --danger-10: rgba(239, 68, 68, 0.1);
   --danger-8: rgba(239, 68, 68, 0.08);
   --success-10: rgba(34, 197, 94, 0.1);
   --success-8: rgba(34, 197, 94, 0.08);
 
   /* Specific UI colors */
-  --bg-input: #fefff5;
+  --bg-input: var(--color-cream-canvas);
 
   /* Radii */
   --radius-sm: 6px;
@@ -66,31 +88,27 @@
   --card-padding-md: 12px; /* p-3 - toolbar */
   --card-gap: 12px; /* gap-3 giữa các section */
 
-  /* Shadows — ink-toned for light bg */
+  /* Shadows stay subtle per DESIGN.md */
   --shadow-sm:
-    0 1px 2px rgba(26, 26, 46, 0.08), 0 0 0 1px rgba(26, 26, 46, 0.04);
-  --shadow: 0 12px 32px rgba(26, 26, 46, 0.1), 0 0 0 1px rgba(26, 26, 46, 0.04);
-  --glow-primary: 0 0 24px rgba(45, 90, 61, 0.2);
-  --shadow-active: 0 0 0 1px var(--primary), 0 0 24px rgba(45, 90, 61, 0.18);
+    0 1px 2px rgba(34, 34, 34, 0.06),
+      0 0 0 1px rgba(34, 34, 34, 0.03);
+      --shadow: 0 8px 24px rgba(34, 34, 34, 0.08), 0 0 0 1px rgba(34, 34, 34, 0.04);
+      --glow-primary: 0 0 20px rgba(15, 62, 23, 0.16);
+      --shadow-active: 0 0 0 1px var(--primary), 0 0 18px rgba(15, 62, 23, 0.14);
   --shadow-selected:
-    0 0 0 1.5px var(--amber), 0 0 16px rgba(196, 149, 106, 0.25);
-  --shadow-glass: var(--shadow), inset 0 0 0 1px rgba(26, 26, 46, 0.04);
-  --shadow-inner: inset 0 2px 16px rgba(26, 26, 46, 0.06);
-
-  /* Landing page shadows — kept as-is */
-  --shadow-ink-sm: 0 8px 32px rgba(26, 26, 46, 0.08);
-  --shadow-ink-md: 0 16px 48px rgba(26, 26, 46, 0.12);
-  --shadow-ink-lg: 0 24px 64px rgba(26, 26, 46, 0.15);
-  --shadow-green: 0 8px 32px rgba(45, 90, 61, 0.3);
+    0 0 0 1.5px var(--amber),
+      0 0 14px rgba(182, 206, 213, 0.35);
+      --shadow-glass: var(--shadow), inset 0 0 0 1px rgba(34, 34, 34, 0.03);
+      --shadow-inner: inset 0 2px 12px rgba(34, 34, 34, 0.06);
+      --shadow-ink-sm: 0 4px 18px rgba(34, 34, 34, 0.06);
+      --shadow-ink-md: 0 8px 24px rgba(34, 34, 34, 0.08);
+      --shadow-ink-lg: 0 12px 32px rgba(34, 34, 34, 0.1);
+      --shadow-green: 0 8px 24px rgba(15, 62, 23, 0.18);
 
   font-family:
-    var(--font-sans),
-    "Inter",
-    "Sora",
-    "Segoe UI",
+    var(--font-suisseintl),
+      ui-sans-serif,
     system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
     sans-serif;
 }
 
@@ -145,7 +163,7 @@
 }
 
 @theme inline {
-  /* Landing page colors */
+  /* Backward-compatible utilities backed by DESIGN.md tokens */
   --color-cream: var(--cream);
   --color-cream-dark: var(--cream-dark);
   --color-ink: var(--ink);
@@ -153,7 +171,18 @@
   --color-accent: var(--accent);
   --color-accent-warm: var(--accent-warm);
 
-  /* Editor colors — now cream-based */
+  /* Home aliases */
+    --color-home-forest: var(--home-forest);
+    --color-home-canvas: var(--home-canvas);
+    --color-home-mint: var(--home-mint);
+    --color-home-slate: var(--home-slate);
+    --color-home-keylime: var(--home-keylime);
+    --color-home-mint-kiss: var(--home-mint-kiss);
+    --color-home-border: var(--home-border);
+    --color-home-ink: var(--home-ink);
+    --color-home-charcoal: var(--home-charcoal);
+  
+    /* Editor aliases */
   --color-bg: var(--bg);
   --color-bg-soft: var(--bg-soft);
   --color-bg-elev: var(--bg-elev);
@@ -170,17 +199,14 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
 
-  /* Utilities */
-  --color-primary-10: var(--primary-10);
-  --color-primary-20: var(--primary-20);
-  --color-primary-8: var(--primary-8);
-  --color-primary-5: var(--primary-5);
-  --color-amber-25: var(--amber-25);
-  --color-danger-10: var(--danger-10);
-  --color-danger-8: var(--danger-8);
-  --color-success-10: var(--success-10);
-  --color-success-8: var(--success-8);
-  --color-bg-input: var(--bg-input);
+  /* Radii */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+  
+    --radius-outer: var(--card-radius-outer);
+    --radius-inner: var(--card-radius-inner);
+    --radius-control: var(--card-radius-control);
 
   /* Shadows */
   --shadow-active: var(--shadow-active);
@@ -194,10 +220,10 @@
 }
 
 .selected-line {
-  border: 1.5px solid var(--amber) !important;
-  background: rgba(196, 149, 106, 0.1) !important;
-  box-shadow: 0 0 0 3px rgba(196, 149, 106, 0.12) !important;
-  border-left: 3px solid var(--amber) !important;
+  border: 1.5px solid var(--color-slate-mist) !important;
+    background: rgba(182, 206, 213, 0.18) !important;
+    box-shadow: 0 0 0 3px rgba(182, 206, 213, 0.18) !important;
+    border-left: 3px solid var(--color-slate-mist) !important;
 }
 
 .ruler-tick {
@@ -206,15 +232,7 @@
 
 body {
   margin: 0;
-  /* Crisp white with very faint green & cool tints */
-  background:
-    radial-gradient(circle at 85% 0%, rgba(45, 90, 61, 0.04), transparent 40%),
-    radial-gradient(
-      circle at 10% 100%,
-      rgba(100, 130, 255, 0.04),
-      transparent 40%
-    ),
-    var(--bg);
+  background: var(--color-cream-canvas);
   color: var(--ink-light);
   overflow-x: hidden;
 }

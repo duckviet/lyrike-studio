@@ -17,10 +17,10 @@ export const SyncedTextEditor = memo(function SyncedTextEditor({
   const t = useTranslations("editor.textEditor");
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col p-2">
-      <p className="text-xs text-muted-foreground mb-2 px-1">{t("format")} </p>
+    <div className="flex min-h-0 flex-1 flex-col p-2">
+      <p className="mb-2 px-1 text-xs text-ink-light-soft">{t("format")} </p>
       <textarea
-        className="flex-1 min-h-0 w-full resize-none rounded-md border border-input bg-background px-3 py-2 font-mono text-sm leading-relaxed ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="min-h-0 flex-1 w-full resize-none rounded-inner border border-line bg-bg px-3 py-2 font-mono text-sm leading-relaxed text-ink-light outline-none placeholder:text-ink-light-soft/70 focus:border-primary focus:ring-2 focus:ring-primary/15"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}

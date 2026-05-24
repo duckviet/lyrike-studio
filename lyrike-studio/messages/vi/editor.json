@@ -15,6 +15,30 @@
     "importLrc": "Nhập LRC",
     "exportLrc": "Xuất LRC"
   },
+  "layout": {
+    "source": "Nguồn",
+    "timeline": "Dòng thời gian",
+    "lyrics": "Lời bài hát",
+    "collapseSource": "Thu gọn bảng nguồn",
+    "expandSource": "Mở rộng bảng nguồn"
+  },
+  "source": {
+    "url": "URL nguồn",
+    "placeholder": "Dán link YouTube tại đây...",
+    "fetch": "Tải media",
+    "fetching": "Đang tải...",
+    "transcribe": "Phiên âm",
+    "working": "Đang xử lý...",
+    "metadata": "Thông tin",
+    "track": "Bài hát",
+    "artist": "Nghệ sĩ",
+    "duration": "Thời lượng",
+    "status": "Trạng thái"
+  },
+  "video": {
+    "title": "Video tham chiếu",
+    "empty": "Chưa tải nguồn"
+  },
   "syncedMode": {
     "lineEdit": "Sửa dòng",
     "textEdit": "Sửa text"

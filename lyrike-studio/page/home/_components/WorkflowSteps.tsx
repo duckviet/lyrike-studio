@@ -12,33 +12,40 @@ export function WorkflowSteps() {
   ];
 
   return (
-    <section className="py-20 px-8 bg-cream-dark">
-      <div className="max-w-[1200px] mx-auto text-center">
+    <section className="bg-home-keylime px-6 py-20 md:px-8">
+      <div className="mx-auto max-w-[1200px] text-center">
         <ScrollReveal>
-          <span className="block text-xs font-semibold tracking-[0.2em] uppercase text-ink-soft mb-4">
+          <span className="mb-4 block text-xs font-semibold uppercase text-home-forest">
             {t("label")}
           </span>
         </ScrollReveal>
 
         <ScrollReveal delay={100}>
-          <h2 className="font-serif text-3xl md:text-4xl font-normal text-ink leading-snug mb-6">
+          <h2 className="mb-6 font-serif text-4xl font-normal leading-tight text-home-forest md:text-5xl">
             {t("title1")}
             <br />
-            <em className="italic bg-cream px-1">{t("title2")}</em>
+            <em className="italic">{t("title2")}</em>
           </h2>
         </ScrollReveal>
 
         <ScrollReveal delay={200} direction="none">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-12">
+          <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-4">
             {steps.map((step, index) => (
-              <div key={step.number} className="relative p-8 bg-cream rounded-2xl shadow-ink-sm">
-                <span className="block font-serif text-5xl font-normal text-ink opacity-15 mb-4">
+              <div
+                className="relative rounded-[14px] border border-home-border bg-home-canvas p-7 text-left"
+                key={step.number}
+              >
+                <span className="mb-5 block font-serif text-5xl font-normal leading-none text-home-mint">
                   {step.number}
                 </span>
-                <h4 className="text-lg font-semibold text-ink mb-2">{t(`${step.key}.title`)}</h4>
-                <p className="text-sm text-ink-soft m-0 leading-snug">{t(`${step.key}.description`)}</p>
+                <h4 className="mb-2 text-lg font-semibold text-home-forest">
+                  {t(`${step.key}.title`)}
+                </h4>
+                <p className="m-0 text-sm leading-relaxed text-home-charcoal">
+                  {t(`${step.key}.description`)}
+                </p>
                 {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-px bg-ink-soft/20" />
+                  <div className="absolute left-full top-1/2 hidden h-px w-5 bg-home-border md:block" />
                 )}
               </div>
             ))}

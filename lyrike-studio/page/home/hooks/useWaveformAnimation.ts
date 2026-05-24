@@ -1,40 +1,34 @@
-import { useState, useEffect, useRef } from "react";
+import { timelineRegions } from "../_lib/homeDemoData";
+import { useLoopProgress } from "./useLoopProgress";
 
 export function useWaveformAnimation() {
-  const [playheadPosition, setPlayheadPosition] = useState(0);
-  const [timeDisplay, setTimeDisplay] = useState("0:00");
-  const [activeRegion, setActiveRegion] = useState(-1);
-  const animationRef = useRef<number>(0);
-  const startTimeRef = useRef<number>(0);
+  const { elapsedMs, percent } = useLoopProgress(4800);
+  const seconds = Math.floor((elapsedMs / 1000) % 60);
+  const minutes = Math.floor(elapsedMs / 60000);
+  const activeRegion =
+    percent > 10 && percent < 35
+      ? 0
+      : percent > 40 && percent < 75
+        ? 1
+        : percent > 85
+          ? 2
+          : -1;
+  const activeRange =
+    activeRegion === 0
+      ? { start: 10, end: 35 }
+      : activeRegion === 1
+        ? { start: 40, end: 75 }
+        : activeRegion === 2
+          ? { start: 85, end: 100 }
+          : undefined;
+  const activeRegionId =
+    activeRegion >= 0 ? timelineRegions[activeRegion]?.id : undefined;
 
-  useEffect(() => {
-    const animate = (timestamp: number) => {
-      if (!startTimeRef.current) startTimeRef.current = timestamp;
-      const elapsed = (timestamp - startTimeRef.current) % 4800; // 4.8s loop
-      const position = (elapsed / 4800) * 100;
-
-      setPlayheadPosition(position);
-
-      // Time display
-      const seconds = Math.floor((elapsed / 1000) % 60);
-      const minutes = Math.floor(elapsed / 60000);
-      setTimeDisplay(`${minutes}:${seconds.toString().padStart(2, "0")}`);
-
-      // Region detection
-      if (position > 10 && position < 35) setActiveRegion(0);
-      else if (position > 40 && position < 75) setActiveRegion(1);
-      else if (position > 85) setActiveRegion(2);
-      else setActiveRegion(-1);
-
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    };
-  }, []);
-
-  return { playheadPosition, timeDisplay, activeRegion };
+  return {
+    playheadPosition: percent,
+    timeDisplay: `${minutes}:${seconds.toString().padStart(2, "0")}`,
+    activeRegion,
+    activeRange,
+    activeRegionId,
+  };
 }

@@ -82,7 +82,7 @@ export const LyricRegionsTrack = memo(function LyricRegionsTrack({
   return (
     <div
       ref={trackRef}
-      className="relative z-20 h-11 shrink-0 border-0 rounded-b-xl bg-[#050608] select-none"
+      className="relative z-20 h-11 shrink-0 select-none rounded-b-inner border border-white/10 border-t-0 bg-[#092a0e]"
       style={{ overflowX: "clip", overflowY: "visible", touchAction: "none" }}
       onClick={clearGap}
       {...handlers}

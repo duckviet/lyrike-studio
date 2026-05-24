@@ -32,24 +32,20 @@ interface LyricLineItemProps {
 }
 
 function ButtonGroup({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="inline-flex overflow-hidden border border-line rounded-lg bg-bg">
-      {children}
-    </div>
-  );
+  return <div className="inline-flex items-center gap-1">{children}</div>;
 }
 
 const segmentBase = cn(
-  "min-w-[28px] border-0 bg-transparent",
-  "px-2 py-1 text-xs font-semibold cursor-pointer",
+  "inline-flex items-center justify-center min-w-[28px] h-7 rounded-control bg-black/5",
+  "px-2 py-1 text-xs font-semibold cursor-pointer border-0",
   "text-ink-light transition-all duration-150",
-  "hover:bg-bg-elev hover:text-primary",
+  "hover:bg-black/10 hover:text-primary",
 );
 
-const segmentWithDivider = cn(segmentBase, "border-l border-line");
+const segmentWithDivider = segmentBase;
 
 const nudgeBase = cn(segmentBase, "font-mono");
-const nudgeWithDivider = cn(segmentWithDivider, "font-mono");
+const nudgeWithDivider = cn(segmentBase, "font-mono");
 
 export const LyricLineItem = memo(function LyricLineItem({
   line,
@@ -73,10 +69,10 @@ export const LyricLineItem = memo(function LyricLineItem({
     <li
       data-id={line.id}
       className={cn(
-        "group grid grid-cols-1 gap-2 rounded-xl border p-3 transition-all duration-150",
-        isActive && "border-primary shadow-active",
-        isSelected && "selected-line",
-        !isActive && !isSelected && "border-line bg-bg-soft hover:bg-bg-elev",
+        "group grid grid-cols-1 gap-2 rounded-inner bg-bg p-3 transition-colors duration-150",
+        isActive && "bg-bg-elev",
+        isSelected && "bg-amber-soft",
+        !isActive && !isSelected && "hover:bg-bg/60",
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -84,11 +80,11 @@ export const LyricLineItem = memo(function LyricLineItem({
           type="button"
           onClick={() => onSeekLine(line)}
           className={cn(
-            "border rounded-md font-mono text-xs px-2 py-1",
-            "cursor-pointer transition-all duration-150",
+            "rounded-[999px] px-2.5 py-1 font-mono text-xs border-0",
+            "cursor-pointer transition-colors duration-150",
             isSelected
-              ? "bg-[rgba(196,149,106,0.18)] text-[#8a5e35] border-[rgba(196,149,106,0.25)]"
-              : "bg-primary-8 text-primary border-primary-10 hover:bg-primary-20 hover:border-primary",
+              ? "bg-amber-soft text-primary"
+              : "bg-primary-8 text-primary hover:bg-primary-20",
           )}
         >
           {formatTime(line.start)}–{formatTime(line.end)}
@@ -103,10 +99,11 @@ export const LyricLineItem = memo(function LyricLineItem({
         onFocus={() => onSelectLine(line.id)}
         onChange={(e) => onEditLineText(line.id, e.target.value)}
         className={cn(
-          "w-full border border-line rounded-lg",
-          "bg-bg text-ink-light px-3 py-2 text-sm",
+          "w-full rounded-inner",
+          "bg-transparent text-ink-light py-1 text-base",
+          "border border-transparent px-2 -ml-2",
           "outline-none transition-all duration-150",
-          "focus:border-primary focus:ring-2 focus:ring-primary/15",
+          "focus:border-line focus:bg-white",
         )}
       />
 
@@ -122,6 +119,7 @@ export const LyricLineItem = memo(function LyricLineItem({
         {/* Reorder */}
         <ButtonGroup>
           <button
+            type="button"
             onClick={() => onReorder(line.id, "up")}
             title={t("moveUp")}
             className={segmentBase}
@@ -129,6 +127,7 @@ export const LyricLineItem = memo(function LyricLineItem({
             <ArrowUpIcon size={13} />
           </button>
           <button
+            type="button"
             onClick={() => onReorder(line.id, "down")}
             title={t("moveDown")}
             className={segmentWithDivider}
@@ -140,6 +139,7 @@ export const LyricLineItem = memo(function LyricLineItem({
         {/* Edit actions */}
         <ButtonGroup>
           <button
+            type="button"
             onClick={() => onInsertAfter(line.id)}
             title={t("insertAfter")}
             className={segmentBase}
@@ -147,6 +147,7 @@ export const LyricLineItem = memo(function LyricLineItem({
             <Plus size={13} />
           </button>
           <button
+            type="button"
             onClick={() => onSplit(line.id)}
             title={t("split")}
             className={segmentWithDivider}
@@ -154,6 +155,7 @@ export const LyricLineItem = memo(function LyricLineItem({
             <SplitSquareHorizontal size={13} />
           </button>
           <button
+            type="button"
             onClick={() => onMerge(line.id)}
             title={t("merge")}
             className={segmentWithDivider}
@@ -161,6 +163,7 @@ export const LyricLineItem = memo(function LyricLineItem({
             <MergeIcon size={13} />
           </button>
           <button
+            type="button"
             onClick={() => onDelete(line.id)}
             title={t("delete")}
             className={cn(
@@ -175,6 +178,7 @@ export const LyricLineItem = memo(function LyricLineItem({
         {/* Nudge */}
         <ButtonGroup>
           <button
+            type="button"
             onClick={() => onNudge(line, "start", -TIMING.NUDGE_DELTA_SEC)}
             title={t("nudgeStart", { delta: -TIMING.NUDGE_DELTA_SEC })}
             className={nudgeBase}
@@ -182,6 +186,7 @@ export const LyricLineItem = memo(function LyricLineItem({
             −S
           </button>
           <button
+            type="button"
             onClick={() => onNudge(line, "start", TIMING.NUDGE_DELTA_SEC)}
             title={t("nudgeStart", { delta: TIMING.NUDGE_DELTA_SEC })}
             className={nudgeWithDivider}
@@ -189,6 +194,7 @@ export const LyricLineItem = memo(function LyricLineItem({
             +S
           </button>
           <button
+            type="button"
             onClick={() => onNudge(line, "end", -TIMING.NUDGE_DELTA_SEC)}
             title={t("nudgeEnd", { delta: -TIMING.NUDGE_DELTA_SEC })}
             className={nudgeWithDivider}
@@ -196,6 +202,7 @@ export const LyricLineItem = memo(function LyricLineItem({
             −E
           </button>
           <button
+            type="button"
             onClick={() => onNudge(line, "end", TIMING.NUDGE_DELTA_SEC)}
             title={t("nudgeEnd", { delta: TIMING.NUDGE_DELTA_SEC })}
             className={nudgeWithDivider}

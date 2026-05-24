@@ -6,7 +6,6 @@ import { SourcePanel } from "@/features/media";
 import { LyricsPanel } from "@/features/lyrics-edit/ui/LyricsPanel";
 import { TimelinePanel } from "@/features/playback/ui/TimelinePanel";
 import { useDraft } from "@/features/playback/model/useDraft";
-import { UI } from "@/shared/config/constants";
 import type { LyricLine } from "@/entities/lyrics";
 import { useEditorUIStore } from "@/features/editor/store/editorUIStore";
 import { useEditorMediaStore } from "@/features/editor/store/editorMediaStore";
@@ -15,6 +14,9 @@ import { editorMediaController } from "@/features/editor/store/editorControllers
 import { usePlaybackSync } from "@/features/lyrics-sync/model/usePlaybackSync";
 import { KeyboardShortcutsHelp } from "@/features/editor/ui/KeyboardShortcutsHelp";
 import { useEditorKeyboardShortcuts } from "@/features/editor/model/useEditorKeyboardShortcuts";
+import { EditorPanel } from "@/features/editor";
+import { EditorLayout } from "@/widgets/editor-layout";
+import { useTranslations } from "next-intl";
 
 function downloadLrc(content: string, filename: string) {
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -29,7 +31,10 @@ function downloadLrc(content: string, filename: string) {
 }
 
 export default function StudioPage() {
+  const t = useTranslations("editor.video");
   const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
+  const activeTab = useEditorUIStore((s) => s.activeTab);
+  const setActiveTab = useEditorUIStore((s) => s.setActiveTab);
   const isSidebarCollapsed = useEditorUIStore((s) => s.isSidebarCollapsed);
   const toggleSidebar = () => useEditorUIStore.getState().toggleSidebar();
   const mediaInfo = useEditorMediaStore((s) => s.mediaInfo);
@@ -112,58 +117,40 @@ export default function StudioPage() {
 
   return (
     <>
-      <main className="flex flex-col overflow-hidden h-[calc(100vh-60px)] w-full bg-transparent">
-        <div className="flex-1 flex flex-col min-h-0 p-2 gap-2">
-          <div
-            className="min-h-0 flex-1 grid gap-2"
-            style={{
-              gridTemplateColumns: `${
-                isSidebarCollapsed
-                  ? `${UI.SIDEBAR_COLLAPSED_PX}px`
-                  : `${UI.SIDEBAR_WIDTH_PX}px`
-              } minmax(460px, auto) minmax(0, 1fr)`,
-            }}
+      <EditorLayout
+        activeTab={activeTab}
+        isSidebarCollapsed={isSidebarCollapsed}
+        lyrics={
+          <LyricsPanel
+            onSeekLine={onSeekLine}
+            onNudge={onNudge}
+            onExportLrc={onExportLrc}
+          />
+        }
+        onTabChange={setActiveTab}
+        onToggleSidebar={toggleSidebar}
+        preview={
+          <EditorPanel
+            bodyClassName="flex min-h-0 flex-1 items-center justify-center bg-transparent p-5"
+            className="flex h-full min-w-[360px] flex-col md:min-w-[720px]"
+            title={t("title")}
           >
-            <div className="min-w-0 h-full flex flex-row-reverse overflow-hidden border border-line rounded-2xl bg-bg-soft shadow-sm transition-all duration-200">
-              <aside
-                className={`min-w-0 flex-1 overflow-y-auto opacity-100 transition-opacity duration-150 ${isSidebarCollapsed ? "opacity-0 pointer-events-none" : ""}`}
-              >
-                <SourcePanel />
-              </aside>
-              <button
-                className="w-9 shrink-0 border-0 border-r border-line bg-bg-elev text-ink-light-soft text-sm cursor-pointer transition-all duration-150 hover:bg-[#2c313c] hover:text-white"
-                onClick={toggleSidebar}
-              >
-                {isSidebarCollapsed ? "→" : "←"}
-              </button>
-            </div>
-            <section className="min-w-[360px] md:min-w-[720px] min-h-0 flex items-center justify-center p-4 border border-line rounded-2xl overflow-hidden bg-linear-to-b from-[#050608] to-black shadow-glass">
-              <VideoPlayer
-                ref={videoRef}
-                videoId={mediaInfo?.videoId ?? null}
-              />
-            </section>
-            <aside className="min-w-0 min-h-0 h-full overflow-hidden border border-line rounded-2xl bg-bg-soft shadow-sm">
-              <LyricsPanel
-                onSeekLine={onSeekLine}
-                onNudge={onNudge}
-                onExportLrc={onExportLrc}
-              />
-            </aside>
-          </div>
-          <div className="h-[302px] shrink-0 p-0 pb-2.5">
-            <TimelinePanel
-              isPlaying={isPlaying}
-              currentTime={currentTime}
-              onSaveDraft={handleSaveDraft}
-              onTogglePlayback={handleTogglePlayback}
-              onSeekTo={handleSeekTo}
-              onSeekBy={handleSeekBy}
-              onOpenShortcutsHelp={handleOpenShortcutsHelp}
-            />
-          </div>
-        </div>
-      </main>
+            <VideoPlayer ref={videoRef} videoId={mediaInfo?.videoId ?? null} />
+          </EditorPanel>
+        }
+        source={<SourcePanel />}
+        timeline={
+          <TimelinePanel
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            onSaveDraft={handleSaveDraft}
+            onTogglePlayback={handleTogglePlayback}
+            onSeekTo={handleSeekTo}
+            onSeekBy={handleSeekBy}
+            onOpenShortcutsHelp={handleOpenShortcutsHelp}
+          />
+        }
+      />
       <KeyboardShortcutsHelp
         open={isShortcutsHelpOpen}
         onClose={() => setIsShortcutsHelpOpen(false)}

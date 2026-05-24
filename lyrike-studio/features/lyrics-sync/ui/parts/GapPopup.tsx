@@ -27,8 +27,8 @@ export function GapPopup({
         "absolute z-50 bottom-[calc(100%+6px)]",
         "left-1/2 -translate-x-1/2",
         "flex items-center gap-px",
-        "bg-[#1a1f2b] border border-white/15 rounded-lg",
-        "shadow-[0_8px_24px_rgba(0,0,0,0.5)]",
+        "rounded-inner border border-line bg-bg",
+        "shadow-ink-md",
         "p-1",
         "animate-in fade-in zoom-in-95 duration-100",
         "pointer-events-auto",
@@ -36,8 +36,8 @@ export function GapPopup({
       onClick={(e) => e.stopPropagation()}
     >
       {/* Caret */}
-      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-white/15" />
-      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-px w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-[#1a1f2b]" />
+      <div className="absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-line" />
+      <div className="absolute left-1/2 top-full mt-px h-0 w-0 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-bg-soft" />
 
       {onExtendPrev && (
         <PopupAction
@@ -105,11 +105,11 @@ function PopupAction({
       title={title}
       onClick={onClick}
       className={cn(
-        "w-7 h-7 rounded-md border text-xs font-semibold cursor-pointer",
+        "h-7 w-7 rounded-control border text-xs font-semibold cursor-pointer",
         "transition-all duration-100",
         variant === "primary"
           ? "border-primary/40 text-primary bg-primary/10 hover:bg-primary/20"
-          : "border-white/10 text-white/60 bg-transparent hover:bg-white/10 hover:text-white/90",
+          : "border-line text-ink-light-soft bg-transparent hover:bg-bg-elev hover:text-ink-light",
       )}
     >
       {label}

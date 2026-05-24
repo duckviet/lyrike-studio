@@ -15,6 +15,30 @@
     "importLrc": "Import LRC",
     "exportLrc": "Export LRC"
   },
+  "layout": {
+    "source": "Source",
+    "timeline": "Timeline",
+    "lyrics": "Lyrics",
+    "collapseSource": "Collapse source panel",
+    "expandSource": "Expand source panel"
+  },
+  "source": {
+    "url": "Source URL",
+    "placeholder": "Paste YouTube link here...",
+    "fetch": "Fetch Media",
+    "fetching": "Fetching...",
+    "transcribe": "Transcribe",
+    "working": "Working...",
+    "metadata": "Metadata",
+    "track": "Track",
+    "artist": "Artist",
+    "duration": "Duration",
+    "status": "Status"
+  },
+  "video": {
+    "title": "Reference video",
+    "empty": "No source loaded"
+  },
   "syncedMode": {
     "lineEdit": "Line Edit",
     "textEdit": "Text Edit"

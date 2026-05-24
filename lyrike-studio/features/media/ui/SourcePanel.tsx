@@ -2,7 +2,6 @@
 
 import { PublishCard } from "@/features/publish";
 
-import { useEditorUIStore } from "@/features/editor/store/editorUIStore";
 import { useEditorMediaStore } from "@/features/editor/store/editorMediaStore";
 import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
 import {
@@ -13,9 +12,12 @@ import {
 import { useCallback, useMemo } from "react";
 import { formatTime } from "@/shared/utils/formatters";
 import Image from "next/image";
+import { LoaderCircle, Radio, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { EditorButton, EditorStatusCallout } from "@/features/editor";
 
 export function SourcePanel() {
-  const activeTab = useEditorUIStore((s) => s.activeTab);
+  const t = useTranslations("editor.source");
 
   const sourceInput = useEditorMediaStore((s) => s.sourceInput);
   const setSourceInput = useEditorMediaStore((s) => s.setSourceInput);
@@ -105,7 +107,7 @@ export function SourcePanel() {
       setPeaksState(data.peaksState);
       setPeaksMessage(data.peaksMessage);
       setFetchState("ready");
-    } catch (e) {
+    } catch {
       setFetchState("error");
     }
   }, [
@@ -128,7 +130,7 @@ export function SourcePanel() {
     try {
       await transcribeMutation.transcribeAsync(mediaInfo.videoId);
       setTranscribeState("ready");
-    } catch (e) {
+    } catch {
       setTranscribeState("error");
     }
   }, [mediaInfo, transcribeMutation, setSourceMessage, setTranscribeState]);
@@ -146,21 +148,19 @@ export function SourcePanel() {
   }, [lyricsState, mediaInfo, publishMutation, exportToLrc, setSourceMessage]);
 
   return (
-    <article
-      className={`min-h-0 h-full flex flex-col overflow-x-hidden overflow-y-auto bg-transparent ${activeTab !== "source" ? "hidden md:flex" : ""}`}
-    >
-      <section className="p-4 flex flex-col gap-3.5 border-b border-line-soft">
+    <article className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto bg-transparent">
+      <section className="flex flex-col gap-4 p-5 pl-0 pb-2">
         <div className="flex flex-col gap-2">
-          <span className="text-[0.7rem] font-bold text-ink-light-soft uppercase tracking-widest">
-            Source URL
+          <span className="text-[0.7rem] font-bold uppercase text-ink-light-soft">
+            {t("url")}
           </span>
           <div className="relative">
             <input
               type="url"
               value={sourceInput}
               onChange={(e) => setSourceInput(e.target.value)}
-              placeholder="Paste YouTube link here..."
-              className={`w-full px-4 py-3 rounded-xl border bg-bg-input text-ink text-sm outline-none transition-colors ${
+              placeholder={t("placeholder")}
+              className={`w-full rounded-control border bg-bg-input px-4 py-3 text-sm text-ink outline-none transition-colors ${
                 fetchState === "error"
                   ? "border-danger"
                   : "border-line focus:border-primary-deep focus:ring-4 focus:ring-primary-10"
@@ -170,55 +170,65 @@ export function SourcePanel() {
         </div>
 
         <div className="grid grid-cols-1 gap-2">
-          <button
-            type="button"
-            className="px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 min-h-[42px] inline-flex items-center justify-center gap-2 tracking-tight bg-accent text-white border-none shadow-sm hover:bg-accent-deep"
+          <EditorButton
+            className="w-full"
             disabled={fetchState === "loading"}
+            icon={
+              fetchState === "loading" ? (
+                <LoaderCircle className="animate-spin" size={16} />
+              ) : (
+                <Radio size={16} />
+              )
+            }
             onClick={onFetch}
+            variant="primary"
           >
-            {fetchState === "loading" ? (
-              <>
-                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{" "}
-                Fetching...
-              </>
-            ) : (
-              "Fetch Media"
-            )}
-          </button>
+            {fetchState === "loading" ? t("fetching") : t("fetch")}
+          </EditorButton>
 
-          <button
-            type="button"
-            className="min-h-[42px] rounded-xl border border-accent/25 px-5 py-3 inline-flex items-center justify-center gap-2 text-sm font-semibold text-accent transition-all duration-150 cursor-pointer tracking-tight bg-bg-elev hover:bg-bg-soft hover:border-accent/40"
+          <EditorButton
+            className="w-full"
             disabled={
               !mediaInfo ||
               ["starting", "running", "queued"].includes(transcribeState)
             }
+            icon={
+              ["starting", "running", "queued"].includes(transcribeState) ? (
+                <LoaderCircle className="animate-spin" size={16} />
+              ) : (
+                <Sparkles size={16} />
+              )
+            }
             onClick={onTranscribe}
+            variant="secondary"
           >
-            {["starting", "running", "queued"].includes(transcribeState) ? (
-              <>
-                <span className="w-2 h-2 bg-accent rounded-full animate-pulse shadow-accent/20 shadow-lg" />{" "}
-                Working...
-              </>
-            ) : (
-              "Transcribe"
-            )}
-          </button>
+            {["starting", "running", "queued"].includes(transcribeState)
+              ? t("working")
+              : t("transcribe")}
+          </EditorButton>
         </div>
 
-        <div
-          className={`border-l-4 border-line rounded-lg p-4 text-sm text-ink-light ${fetchState === "ready" ? "border-l-primary bg-primary-8 text-ink-light" : ""} ${fetchState === "error" ? "border-l-danger bg-danger-8 text-[#fca5a5]" : ""}`}
+        <EditorStatusCallout
+          tone={
+            fetchState === "ready"
+              ? "success"
+              : fetchState === "error"
+                ? "error"
+                : fetchState === "loading"
+                  ? "loading"
+                  : "neutral"
+          }
         >
           <p className="m-0">{sourceMessage}</p>
-        </div>
+        </EditorStatusCallout>
       </section>
 
       {mediaInfo && (
         <>
-          <section className="p-4 flex flex-col gap-3.5 border-b border-line-soft">
+          <section className="flex flex-col gap-4 p-5 pt-2">
             <div className="flex items-center">
               <span className="inline-flex rounded-md bg-primary-10 text-primary px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wider border border-primary-20">
-                Metadata
+                {t("metadata")}
               </span>
             </div>
             <div className="flex flex-col gap-3">
@@ -227,13 +237,13 @@ export function SourcePanel() {
                   width={112}
                   height={112}
                   src={`https://i.ytimg.com/vi/${mediaInfo.videoId}/mqdefault.jpg`}
-                  className="w-28 aspect-square rounded-xl object-cover shadow-sm bg-bg-elev border border-line-soft"
+                  className="aspect-square w-28 rounded-inner border border-line-soft bg-bg object-cover"
                   alt="Thumbnail"
                 />
                 <div className="flex-1 min-w-0 flex flex-col gap-3">
                   <div className="min-w-0 grid gap-1">
                     <span className="text-[0.68rem] text-ink-light-soft font-bold uppercase tracking-wider">
-                      Track
+                      {t("track")}
                     </span>
                     <span className="text-sm font-medium text-ink-light wrap-break-word">
                       {mediaInfo.trackName || "Untitled"}
@@ -241,7 +251,7 @@ export function SourcePanel() {
                   </div>
                   <div className="min-w-0 grid gap-1">
                     <span className="text-[0.68rem] text-ink-light-soft font-bold uppercase tracking-wider">
-                      Artist
+                      {t("artist")}
                     </span>
                     <span className="text-sm font-medium text-ink-light wrap-break-word">
                       {mediaInfo.artistName || "Unknown Artist"}
@@ -252,7 +262,7 @@ export function SourcePanel() {
               <div className="grid grid-cols-2 gap-3 pt-3 border-t border-line">
                 <div className="min-w-0 grid gap-1">
                   <span className="text-[0.68rem] text-ink-light-soft font-bold uppercase tracking-wider">
-                    Duration
+                    {t("duration")}
                   </span>
                   <span className="text-sm font-medium text-ink-light wrap-break-word font-mono">
                     {formatTime(mediaInfo.duration)}
@@ -260,7 +270,7 @@ export function SourcePanel() {
                 </div>
                 <div className="min-w-0 grid gap-1">
                   <span className="text-[0.68rem] text-ink-light-soft font-bold uppercase tracking-wider">
-                    Status
+                    {t("status")}
                   </span>
                   <span className="text-sm font-medium text-primary capitalize">
                     {transcribeState}

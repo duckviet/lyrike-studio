@@ -19,6 +19,7 @@ import { calcExtendLinePatch } from "@/features/playback/model/extendLine";
 import { getAudioUrl } from "@/lib/api";
 import { useTranslations } from "next-intl";
 import { TimelineActionsBar } from "./TimelineActionsBar";
+import { EditorPanel } from "@/features/editor";
 
 export const TimelinePanel = ({
   isPlaying = false,
@@ -43,7 +44,6 @@ export const TimelinePanel = ({
   const isInitialized = useRef(false);
 
   // Context / Stores
-  const activeTab = useEditorUIStore((s) => s.activeTab);
   const zoomLevel = useEditorUIStore((s) => s.zoomLevel);
   const waveScrollLeft = useEditorUIStore((s) => s.waveScrollLeft);
   const wavePxPerSec = useEditorUIStore((s) => s.wavePxPerSec);
@@ -162,8 +162,9 @@ export const TimelinePanel = ({
   }, [zoomLevel]);
 
   return (
-    <article
-      className={`h-full flex flex-col overflow-hidden border border-line rounded-2xl bg-bg-soft shadow-sm ${activeTab !== "timeline" ? "hidden md:block" : ""}`}
+    <EditorPanel
+      bodyClassName="flex min-h-0 flex-1 flex-col"
+      className="flex h-full flex-col"
     >
       <TimelineActionsBar
         isPlaying={isPlaying}
@@ -177,18 +178,18 @@ export const TimelinePanel = ({
         onSaveDraft={onSaveDraft ?? (() => undefined)}
       />
 
-      <div className="min-h-0 flex-1 p-3 flex flex-col relative bg-[#050608]">
+      <div className="relative flex min-h-0 flex-1 flex-col bg-transparent px-4 py-2">
         <div
-          className="shrink-0 overflow-hidden border-0 rounded-t-xl bg-[#0d1117] ruler-tick"
+          className="shrink-0 overflow-hidden rounded-t-inner border border-white/10 border-b-0 bg-[#092a0e] ruler-tick"
           ref={timelineHostRef}
         />
         <div
           id="waveform"
-          className="min-h-0 flex-1 overflow-hidden border-x border-b border-white/5 bg-[#050608] shadow-inner no-scrollbar waveform-container "
+          className="min-h-0 flex-1 overflow-hidden border-x border-white/10 bg-[#092a0e] shadow-inner no-scrollbar waveform-container"
           ref={waveHostRef}
         >
           {!mediaInfo && (
-            <div className="flex-1 h-full grid place-items-center border border-dashed border-white/10 rounded-lg text-white/30 text-sm">
+            <div className="grid h-full flex-1 place-items-center rounded-inner border border-dashed border-white/20 text-sm text-white/65">
               <span>{t("loadWaveform")}</span>
             </div>
           )}
@@ -222,7 +223,7 @@ export const TimelinePanel = ({
           />
         )}
       </div>
-    </article>
+    </EditorPanel>
   );
 };
 

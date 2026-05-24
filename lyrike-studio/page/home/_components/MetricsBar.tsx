@@ -1,46 +1,30 @@
 import { ScrollReveal } from "./ScrollReveal";
 
+const metrics = [
+  { value: "LRC", label: "Industry standard" },
+  { value: "No account", label: "No sign-up needed" },
+  { value: "Free", label: "Open source-friendly" },
+];
+
 export function MetricsBar() {
   return (
-    <section className="py-8">
-      <div className="max-w-[1200px] mx-auto px-4">
+    <section className="px-6 py-8 md:px-8">
+      <div className="mx-auto max-w-[1200px]">
         <ScrollReveal>
-          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-0 rounded-2xl border border-white/10 bg-zinc-950/40 backdrop-blur-xl p-8 md:p-10">
-            {/* Item 1 */}
-            <div className="flex flex-1 flex-col items-center md:items-start text-center md:text-left">
-              <div className="text-4xl font-semibold tracking-[-1.5px]">
-                LRC
+          <div className="grid overflow-hidden rounded-[14px] border border-home-border bg-home-keylime md:grid-cols-3">
+            {metrics.map((metric) => (
+              <div
+                className="border-home-border p-6 text-center first:border-l-0 md:border-l md:p-8 md:text-center"
+                key={metric.value}
+              >
+                <div className="font-serif text-4xl font-normal leading-none text-home-forest">
+                  {metric.value}
+                </div>
+                <div className="mt-2 text-sm text-home-charcoal">
+                  {metric.label}
+                </div>
               </div>
-              <div className="mt-1 text-sm text-white/60">
-                Industry standard
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="hidden md:block w-px self-stretch bg-white/10" />
-
-            {/* Item 2 */}
-            <div className="flex flex-1 flex-col items-center text-center">
-              <div className="text-4xl font-semibold tracking-[-1.5px]">
-                No account
-              </div>
-              <div className="mt-1 text-sm text-white/60">
-                No sign-up needed
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="hidden md:block w-px self-stretch bg-white/10" />
-
-            {/* Item 3 */}
-            <div className="flex flex-1 flex-col items-center md:items-end text-center md:text-right">
-              <div className="text-4xl font-semibold tracking-[-1.5px]">
-                Free
-              </div>
-              <div className="mt-1 text-sm text-white/60">
-                Open source-friendly
-              </div>
-            </div>
+            ))}
           </div>
         </ScrollReveal>
       </div>

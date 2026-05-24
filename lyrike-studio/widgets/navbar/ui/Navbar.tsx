@@ -1,73 +1,9 @@
 "use client";
-import { useTranslations, useLocale } from "next-intl";
+
+import { Home, Languages, PencilLine } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { cn } from "@/shared/lib/utils";
 import { Link, usePathname, useRouter } from "@/shared/lib/i18n/navigation";
-
-const HomeIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-    <polyline points="9 22 9 12 15 12 15 22" />
-  </svg>
-);
-
-const EditorIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-    <path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" />
-  </svg>
-);
-
-const ProjectsIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
-  </svg>
-);
-
-const AccountIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
 
 const GithubIcon = () => (
   <svg
@@ -85,6 +21,8 @@ const GithubIcon = () => (
     <path d="M9 18c-4.51 2-4.51-2-7-2" />
   </svg>
 );
+const navLinkClass =
+  "inline-flex min-h-10 items-center gap-2 rounded-[14px] px-3 text-sm font-medium transition-colors";
 
 const LanguageSwitcher = () => {
   const locale = useLocale();
@@ -98,9 +36,11 @@ const LanguageSwitcher = () => {
 
   return (
     <button
+      className="inline-flex min-h-10 items-center gap-2 rounded-[14px] border border-home-border bg-home-canvas px-3 text-xs font-semibold uppercase text-home-charcoal transition-colors hover:text-home-forest"
       onClick={toggleLocale}
-      className="flex items-center gap-2 text-xs font-bold text-ink-soft hover:text-ink hover:bg-ink/5 px-2 py-1 rounded-md transition-all border border-ink/10 uppercase tracking-tighter"
+      type="button"
     >
+      <Languages size={15} strokeWidth={1.8} />
       <span>{locale === "en" ? "EN" : "VI"}</span>
     </button>
   );
@@ -108,57 +48,56 @@ const LanguageSwitcher = () => {
 
 export const Navbar = () => {
   const t = useTranslations("common.nav");
+  const pathname = usePathname();
+
+  const links = [
+    { href: "/", label: t("home"), icon: Home },
+    { href: "/studio", label: t("editor"), icon: PencilLine },
+  ];
 
   return (
-    <nav className="sticky top-0 left-0 right-0 z-50 px-8 py-3 bg-cream/85 backdrop-blur-md border-b border-line">
-      <div className="max-w-[90vw] mx-auto flex items-center justify-between">
+    <nav className="sticky left-0 right-0 top-0 z-50 border-b border-home-border bg-home-canvas/90 px-4 py-3 backdrop-blur-md md:px-8">
+      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4">
         <Link
+          className="flex min-w-0 items-center gap-3 font-serif text-xl font-normal text-home-forest"
           href="/"
-          className="text-xl font-serif font-normal text-ink tracking-tight flex items-center gap-2"
         >
-          <div className="w-5 h-5 rounded-full bg-accent" />
-          LyricSync
+          <span className="size-5 shrink-0 rounded-full bg-home-forest" />
+          <span className="truncate">LyricSync</span>
         </Link>
 
-        <div className="flex items-center gap-1">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-ink/5 px-3 py-2 rounded-lg transition-all"
-          >
-            <HomeIcon />
-            <span>{t("home")}</span>
-          </Link>
-          <Link
-            href="/studio"
-            className="flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-ink/5 px-3 py-2 rounded-lg transition-all"
-          >
-            <EditorIcon />
-            <span>{t("editor")}</span>
-          </Link>
-          {/* <Link
-            href="/projects"
-            className="flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-ink/5 px-3 py-2 rounded-lg transition-all"
-          >
-            <ProjectsIcon />
-            <span>{t("projects")}</span>
-          </Link>
-          <Link
-            href="/account"
-            className="flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-ink/5 px-3 py-2 rounded-lg transition-all"
-          >
-            <AccountIcon />
-            <span>{t("account")}</span>
-          </Link> */}
-          <div className="w-px h-4 bg-ink/10 mx-2" />
+        <div className="flex items-center gap-1.5">
+          <div className="hidden items-center gap-1.5 sm:flex">
+            {links.map(({ href, icon: Icon, label }) => {
+              const isActive = pathname === href;
+
+              return (
+                <Link
+                  className={cn(
+                    navLinkClass,
+                    isActive
+                      ? "bg-home-keylime text-home-forest"
+                      : "text-home-charcoal hover:bg-home-keylime hover:text-home-forest",
+                  )}
+                  href={href}
+                  key={href}
+                >
+                  <Icon size={16} strokeWidth={1.8} />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </div>
+
           <a
+            aria-label="GitHub"
+            className="inline-flex size-10 items-center justify-center rounded-[14px] text-home-charcoal transition-colors hover:bg-home-keylime hover:text-home-forest"
             href="https://github.com/duckviet/lyrike-studio"
-            target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-ink/5 px-3 py-2 rounded-lg transition-all"
+            target="_blank"
           >
             <GithubIcon />
           </a>
-          <div className="w-px h-4 bg-ink/10 mx-2" />
           <LanguageSwitcher />
         </div>
       </div>

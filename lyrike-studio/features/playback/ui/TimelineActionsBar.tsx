@@ -2,10 +2,20 @@ import { useTranslations } from "next-intl";
 import { useEditorUIStore } from "@/features/editor/store/editorUIStore";
 import { useEditorMediaStore } from "@/features/editor/store/editorMediaStore";
 import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
-import { TIMING } from "@/shared/config/constants";
+import { TIMING, WAVEFORM } from "@/shared/config/constants";
 import { formatTime } from "@/shared/utils/formatters";
 import { editorWaveformController } from "@/features/editor/store/editorControllers";
-import { CircleQuestionMark, SplitSquareHorizontalIcon } from "lucide-react";
+import {
+  CircleQuestionMark,
+  Pause,
+  Play,
+  Redo2,
+  RotateCcw,
+  Save,
+  SplitSquareHorizontalIcon,
+  Undo2,
+} from "lucide-react";
+import { EditorButton, EditorSegmentedControl } from "@/features/editor";
 
 interface TimelineActionsBarProps {
   isPlaying: boolean;
@@ -46,123 +56,133 @@ export function TimelineActionsBar({
   const canRedo = useLyricsStore((s) => s.canRedo);
 
   return (
-    <div className="h-12 px-4 shrink-0 flex justify-between items-center gap-4 bg-bg-elev border-b border-line">
-      <div className="min-w-0 flex items-center gap-2">
-        <button
-          type="button"
-          className="w-24 h-8 px-4 bg-white rounded-lg border border-line inline-flex items-center justify-center gap-2 text-xs font-semibold transition-all duration-150 cursor-pointer tracking-tight disabled:opacity-40 disabled:cursor-not-allowed"
+    <div className="flex min-h-12 shrink-0 items-center justify-between gap-3 overflow-x-auto px-3 py-2">
+      <div className="flex min-w-max items-center gap-2">
+        <EditorButton
           disabled={!mediaInfo?.audioReady}
+          icon={isPlaying ? <Pause size={14} /> : <Play size={14} />}
           onClick={onTogglePlayback}
+          size="sm"
+          variant="primary"
         >
-          {isPlaying ? `⏸ ${t("pause")}` : `▶ ${t("play")}`}
-        </button>
-        <div className="inline-flex items-center gap-0.5 p-1 border border-line rounded-lg bg-bg">
-          <button
-            type="button"
-            className="h-7 px-3 rounded border-0 bg-transparent text-ink-light-soft text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev"
+          {isPlaying ? t("pause") : t("play")}
+        </EditorButton>
+        <div className="inline-flex h-9 items-center rounded-control border border-line bg-bg p-0.5">
+          <EditorButton
+            className="h-full min-h-0 px-2"
             disabled={!mediaInfo?.audioReady}
+            icon={<RotateCcw size={14} />}
             onClick={() => onSeekBy(-TIMING.SEEK_DELTA_SEC)}
+            variant="ghost"
           >
             −5s
-          </button>
-          <button
-            type="button"
-            className="h-7 px-3 rounded border-0 bg-transparent text-ink-light-soft text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev"
+          </EditorButton>
+          <EditorButton
+            className="h-full min-h-0 px-2"
             disabled={!mediaInfo?.audioReady}
             onClick={() => onSeekBy(TIMING.SEEK_DELTA_SEC)}
+            variant="ghost"
           >
             +5s
-          </button>
+          </EditorButton>
         </div>
-        <div className="inline-flex items-center gap-0.5 p-1 border border-line rounded-lg bg-bg ml-1">
-          <button
-            type="button"
-            className={`h-6 px-3 rounded border-0 text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-150 ${peakSource === "original" ? "bg-bg-elev text-primary shadow-sm" : "bg-transparent text-ink-light-soft hover:bg-bg-elev"}`}
-            onClick={() => setPeakSource("original")}
-            title="Use original audio waveform"
-          >
-            Full
-          </button>
-          <button
-            type="button"
-            className={`h-6 px-3 rounded border-0 text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-150 ${peakSource === "demucs" ? "bg-bg-elev text-primary shadow-sm" : "bg-transparent text-ink-light-soft hover:bg-bg-elev"}`}
-            onClick={() => setPeakSource("demucs")}
-            title="Use vocal-only waveform (requires transcription)"
-          >
-            Vocals
-          </button>
-        </div>
+        <EditorSegmentedControl
+          className="h-9 p-0.5 rounded-control"
+          items={[
+            {
+              id: "original",
+              label: "Full",
+              title: "Use original audio waveform",
+            },
+            {
+              id: "demucs",
+              label: "Vocals",
+              title: "Use vocal-only waveform (requires transcription)",
+            },
+          ]}
+          onChange={setPeakSource}
+          size="sm"
+          value={peakSource}
+        />
       </div>
 
-      <div className="min-w-[180px] flex items-center justify-center gap-3">
-        <span className="text-[0.66rem] font-bold text-ink-light-soft uppercase text-nowrap tracking-widest">
+      <div className="flex min-w-[180px] flex-1 items-center justify-center gap-3">
+        <span className="text-nowrap text-[0.66rem] font-bold uppercase text-ink-light-soft">
           {t("zoom")}
         </span>
         <input
           className="w-full max-w-[260px] h-1.5 border-0 rounded-full bg-bg appearance-none cursor-pointer p-0 accent-primary"
           type="range"
-          min="20"
-          max="240"
-          step="2"
+          min={WAVEFORM.MIN_ZOOM}
+          max={WAVEFORM.MAX_ZOOM}
+          step={WAVEFORM.ZOOM_STEP}
           value={zoomLevel}
           onChange={(e) => onZoomChange(Number(e.target.value))}
         />
       </div>
 
-      <div className="min-w-0 flex items-center justify-end gap-2">
-        <button
-          type="button"
-          className="flex items-center gap-2 h-8 px-3 rounded-lg border border-line bg-transparent text-ink-light-soft text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev"
+      <div className="flex min-w-max items-center justify-end gap-2">
+        <EditorButton
+          icon={<SplitSquareHorizontalIcon size={14} />}
           onClick={() => {
             const time = editorWaveformController.getHoverTime();
             useLyricsStore.getState().splitAtTime(time);
           }}
+          size="sm"
           title="Split line at hover position"
+          variant="secondary"
         >
-          <SplitSquareHorizontalIcon size={13} /> {t("split") || "Split"}
-        </button>
-        <button
-          type="button"
-          className={`h-8 px-3 rounded-lg border border-line bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 ${loopEnabled ? "bg-primary text-[#002633] border-primary shadow-md" : "text-ink-light-soft hover:bg-bg-elev"}`}
+          {t("split") || "Split"}
+        </EditorButton>
+        <EditorButton
           onClick={onToggleLoop}
+          size="sm"
+          variant={loopEnabled ? "primary" : "secondary"}
         >
           {t("loop")}
-        </button>
-        <div className="h-8 min-w-[142px] px-3 inline-flex items-center justify-center border border-line rounded-lg bg-bg text-center text-primary font-mono text-sm font-medium tabular-nums">
+        </EditorButton>
+        <div className="inline-flex h-9 min-w-[130px] items-center justify-center rounded-control border border-line bg-bg px-3 text-center font-mono text-xs font-medium tabular-nums text-primary">
           {formatTime(currentTime)} / {formatTime(duration)}
         </div>
-        <div className="inline-flex items-center gap-0.5 p-1 border border-line rounded-lg bg-bg">
-          <button
-            type="button"
-            className="h-6 px-3 rounded border-0 bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev disabled:opacity-40 disabled:cursor-not-allowed text-ink-light-soft"
+        <div className="inline-flex h-9 items-center gap-0.5 rounded-control border border-line bg-bg p-0.5">
+          <EditorButton
+            className="h-full min-h-0 w-8 p-0"
+            icon={<Undo2 size={14} />}
             disabled={!canUndo}
             onClick={onUndo}
+            title={t("undo")}
+            variant="ghost"
           >
-            {t("undo")}
-          </button>
-          <button
-            type="button"
-            className="h-6 px-3 rounded border-0 bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev disabled:opacity-40 disabled:cursor-not-allowed text-ink-light-soft"
+            <span className="sr-only">{t("undo")}</span>
+          </EditorButton>
+          <EditorButton
+            className="h-full min-h-0 w-8 p-0"
+            icon={<Redo2 size={14} />}
             disabled={!canRedo}
             onClick={onRedo}
+            title={t("redo")}
+            variant="ghost"
           >
-            {t("redo")}
-          </button>
-          <button
-            type="button"
-            className="h-6 px-3 rounded border-0 bg-transparent text-xs font-semibold cursor-pointer transition-all duration-150 hover:bg-bg-elev text-ink-light-soft"
+            <span className="sr-only">{t("redo")}</span>
+          </EditorButton>
+          <span className="mx-0.5 h-4 w-px bg-line" />
+          <EditorButton
+            className="h-full min-h-0 w-8 p-0"
+            icon={<Save size={14} />}
             onClick={onSaveDraft}
+            title={t("draft")}
+            variant="ghost"
           >
-            {t("draft")}
-          </button>
+            <span className="sr-only">{t("draft")}</span>
+          </EditorButton>
         </div>
-        <button
-          type="button"
-          className={` text-xs font-semibold cursor-pointer transition-all duration-150 ${loopEnabled ? "bg-primary text-[#002633] border-primary shadow-md" : "text-ink-light-soft hover:bg-bg-elev"}`}
+        <EditorButton
+          aria-label="Keyboard shortcuts"
+          className="h-9 w-9 min-h-0 min-w-0 p-0"
+          icon={<CircleQuestionMark size={16} />}
           onClick={onOpenShortcutsHelp}
-        >
-          <CircleQuestionMark size={16} />
-        </button>
+          variant="ghost"
+        />
       </div>
     </div>
   );
