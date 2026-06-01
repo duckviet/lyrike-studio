@@ -40,26 +40,40 @@ def fetch_video_info(url: str) -> dict:
         "noplaylist": True, 
         "skip_download": True,
         "nocheckcertificate": True,
-        # Switching to Android and Mobile Web as they currently bypass blocks better than iOS
-        "extractor_args": {"youtube": {"player_client": ["android", "mweb", "web"]}},
+        # 'tv' and 'android' clients are currently the strongest against cloud IP blocks
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["tv", "android", "mweb", "web"],
+                # Some videos now require 'web_creator' or 'web_embedded'
+                "player_skip": ["web"] 
+            }
+        },
+        "source_address": "0.0.0.0", # Force IPv4
+        "check_formats": False,
         "http_headers": {
-            "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (SMART-TV; LINUX; Tizen 5.0) AppleWebkit/537.36 (KHTML, like Gecko) SamsungBrowser/2.2 Chrome/63.0.3239.111 TV Safari/537.36",
             "Accept": "*/*",
             "Accept-Language": "en-US,en;q=0.9",
-            "Origin": "https://www.youtube.com",
-            "Referer": "https://www.youtube.com/",
         },
         **_get_cookie_opt(),
     }
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             return ydl.extract_info(url, download=False)
+    except yt_dlp.utils.DownloadError as e:
+        msg = str(e).lower()
+        logging.error(f"yt-dlp fetch error: {e}")
+        if "video unavailable" in msg or "private" in msg or "removed" in msg:
+            raise HTTPException(status_code=404, detail="Video không tồn tại hoặc đã bị xóa")
+        if "sign in" in msg or "bot" in msg or "captcha" in msg:
+            raise HTTPException(
+                status_code=403, 
+                detail="YouTube đang chặn dải IP của server. Hãy thử cập nhật Cookies mới hoặc dùng video khác."
+            )
+        raise HTTPException(status_code=502, detail=f"Lỗi khi lấy thông tin video: {str(e)}")
     except Exception as e:
-        logging.error(f"yt-dlp fetch error: {str(e)}")
-        raise HTTPException(
-            status_code=403, 
-            detail="YouTube is blocking access. Try updating YOUTUBE_COOKIES or check if video is restricted."
-        )
+        logging.error(f"Unexpected fetch error: {e}")
+        raise HTTPException(status_code=500, detail="Lỗi server không xác định")
 
 def download_audio(url: str, video_id: str) -> Path:
     target_dir = AUDIO_CACHE_DIR / video_id
@@ -72,9 +86,10 @@ def download_audio(url: str, video_id: str) -> Path:
         "quiet": True,
         "no_warnings": True,
         "nocheckcertificate": True,
-        "extractor_args": {"youtube": {"player_client": ["android", "mweb", "web"]}},
+        "extractor_args": {"youtube": {"player_client": ["tv", "android", "mweb"]}},
+        "source_address": "0.0.0.0",
         "http_headers": {
-            "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (SMART-TV; LINUX; Tizen 5.0) AppleWebkit/537.36 (KHTML, like Gecko) SamsungBrowser/2.2 Chrome/63.0.3239.111 TV Safari/537.36",
         },
         **_get_cookie_opt(),
     }
