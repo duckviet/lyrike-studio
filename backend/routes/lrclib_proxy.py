@@ -10,7 +10,11 @@ LRCLIB_API_BASE = "https://lrclib.net"
 async def request_challenge():
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.post(f"{LRCLIB_API_BASE}/api/request-challenge")
+            resp = await client.post(
+                f"{LRCLIB_API_BASE}/api/request-challenge",
+                headers={"User-Agent": "LyricsStudio/1.0.0"},
+                timeout=30.0
+            )
             return StreamingResponse(
                 resp.aiter_bytes(),
                 status_code=resp.status_code,
@@ -25,7 +29,10 @@ async def publish(request: Request):
     token = request.headers.get("X-Publish-Token")
     async with httpx.AsyncClient() as client:
         try:
-            headers = {"Content-Type": "application/json"}
+            headers = {
+                "Content-Type": "application/json",
+                "User-Agent": "LyricsStudio/1.0.0"
+            }
             if token:
                 headers["X-Publish-Token"] = token
             
@@ -42,3 +49,4 @@ async def publish(request: Request):
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
