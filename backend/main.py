@@ -92,6 +92,10 @@ app.include_router(cache_proxy.router)
 def health():
     return {"status": "ok", "message": "LRCLIB Publisher API is running"}
 
+@app.get("/healthz", tags=["health"])
+def healthz():
+    return {"ok": True}
+
 from core.config import write_cookies_from_env
 
 @app.on_event("startup")
@@ -104,10 +108,12 @@ async def startup_event():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    import os
+    port = int(os.getenv("PORT", "8080"))
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8080,
+        port=port,
         log_level="info",
         reload=True,
         # Trust Render's internal proxy and Cloudflare

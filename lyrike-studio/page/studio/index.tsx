@@ -93,10 +93,6 @@ export default function StudioPage() {
     handleSeekTo(line.start);
   };
 
-  const onNudge = (line: LyricLine, edge: "start" | "end", delta: number) => {
-    useLyricsStore.getState().nudgeLine(line.id, edge, delta);
-  };
-
   const onExportLrc = () => {
     const lrcContent = useLyricsStore.getState().exportToLrc();
     const doc = useLyricsStore.getState().doc;
@@ -123,7 +119,6 @@ export default function StudioPage() {
         lyrics={
           <LyricsPanel
             onSeekLine={onSeekLine}
-            onNudge={onNudge}
             onExportLrc={onExportLrc}
           />
         }

@@ -1,10 +1,11 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import type { LyricLine } from "@/entities/lyrics";
 import { TIMING } from "@/shared/config/constants";
 import { cn } from "@/shared/lib/utils";
+import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
 import {
   ArrowDown,
   ArrowUpIcon,
@@ -21,14 +22,6 @@ interface LyricLineItemProps {
   isSelected: boolean;
   formatTime: (seconds: number) => string;
   onSeekLine: (line: LyricLine) => void;
-  onSelectLine: (id: string) => void;
-  onEditLineText: (id: string, text: string) => void;
-  onReorder: (id: string, direction: "up" | "down") => void;
-  onInsertAfter: (id: string) => void;
-  onSplit: (id: string) => void;
-  onMerge: (id: string) => void;
-  onDelete: (id: string) => void;
-  onNudge: (line: LyricLine, edge: "start" | "end", delta: number) => void;
 }
 
 function ButtonGroup({ children }: { children: React.ReactNode }) {
@@ -47,6 +40,122 @@ const segmentWithDivider = segmentBase;
 const nudgeBase = cn(segmentBase, "font-mono");
 const nudgeWithDivider = cn(segmentBase, "font-mono");
 
+function ReorderButtonGroup({ lineId }: { lineId: string }) {
+  const t = useTranslations("dashboard.actions");
+  const reorder = useLyricsStore((s) => s.reorder);
+
+  return (
+    <ButtonGroup>
+      <button
+        type="button"
+        onClick={() => reorder(lineId, "up")}
+        title={t("moveUp")}
+        className={segmentBase}
+      >
+        <ArrowUpIcon size={13} />
+      </button>
+      <button
+        type="button"
+        onClick={() => reorder(lineId, "down")}
+        title={t("moveDown")}
+        className={segmentWithDivider}
+      >
+        <ArrowDown size={13} />
+      </button>
+    </ButtonGroup>
+  );
+}
+
+function EditButtonGroup({ lineId }: { lineId: string }) {
+  const t = useTranslations("dashboard.actions");
+  const insertAfter = useLyricsStore((s) => s.insertAfter);
+  const splitLine = useLyricsStore((s) => s.splitLine);
+  const mergeWithPrevious = useLyricsStore((s) => s.mergeWithPrevious);
+  const deleteLine = useLyricsStore((s) => s.deleteLine);
+
+  return (
+    <ButtonGroup>
+      <button
+        type="button"
+        onClick={() => insertAfter(lineId)}
+        title={t("insertAfter")}
+        className={segmentBase}
+      >
+        <Plus size={13} />
+      </button>
+      <button
+        type="button"
+        onClick={() => splitLine(lineId)}
+        title={t("split")}
+        className={segmentWithDivider}
+      >
+        <SplitSquareHorizontal size={13} />
+      </button>
+      <button
+        type="button"
+        onClick={() => mergeWithPrevious(lineId)}
+        title={t("merge")}
+        className={segmentWithDivider}
+      >
+        <MergeIcon size={13} />
+      </button>
+      <button
+        type="button"
+        onClick={() => deleteLine(lineId)}
+        title={t("delete")}
+        className={cn(
+          segmentWithDivider,
+          "hover:bg-danger/10 hover:text-danger",
+        )}
+      >
+        <DeleteIcon size={13} />
+      </button>
+    </ButtonGroup>
+  );
+}
+
+function NudgeButtonGroup({ line }: { line: LyricLine }) {
+  const t = useTranslations("dashboard.actions");
+  const nudgeLine = useLyricsStore((s) => s.nudgeLine);
+
+  return (
+    <ButtonGroup>
+      <button
+        type="button"
+        onClick={() => nudgeLine(line.id, "start", -TIMING.NUDGE_DELTA_SEC)}
+        title={t("nudgeStart", { delta: -TIMING.NUDGE_DELTA_SEC })}
+        className={nudgeBase}
+      >
+        −S
+      </button>
+      <button
+        type="button"
+        onClick={() => nudgeLine(line.id, "start", TIMING.NUDGE_DELTA_SEC)}
+        title={t("nudgeStart", { delta: TIMING.NUDGE_DELTA_SEC })}
+        className={nudgeWithDivider}
+      >
+        +S
+      </button>
+      <button
+        type="button"
+        onClick={() => nudgeLine(line.id, "end", -TIMING.NUDGE_DELTA_SEC)}
+        title={t("nudgeEnd", { delta: -TIMING.NUDGE_DELTA_SEC })}
+        className={nudgeWithDivider}
+      >
+        −E
+      </button>
+      <button
+        type="button"
+        onClick={() => nudgeLine(line.id, "end", TIMING.NUDGE_DELTA_SEC)}
+        title={t("nudgeEnd", { delta: TIMING.NUDGE_DELTA_SEC })}
+        className={nudgeWithDivider}
+      >
+        +E
+      </button>
+    </ButtonGroup>
+  );
+}
+
 export const LyricLineItem = memo(function LyricLineItem({
   line,
   index,
@@ -54,16 +163,21 @@ export const LyricLineItem = memo(function LyricLineItem({
   isSelected,
   formatTime,
   onSeekLine,
-  onSelectLine,
-  onEditLineText,
-  onReorder,
-  onInsertAfter,
-  onSplit,
-  onMerge,
-  onDelete,
-  onNudge,
 }: LyricLineItemProps) {
-  const t = useTranslations("dashboard.actions");
+  const selectLine = useLyricsStore((s) => s.selectLine);
+  const editText = useLyricsStore((s) => s.editText);
+  const focusLineId = useLyricsStore((s) => s.focusLineId);
+  const setFocusLine = useLyricsStore((s) => s.setFocusLine);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (focusLineId === line.id && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+      setFocusLine(null);
+    }
+  }, [focusLineId, line.id, setFocusLine]);
 
   return (
     <li
@@ -95,9 +209,10 @@ export const LyricLineItem = memo(function LyricLineItem({
       </div>
 
       <input
+        ref={inputRef}
         value={line.text}
-        onFocus={() => onSelectLine(line.id)}
-        onChange={(e) => onEditLineText(line.id, e.target.value)}
+        onFocus={() => selectLine(line.id)}
+        onChange={(e) => editText(line.id, e.target.value)}
         className={cn(
           "w-full rounded-inner",
           "bg-transparent text-ink-light py-1 text-base",
@@ -116,100 +231,9 @@ export const LyricLineItem = memo(function LyricLineItem({
             : "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto",
         )}
       >
-        {/* Reorder */}
-        <ButtonGroup>
-          <button
-            type="button"
-            onClick={() => onReorder(line.id, "up")}
-            title={t("moveUp")}
-            className={segmentBase}
-          >
-            <ArrowUpIcon size={13} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onReorder(line.id, "down")}
-            title={t("moveDown")}
-            className={segmentWithDivider}
-          >
-            <ArrowDown size={13} />
-          </button>
-        </ButtonGroup>
-
-        {/* Edit actions */}
-        <ButtonGroup>
-          <button
-            type="button"
-            onClick={() => onInsertAfter(line.id)}
-            title={t("insertAfter")}
-            className={segmentBase}
-          >
-            <Plus size={13} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onSplit(line.id)}
-            title={t("split")}
-            className={segmentWithDivider}
-          >
-            <SplitSquareHorizontal size={13} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMerge(line.id)}
-            title={t("merge")}
-            className={segmentWithDivider}
-          >
-            <MergeIcon size={13} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(line.id)}
-            title={t("delete")}
-            className={cn(
-              segmentWithDivider,
-              "hover:bg-danger/10 hover:text-danger",
-            )}
-          >
-            <DeleteIcon size={13} />
-          </button>
-        </ButtonGroup>
-
-        {/* Nudge */}
-        <ButtonGroup>
-          <button
-            type="button"
-            onClick={() => onNudge(line, "start", -TIMING.NUDGE_DELTA_SEC)}
-            title={t("nudgeStart", { delta: -TIMING.NUDGE_DELTA_SEC })}
-            className={nudgeBase}
-          >
-            −S
-          </button>
-          <button
-            type="button"
-            onClick={() => onNudge(line, "start", TIMING.NUDGE_DELTA_SEC)}
-            title={t("nudgeStart", { delta: TIMING.NUDGE_DELTA_SEC })}
-            className={nudgeWithDivider}
-          >
-            +S
-          </button>
-          <button
-            type="button"
-            onClick={() => onNudge(line, "end", -TIMING.NUDGE_DELTA_SEC)}
-            title={t("nudgeEnd", { delta: -TIMING.NUDGE_DELTA_SEC })}
-            className={nudgeWithDivider}
-          >
-            −E
-          </button>
-          <button
-            type="button"
-            onClick={() => onNudge(line, "end", TIMING.NUDGE_DELTA_SEC)}
-            title={t("nudgeEnd", { delta: TIMING.NUDGE_DELTA_SEC })}
-            className={nudgeWithDivider}
-          >
-            +E
-          </button>
-        </ButtonGroup>
+        <ReorderButtonGroup lineId={line.id} />
+        <EditButtonGroup lineId={line.id} />
+        <NudgeButtonGroup line={line} />
       </div>
     </li>
   );

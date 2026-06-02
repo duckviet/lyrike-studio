@@ -148,7 +148,7 @@ export function SourcePanel() {
   }, [lyricsState, mediaInfo, publishMutation, exportToLrc, setSourceMessage]);
 
   return (
-    <article className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto bg-transparent">
+    <article className="flex h-full min-h-0 flex-col overflow-x-hidden overflow-y-auto bg-transparent pl-1">
       <section className="flex flex-col gap-4 p-5 pl-0 pb-2">
         <div className="flex flex-col gap-2">
           <span className="text-[0.7rem] font-bold uppercase text-ink-light-soft">
@@ -160,11 +160,10 @@ export function SourcePanel() {
               value={sourceInput}
               onChange={(e) => setSourceInput(e.target.value)}
               placeholder={t("placeholder")}
-              className={`w-full rounded-control border bg-bg-input px-4 py-3 text-sm text-ink outline-none transition-colors ${
-                fetchState === "error"
-                  ? "border-danger"
-                  : "border-line focus:border-primary-deep focus:ring-4 focus:ring-primary-10"
-              }`}
+              className={`w-full rounded-control border bg-white px-4 py-3 text-sm text-ink outline-none transition-colors ${fetchState === "error"
+                ? "border-danger"
+                : "border-line focus:border-primary-deep focus:ring-4 focus:ring-primary-10"
+                }`}
             />
           </div>
         </div>
@@ -225,7 +224,7 @@ export function SourcePanel() {
 
       {mediaInfo && (
         <>
-          <section className="flex flex-col gap-4 p-5 pt-2">
+          <section className="flex flex-col gap-4 pt-2">
             <div className="flex items-center">
               <span className="inline-flex rounded-md bg-primary-10 text-primary px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wider border border-primary-20">
                 {t("metadata")}

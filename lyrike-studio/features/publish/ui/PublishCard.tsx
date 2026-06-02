@@ -12,7 +12,7 @@ export function PublishCard({ publishState, onPublish }: PublishCardProps) {
   const t = useTranslations("dashboard.publish");
 
   return (
-    <section className="flex flex-col gap-3 p-4">
+    <section className="flex flex-col gap-3 pr-4 pb-2">
       <div className="flex items-center">
         <span className="inline-flex rounded-md bg-primary-10 text-primary px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wider border border-primary-20">
           {t("label")}
@@ -45,15 +45,14 @@ export function PublishCard({ publishState, onPublish }: PublishCardProps) {
             className={`flex items-center gap-2 text-sm ${step.status === "running" ? "text-ink-light font-semibold" : ""} ${step.status === "success" ? "text-success" : ""} ${step.status === "error" ? "text-danger" : ""} ${step.status === "idle" ? "text-ink-light-soft" : ""}`}
           >
             <span
-              className={`w-2 h-2 rounded-full ${
-                step.status === "success"
-                  ? "bg-success shadow-[0_0_0_1px_inset_var(--success-deep)]"
-                  : step.status === "error"
-                    ? "bg-danger shadow-[0_0_0_1px_inset_var(--danger)]"
-                    : step.status === "running"
-                      ? "bg-primary animate-pulse shadow-[0_0_0_1px_inset_var(--primary-deep),0_0_12px_var(--primary-50)]"
-                      : "bg-line shadow-[0_0_0_1px_inset_var(--line)]"
-              }`}
+              className={`w-2 h-2 rounded-full ${step.status === "success"
+                ? "bg-success shadow-[0_0_0_1px_inset_var(--success-deep)]"
+                : step.status === "error"
+                  ? "bg-danger shadow-[0_0_0_1px_inset_var(--danger)]"
+                  : step.status === "running"
+                    ? "bg-primary animate-pulse shadow-[0_0_0_1px_inset_var(--primary-deep),0_0_12px_var(--primary-50)]"
+                    : "bg-line shadow-[0_0_0_1px_inset_var(--line)]"
+                }`}
               aria-hidden="true"
             />
             <span>{step.label}</span>

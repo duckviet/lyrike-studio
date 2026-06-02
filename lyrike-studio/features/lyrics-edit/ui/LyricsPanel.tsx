@@ -13,11 +13,9 @@ import { formatTime } from "@/shared/utils/formatters";
 
 export function LyricsPanel({
   onSeekLine,
-  onNudge,
   onExportLrc,
 }: {
   onSeekLine: (line: LyricLine) => void;
-  onNudge: (line: LyricLine, edge: "start" | "end", delta: number) => void;
   onExportLrc: () => void;
 }) {
   const doc = useLyricsStore((s) => s.doc);
@@ -27,14 +25,6 @@ export function LyricsPanel({
   const isAutoSyncEnabled = useLyricsStore((s) => s.isAutoSyncEnabled);
 
   const setTab = useLyricsStore((s) => s.setTab);
-  const selectLine = useLyricsStore((s) => s.selectLine);
-  const clearSelection = useLyricsStore((s) => s.clearSelection);
-  const editText = useLyricsStore((s) => s.editText);
-  const reorder = useLyricsStore((s) => s.reorder);
-  const insertAfter = useLyricsStore((s) => s.insertAfter);
-  const splitLine = useLyricsStore((s) => s.splitLine);
-  const mergeWithPrevious = useLyricsStore((s) => s.mergeWithPrevious);
-  const deleteLine = useLyricsStore((s) => s.deleteLine);
   const setPlainLyrics = useLyricsStore((s) => s.setPlainLyrics);
   const setMeta = useLyricsStore((s) => s.setMeta);
   const importFromLrc = useLyricsStore((s) => s.importFromLrc);
@@ -58,14 +48,6 @@ export function LyricsPanel({
     return formatTime(seconds);
   };
 
-  const handleSelectLine = (lineId: string | null) => {
-    if (lineId === null) {
-      clearSelection();
-    } else {
-      selectLine(lineId);
-    }
-  };
-
   return (
     <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-outer bg-[#f4f5f4]">
       <PanelToolbar
@@ -85,14 +67,6 @@ export function LyricsPanel({
           listRef={listRef}
           formatTime={formatTimeStr}
           onSeekLine={onSeekLine}
-          onSelectLine={handleSelectLine}
-          onEditLineText={editText}
-          onReorder={reorder}
-          onInsertAfter={insertAfter}
-          onSplit={splitLine}
-          onMerge={mergeWithPrevious}
-          onDelete={deleteLine}
-          onNudge={onNudge}
           onApplyTextEdits={applyTextEdits}
         />
       )}
