@@ -11,9 +11,9 @@ interface EditorStatusCalloutProps {
 
 const toneClass: Record<EditorStatusTone, string> = {
   neutral: "border-l-line bg-bg text-ink-light-soft",
-  success: "border-l-primary bg-primary-8 text-ink-light",
-  error: "border-l-danger bg-danger-8 text-danger",
-  loading: "border-l-amber bg-amber-soft text-ink-light",
+  success: "border-l-primary bg-bg text-ink-light",
+  error: "border-l-danger bg-bg text-danger",
+  loading: "border-l-amber bg-bg text-ink-light",
 };
 
 export function EditorStatusCallout({

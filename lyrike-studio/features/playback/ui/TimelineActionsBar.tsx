@@ -87,7 +87,7 @@ export function TimelineActionsBar({
           </EditorButton>
         </div>
         <EditorSegmentedControl
-          className="h-9 p-0.5 rounded-control"
+          className="h-9 p-1"
           items={[
             {
               id: "original",

@@ -18,6 +18,7 @@ export type LyricsStoreState = LyricsHistoryState & {
   isAutoSyncEnabled: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  focusLineId: string | null;
 };
 
 export type LyricsStoreActions = {
@@ -25,6 +26,7 @@ export type LyricsStoreActions = {
   setActiveLine: (lineId: string | null) => void;
   selectLine: (lineId: string) => void;
   clearSelection: () => void;
+  setFocusLine: (lineId: string | null) => void;
   loadDraft: (doc: LyricsDoc, selectedLineId: string | null) => void;
   selectByOffset: (offset: number) => void;
   setLineRangeLive: (lineId: string, start: number, end: number) => void;
@@ -139,6 +141,7 @@ export const useLyricsStore = create<LyricsStore>()(
       isAutoSyncEnabled: false,
       canUndo: false,
       canRedo: false,
+      focusLineId: null,
 
       setTab: (tab) => set({ tab }),
 
@@ -156,6 +159,8 @@ export const useLyricsStore = create<LyricsStore>()(
       },
 
       clearSelection: () => set({ selectedLineId: null }),
+
+      setFocusLine: (lineId) => set({ focusLineId: lineId }),
 
       loadDraft: (doc, selectedLineId) => {
         const selected = utils.ensureSelectedLine(

@@ -18,14 +18,6 @@ interface SyncedLinesListProps {
   listRef: React.RefObject<HTMLUListElement | null>;
   formatTime: (seconds: number) => string;
   onSeekLine: (line: LyricLine) => void;
-  onSelectLine: (lineId: string | null) => void;
-  onEditLineText: (lineId: string, text: string) => void;
-  onReorder: (lineId: string, direction: "up" | "down") => void;
-  onInsertAfter: (lineId: string) => void;
-  onSplit: (lineId: string) => void;
-  onMerge: (lineId: string) => void;
-  onDelete: (lineId: string) => void;
-  onNudge: (line: LyricLine, edge: "start" | "end", delta: number) => void;
   onApplyTextEdits: (edits: ParsedLineEdit[]) => void;
 }
 
@@ -36,14 +28,6 @@ export default function SyncedLinesList({
   listRef,
   formatTime,
   onSeekLine,
-  onSelectLine,
-  onEditLineText,
-  onReorder,
-  onInsertAfter,
-  onSplit,
-  onMerge,
-  onDelete,
-  onNudge,
   onApplyTextEdits,
 }: SyncedLinesListProps) {
   const [mode, setMode] = useState<SyncedMode>("line");
@@ -85,14 +69,6 @@ export default function SyncedLinesList({
               isSelected={line.id === selectedLineId}
               formatTime={formatTime}
               onSeekLine={onSeekLine}
-              onSelectLine={onSelectLine}
-              onEditLineText={onEditLineText}
-              onReorder={onReorder}
-              onInsertAfter={onInsertAfter}
-              onSplit={onSplit}
-              onMerge={onMerge}
-              onDelete={onDelete}
-              onNudge={onNudge}
             />
           ))}
         </ul>

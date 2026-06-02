@@ -24,7 +24,7 @@ export function EditorSegmentedControl<T extends string>({
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1 rounded-outer border border-line bg-bg p-1",
+        "inline-flex items-center gap-1 rounded-md border border-line bg-bg p-1",
         className,
       )}
       role="tablist"
@@ -33,7 +33,7 @@ export function EditorSegmentedControl<T extends string>({
         <button
           aria-selected={value === item.id}
           className={cn(
-            "rounded-control border border-transparent font-semibold transition-colors flex-1 min-h-0 h-full",
+            "rounded-sm border border-transparent font-semibold transition-colors flex-1 min-h-0 h-full",
             size === "sm" ? "px-3 text-[11px]" : "px-3 text-xs",
             value === item.id
               ? "bg-bg-elev text-primary"

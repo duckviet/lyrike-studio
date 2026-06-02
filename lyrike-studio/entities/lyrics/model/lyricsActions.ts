@@ -13,6 +13,7 @@ type MinimalState = {
   selectedLineId: string | null;
   activeLineId: string | null;
   isAutoSyncEnabled: boolean;
+  focusLineId: string | null;
 };
 
 type StoreApi = {
@@ -96,6 +97,7 @@ export const buildInsertAfterAction =
     set({
       doc: utils.applyDocWithSyncedLines(doc, nextLines),
       selectedLineId: inserted.id,
+      focusLineId: inserted.id,
     });
   };
 
@@ -113,6 +115,7 @@ export const buildInsertAtRangeAction =
     set({
       doc: utils.applyDocWithSyncedLines(doc, nextLines),
       selectedLineId: inserted.id,
+      focusLineId: inserted.id,
     });
   };
 
