@@ -40,7 +40,7 @@ export default function SyncedLinesList({
   const t = useTranslations("editor.syncedMode");
 
   return (
-    <div className="relative flex-1 min-h-0 flex flex-col">
+    <div className="relative flex min-h-0 flex-1 flex-col">
       {/* Mode toggle tabs */}
       <div className="sticky top-0 z-10 flex bg-[#f4f5f4] px-3 py-2">
         <EditorSegmentedControl

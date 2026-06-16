@@ -1,4 +1,5 @@
 import type { LyricsDoc } from "@/entities/lyrics";
+import { normalizeWordsWithinLine } from "@/entities/lyrics/model/wordTiming";
 
 export type DraftPayload = {
   savedAt: string;
@@ -34,13 +35,20 @@ export function createDraftManager(prefix = "lyrics-studio:draft") {
 
       try {
         const parsed = JSON.parse(raw) as Partial<DraftPayload>;
-        if (!parsed.doc) {
+        if (!parsed.doc || !Array.isArray(parsed.doc.syncedLines)) {
           return null;
         }
 
+        const normalizedDoc: LyricsDoc = {
+          ...parsed.doc,
+          syncedLines: parsed.doc.syncedLines.map((line) =>
+            normalizeWordsWithinLine(line),
+          ),
+        };
+
         return {
           savedAt: typeof parsed.savedAt === "string" ? parsed.savedAt : "",
-          doc: parsed.doc,
+          doc: normalizedDoc,
           selectedLineId:
             typeof parsed.selectedLineId === "string"
               ? parsed.selectedLineId

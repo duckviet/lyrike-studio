@@ -3,6 +3,7 @@ import type {
   PeaksResponse,
   TranscribeResponse,
 } from "../../../lib/api";
+import { normalizeTranscribeResponse } from "../../../lib/api";
 import type { MediaController } from "@/entities/media";
 import type { WaveformController } from "@/entities/media";
 
@@ -155,7 +156,7 @@ export async function runTranscriptionFlow(params: {
 
       es.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data) as TranscribeResponse;
+          const data = normalizeTranscribeResponse(JSON.parse(event.data));
 
           if (data.status === "completed") {
             if (data.synced) {
@@ -185,8 +186,15 @@ export async function runTranscriptionFlow(params: {
               params.onStatus(data.status, message);
             }
           }
-        } catch (err) {
-          console.error("SSE parse error", err);
+        } catch (error) {
+          cleanup();
+          resolve({
+            transcribeState: "failed",
+            sourceMessage:
+              error instanceof Error
+                ? error.message
+                : "Invalid transcription stream payload.",
+          });
         }
       };
 

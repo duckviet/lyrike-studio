@@ -20,6 +20,7 @@ export type TranscribeResponse = {
   videoId: string;
   status: "queued" | "running" | "completed" | "failed";
   message?: string;
+  error?: string;
   synced?: string;
   plain?: string;
   updatedAt?: string;
@@ -30,6 +31,72 @@ export type TranscribeResponse = {
     error?: string;
   };
 };
+
+type JsonRecord = Record<string, unknown>;
+
+function isJsonRecord(value: unknown): value is JsonRecord {
+  return typeof value === "object" && value !== null;
+}
+
+function optionalString(record: JsonRecord, key: string): string | undefined {
+  const value = record[key];
+  return typeof value === "string" ? value : undefined;
+}
+
+function parseTranscribeStatus(
+  status: unknown,
+): TranscribeResponse["status"] {
+  if (
+    status === "queued" ||
+    status === "running" ||
+    status === "completed" ||
+    status === "failed"
+  ) {
+    return status;
+  }
+
+  throw new Error("Invalid transcription response status");
+}
+
+function parseTranscribeJob(value: unknown): TranscribeResponse["job"] {
+  if (!isJsonRecord(value)) {
+    return undefined;
+  }
+
+  const status = optionalString(value, "status");
+  if (!status) {
+    return undefined;
+  }
+
+  return {
+    status,
+    startedAt: optionalString(value, "startedAt"),
+    updatedAt: optionalString(value, "updatedAt"),
+    error: optionalString(value, "error"),
+  };
+}
+
+export function normalizeTranscribeResponse(
+  payload: unknown,
+): TranscribeResponse {
+  if (!isJsonRecord(payload)) {
+    throw new Error("Invalid transcription response payload");
+  }
+
+  return {
+    videoId: optionalString(payload, "videoId") ?? "",
+    status: parseTranscribeStatus(payload.status),
+    message: optionalString(payload, "message"),
+    error: optionalString(payload, "error"),
+    synced:
+      optionalString(payload, "synced") ??
+      optionalString(payload, "syncedLyrics"),
+    plain:
+      optionalString(payload, "plain") ?? optionalString(payload, "plainLyrics"),
+    updatedAt: optionalString(payload, "updatedAt"),
+    job: parseTranscribeJob(payload.job),
+  };
+}
 
 export type PeaksResponse = {
   videoId: string;
@@ -75,9 +142,9 @@ async function parseJsonOrThrow(response: Response): Promise<unknown> {
   if (!response.ok) {
     const detail =
       typeof payload === "object" &&
-      payload !== null &&
-      "detail" in payload &&
-      typeof (payload as { detail?: unknown }).detail === "string"
+        payload !== null &&
+        "detail" in payload &&
+        typeof (payload as { detail?: unknown }).detail === "string"
         ? (payload as { detail: string }).detail
         : `Request failed with status ${response.status}`;
     throw new Error(detail);
@@ -100,28 +167,34 @@ export async function fetchMedia(
   return (await parseJsonOrThrow(response)) as FetchMediaResponse;
 }
 
+export type TranscribeMode = "normal" | "karaoke";
+
 export async function requestTranscription(
   videoId: string,
+  mode: TranscribeMode = "normal",
 ): Promise<TranscribeResponse> {
   const response = await fetch(buildUrl("/local-api/transcribe"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ videoId }),
+    body: JSON.stringify({ videoId, mode }),
   });
 
-  return (await parseJsonOrThrow(response)) as TranscribeResponse;
+  return normalizeTranscribeResponse(await parseJsonOrThrow(response));
 }
 
-export function streamTranscription(videoId: string): EventSource {
+export function streamTranscription(
+  videoId: string,
+  _mode?: TranscribeMode,
+): EventSource {
   const encodedVideoId = encodeURIComponent(videoId);
   return new EventSource(buildUrl(`/local-api/transcribe/stream/${encodedVideoId}`));
 }
 
 export async function fetchPeaks(
   videoId: string,
-  samples = 800,
+  samples = 2000,
   source = "original"
 ): Promise<PeaksResponse> {
   const encodedVideoId = encodeURIComponent(videoId);

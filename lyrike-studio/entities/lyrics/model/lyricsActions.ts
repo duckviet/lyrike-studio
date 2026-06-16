@@ -3,6 +3,7 @@ import { LYRICS_DEFAULTS } from "../config/constants";
 import type { LyricLine, LyricsDoc } from "./types";
 import * as utils from "./lyricsUtils";
 import { buildSeedLyrics } from "./lyricsTimeline";
+import * as wordTiming from "./wordTiming";
 
 /**
  * We use any for get/set to avoid circular dependency with the main store file.
@@ -197,24 +198,60 @@ export const buildSplitLineAction =
     const midpoint = Number(((line.start + line.end) / 2).toFixed(2));
     const parts = line.text.trim().split(/\s+/);
     const cutAt = Math.max(1, Math.floor(parts.length / 2));
-    const leftText = parts.slice(0, cutAt).join(" ") || line.text;
-    const rightText =
+    let leftText = parts.slice(0, cutAt).join(" ") || line.text;
+    let rightText =
       parts.slice(cutAt).join(" ") || LYRICS_DEFAULTS.SPLIT_FALLBACK_TEXT;
 
-    const first: LyricLine = {
+    let firstEnd = Math.max(line.start + TIMING.MIN_LINE_LENGTH_SEC, midpoint);
+    let secondStart = Math.min(
+      firstEnd + TIMING.MIN_LINE_LENGTH_SEC,
+      line.end - TIMING.MIN_LINE_LENGTH_SEC,
+    );
+
+    let leftWords: import("./types").LyricWord[] | undefined = undefined;
+    let rightWords: import("./types").LyricWord[] | undefined = undefined;
+
+    const hasWords = line.words && line.words.length > 0;
+    if (hasWords) {
+      leftWords = line.words!.slice(0, cutAt).map(w => ({ ...w }));
+      rightWords = line.words!.slice(cutAt).map(w => ({ ...w }));
+
+      const lastLeftWord = leftWords[leftWords.length - 1];
+      const firstRightWord = rightWords[0];
+
+      if (lastLeftWord && firstRightWord) {
+        const boundary = Number(((lastLeftWord.end + firstRightWord.start) / 2).toFixed(2));
+        firstEnd = boundary;
+        secondStart = boundary;
+      } else if (lastLeftWord) {
+        firstEnd = lastLeftWord.end;
+        secondStart = lastLeftWord.end;
+      }
+
+      leftText = leftWords.length > 0 ? wordTiming.deriveLineTextFromWords(leftWords) : leftText;
+      rightText = rightWords.length > 0 ? wordTiming.deriveLineTextFromWords(rightWords) : rightText;
+    }
+
+    let first: LyricLine = {
       ...line,
-      end: Math.max(line.start + TIMING.MIN_LINE_LENGTH_SEC, midpoint),
+      end: firstEnd,
       text: leftText,
+      words: leftWords,
     };
-    const second: LyricLine = {
+    let second: LyricLine = {
       id: utils.createLineId(),
-      start: Math.min(
-        first.end + TIMING.MIN_LINE_LENGTH_SEC,
-        line.end - TIMING.MIN_LINE_LENGTH_SEC,
-      ),
+      start: secondStart,
       end: line.end,
       text: rightText,
+      words: rightWords,
     };
+
+    if (hasWords) {
+      first = wordTiming.normalizeWordsWithinLine(first);
+      second = wordTiming.normalizeWordsWithinLine(second);
+      first = utils.assignWordIdsForLine(first);
+      second = utils.assignWordIdsForLine(second);
+    }
 
     const nextLines = [
       ...lines.slice(0, index),
@@ -247,21 +284,56 @@ export const buildSplitAtTimeAction =
 
     const parts = line.text.trim().split(/\s+/);
     const cutAt = Math.max(1, Math.floor(parts.length / 2));
-    const leftText = parts.slice(0, cutAt).join(" ") || line.text;
-    const rightText =
+    let leftText = parts.slice(0, cutAt).join(" ") || line.text;
+    let rightText =
       parts.slice(cutAt).join(" ") || LYRICS_DEFAULTS.SPLIT_FALLBACK_TEXT;
 
-    const first: LyricLine = {
+    let leftWords: import("./types").LyricWord[] | undefined = undefined;
+    let rightWords: import("./types").LyricWord[] | undefined = undefined;
+
+    const hasWords = line.words && line.words.length > 0;
+    if (hasWords) {
+      leftWords = [];
+      rightWords = [];
+      for (const w of line.words!) {
+        if (w.end <= time) {
+          leftWords.push({ ...w });
+        } else if (w.start >= time) {
+          rightWords.push({ ...w });
+        } else {
+          const mid = w.start + (w.end - w.start) / 2;
+          if (mid < time) {
+            leftWords.push({ ...w, end: time });
+          } else {
+            rightWords.push({ ...w, start: time });
+          }
+        }
+      }
+
+      leftText = leftWords.length > 0 ? wordTiming.deriveLineTextFromWords(leftWords) : leftText;
+      rightText = rightWords.length > 0 ? wordTiming.deriveLineTextFromWords(rightWords) : rightText;
+    }
+
+    let first: LyricLine = {
       ...line,
       end: time,
       text: leftText,
+      words: leftWords,
     };
-    const second: LyricLine = {
+    let second: LyricLine = {
       id: utils.createLineId(),
       start: time,
       end: line.end,
       text: rightText,
+      words: rightWords,
     };
+
+    if (hasWords) {
+      first = wordTiming.normalizeWordsWithinLine(first);
+      second = wordTiming.normalizeWordsWithinLine(second);
+      first = utils.assignWordIdsForLine(first);
+      second = utils.assignWordIdsForLine(second);
+    }
 
     const nextLines = [
       ...lines.slice(0, index),
@@ -287,6 +359,7 @@ export const buildMergeAction =
       ...previous,
       end: Math.max(previous.end, current.end),
       text: `${previous.text} ${current.text}`.trim(),
+      words: undefined,
     };
     const nextLines = [
       ...lines.slice(0, index - 1),

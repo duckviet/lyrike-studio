@@ -1,30 +1,38 @@
+export type LyricWord = {
+  readonly id: string
+  readonly start: number
+  readonly end: number
+  readonly text: string
+}
+
 export type LyricLine = {
-  id: string
-  start: number
-  end: number
-  text: string
+  readonly id: string
+  readonly start: number
+  readonly end: number
+  readonly text: string
+  readonly words?: readonly LyricWord[]
 }
 
 export type LyricsMeta = {
-  title: string
-  artist: string
-  album: string
-  by: string
-  offset: number
+  readonly title: string
+  readonly artist: string
+  readonly album: string
+  readonly by: string
+  readonly offset: number
 }
 
 export type LyricsDoc = {
-  syncedLines: LyricLine[]
-  plainLyrics: string
-  meta: LyricsMeta
+  readonly syncedLines: LyricLine[]
+  readonly plainLyrics: string
+  readonly meta: LyricsMeta
 }
 
 export type LyricsState = {
-  doc: LyricsDoc
-  selectedLineId: string | null
-  tab: 'synced' | 'plain' | 'meta'
-  canUndo: boolean
-  canRedo: boolean
-  activeLineId: string | null
-  isAutoSyncEnabled: boolean
+  readonly doc: LyricsDoc
+  readonly selectedLineId: string | null
+  readonly tab: 'synced' | 'karaoke' | 'plain' | 'meta'
+  readonly canUndo: boolean
+  readonly canRedo: boolean
+  readonly activeLineId: string | null
+  readonly isAutoSyncEnabled: boolean
 }

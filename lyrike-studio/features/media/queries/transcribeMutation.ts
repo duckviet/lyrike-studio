@@ -1,8 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import {
+  normalizeTranscribeResponse,
   requestTranscription,
   streamTranscription,
-  type TranscribeResponse,
 } from "@/lib/api";
 
 export const TRANSCRIBE_QUERY_KEYS = {
@@ -17,11 +17,17 @@ export interface UseTranscribeOptions {
 
 export function useTranscribeMutation(options?: UseTranscribeOptions) {
   const mutation = useMutation({
-    mutationFn: async (videoId: string) => {
+    mutationFn: async ({
+      videoId,
+      mode,
+    }: {
+      videoId: string;
+      mode?: "normal" | "karaoke";
+    }) => {
       options?.onStatusChange?.("starting");
 
       // Request transcription
-      const response = await requestTranscription(videoId);
+      const response = await requestTranscription(videoId, mode);
 
       if (response.status === "completed" && response.synced) {
         options?.onStatusChange?.("completed");
@@ -34,14 +40,12 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
 
       // Poll for completion using EventSource
       return new Promise<string>((resolve, reject) => {
-        const eventSource = streamTranscription(videoId);
+        const eventSource = streamTranscription(videoId, mode);
         let resolved = false;
 
         eventSource.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data) as TranscribeResponse & {
-              error?: string;
-            };
+            const data = normalizeTranscribeResponse(JSON.parse(event.data));
 
             options?.onStatusChange?.(data.status);
 
@@ -57,7 +61,9 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
               );
             }
           } catch {
-            // Ignore parse errors
+            resolved = true;
+            eventSource.close();
+            reject(new Error("Invalid transcription stream payload"));
           }
         };
 

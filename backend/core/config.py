@@ -70,6 +70,7 @@ RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
 RATE_LIMIT_TRANSCRIBE_PER_MINUTE = int(os.getenv("RATE_LIMIT_TRANSCRIBE_PER_MINUTE", "5"))
 # --- YouTube Blocking Workaround ---
 YOUTUBE_COOKIES_PATH = Path("/tmp/yt_cookies.txt")
+LOCAL_COOKIES_PATH = BASE_DIR / "cookies.txt"
 
 def write_cookies_from_env():
     """Write cookies from YOUTUBE_COOKIES env var to a temporary file for yt-dlp."""

@@ -1,6 +1,8 @@
 import { useRef, useEffect } from "react";
 import type { LyricsState } from "@/entities/lyrics";
 
+const isLyricsListTab = (tab: string) => tab === "synced" || tab === "karaoke";
+
 /**
  * Manages auto-scroll behaviour for the synced lyrics list.
  * Scrolls to the active line during playback, and to the selected
@@ -30,7 +32,7 @@ export function useLyricsPanelScroll(lyricsState: LyricsState) {
   useEffect(() => {
     const { tab, activeLineId } = lyricsState;
     if (
-      tab !== "synced" ||
+      !isLyricsListTab(tab) ||
       !activeLineId ||
       activeLineId === lastScrolledActiveIdRef.current
     )
@@ -38,13 +40,13 @@ export function useLyricsPanelScroll(lyricsState: LyricsState) {
 
     lastScrolledActiveIdRef.current = activeLineId;
     scrollLineIntoView(activeLineId);
-  }, [lyricsState.activeLineId, lyricsState.tab]);
+  }, [lyricsState, lyricsState.activeLineId, lyricsState.tab]);
 
   // Scroll to selected line when user selects (skip if same as active)
   useEffect(() => {
     const { tab, selectedLineId, activeLineId } = lyricsState;
     if (
-      tab !== "synced" ||
+      !isLyricsListTab(tab) ||
       !selectedLineId ||
       selectedLineId === activeLineId ||
       selectedLineId === lastScrolledSelectedIdRef.current
@@ -53,7 +55,7 @@ export function useLyricsPanelScroll(lyricsState: LyricsState) {
 
     lastScrolledSelectedIdRef.current = selectedLineId;
     scrollLineIntoView(selectedLineId);
-  }, [lyricsState, lyricsState.selectedLineId, lyricsState.tab]);
+  }, [lyricsState, lyricsState.selectedLineId, lyricsState.tab, lyricsState.activeLineId]);
 
   return { listRef };
 }

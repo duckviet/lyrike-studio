@@ -76,7 +76,15 @@ export class MediaController {
   }
 
   async play(): Promise<void> {
-    await this.audio.play();
+    try {
+      await this.audio.play();
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        // Safe to ignore: play request was interrupted by pause
+        return;
+      }
+      console.warn("Audio play failed:", err);
+    }
   }
 
   pause(): void {

@@ -29,6 +29,24 @@ class OpenAIWhisperTranscriptionProvider(BaseTranscriptionProvider):
                 timestamp_granularities=["word", "segment"],
             )
 
+        # # Save to log file to check
+        # try:
+        #     import json
+        #     log_dir = Path(__file__).parent.parent.parent / "logs"
+        #     log_dir.mkdir(exist_ok=True)
+        #     log_path = log_dir / "openai_whisper_response.json"
+        #     with open(log_path, "w", encoding="utf-8") as lf:
+        #         try:
+        #             lf.write(response.model_dump_json(indent=2))
+        #         except AttributeError:
+        #             try:
+        #                 lf.write(json.dumps(response.dict(), indent=2, ensure_ascii=False))
+        #             except AttributeError:
+        #                 lf.write(str(response))
+        #     logger.info(f"Saved OpenAI whisper response to {log_path}")
+        # except Exception as e:
+        #     logger.error(f"Failed to save OpenAI whisper response log: {e}")
+
         segments = []
         resp_segments = getattr(response, "segments", None) or []
         resp_words = getattr(response, "words", None) or []

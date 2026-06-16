@@ -26,7 +26,7 @@ export function usePeaksQuery(videoId: string | null, source = "original") {
     queryKey: MEDIA_QUERY_KEYS.peaks(videoId ?? "", source),
     queryFn: async () => {
       if (!videoId) throw new Error("No videoId");
-      return fetchPeaks(videoId, 800, source);
+      return fetchPeaks(videoId, 2000, source);
     },
     enabled: !!videoId,
     staleTime: Infinity, // Peaks don't change once generated

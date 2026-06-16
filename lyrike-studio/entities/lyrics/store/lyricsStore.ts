@@ -5,6 +5,7 @@ import type { LyricsTabId } from "../config/enums";
 import type { LyricsMeta, LyricsDoc } from "../model/types";
 import * as utils from "../model/lyricsUtils";
 import * as actions from "../model/lyricsActions";
+import * as wordTiming from "../model/wordTiming";
 import type { ParsedLineEdit } from "@/features/lyrics-edit/model/useSyncedTextEdit";
 
 export type LyricsHistoryState = {
@@ -15,10 +16,12 @@ export type LyricsHistoryState = {
 export type LyricsStoreState = LyricsHistoryState & {
   tab: LyricsTabId;
   activeLineId: string | null;
+  activeWordId: string | null;
   isAutoSyncEnabled: boolean;
   canUndo: boolean;
   canRedo: boolean;
   focusLineId: string | null;
+  selectedWordId: string | null;
 };
 
 export type LyricsStoreActions = {
@@ -36,9 +39,26 @@ export type LyricsStoreActions = {
     end: number,
     baseState?: LyricsHistoryState | null,
   ) => void;
+  setWordRangeLive: (
+    lineId: string,
+    wordId: string,
+    start: number,
+    end: number,
+  ) => void;
+  setWordRange: (
+    lineId: string,
+    wordId: string,
+    start: number,
+    end: number,
+    baseState?: LyricsHistoryState | null,
+  ) => void;
+  selectWord: (lineId: string, wordId: string) => void;
+  clearWordSelection: () => void;
+  setActiveWord: (wordId: string | null) => void;
   tapSync: (currentTime: number) => void;
   toggleAutoSyncMode: () => void;
   editText: (lineId: string, text: string) => void;
+  setWordText: (lineId: string, wordId: string, text: string) => void;
   insertAfter: (lineId: string) => void;
   insertAtRange: (start: number, end: number) => void;
   deleteGap: (
@@ -138,10 +158,12 @@ export const useLyricsStore = create<LyricsStore>()(
       selectedLineId: initialDoc.syncedLines[0]?.id ?? null,
       tab: "synced",
       activeLineId: null,
+      activeWordId: null,
       isAutoSyncEnabled: false,
       canUndo: false,
       canRedo: false,
       focusLineId: null,
+      selectedWordId: null,
 
       setTab: (tab) => set({ tab }),
 
@@ -160,15 +182,37 @@ export const useLyricsStore = create<LyricsStore>()(
 
       clearSelection: () => set({ selectedLineId: null }),
 
+      selectWord: (lineId, wordId) => {
+        const { doc } = get();
+        const line = doc.syncedLines.find((l) => l.id === lineId);
+        const word = line?.words?.find((w) => w.id === wordId);
+        if (!line || !word) return;
+        set({ selectedLineId: lineId, selectedWordId: wordId });
+      },
+
+      clearWordSelection: () => set({ selectedWordId: null }),
+
+      setActiveWord: (wordId) => {
+        const { activeWordId } = get();
+        if (activeWordId === wordId) return;
+        set({ activeWordId: wordId });
+      },
+
       setFocusLine: (lineId) => set({ focusLineId: lineId }),
 
       loadDraft: (doc, selectedLineId) => {
+        const normalizedDoc: LyricsDoc = {
+          ...doc,
+          syncedLines: doc.syncedLines.map((line) =>
+            wordTiming.normalizeWordsWithinLine(line),
+          ),
+        };
         const selected = utils.ensureSelectedLine(
-          doc.syncedLines,
+          normalizedDoc.syncedLines,
           selectedLineId,
         );
         set({
-          doc,
+          doc: normalizedDoc,
           selectedLineId: selected,
           activeLineId: selected,
         });
@@ -192,6 +236,8 @@ export const useLyricsStore = create<LyricsStore>()(
 
       setLineRangeLive: (lineId, start, end) => {
         const { doc } = get();
+        const originalLine = doc.syncedLines.find((l) => l.id === lineId);
+        if (!originalLine) return;
         const nextLines = utils.updateLyricTimingWithPush(
           doc.syncedLines,
           lineId,
@@ -200,17 +246,94 @@ export const useLyricsStore = create<LyricsStore>()(
             end,
           },
         );
-        set({ doc: utils.applyDocLive(doc, nextLines) });
+        const updatedLine = nextLines.find((l) => l.id === lineId);
+        if (!updatedLine) return;
+        const lineWithWords = wordTiming.updateLineWordsForRangeChange(
+          originalLine,
+          updatedLine.start,
+          updatedLine.end,
+        );
+        const withWords = nextLines.map((line) =>
+          line.id === lineId ? lineWithWords : line,
+        );
+        set({ doc: utils.applyDocLive(doc, withWords) });
       },
 
       setLineRange: (lineId, start, end, baseState) => {
         commit(
           "Resize region",
           (state) => {
+            const originalLine = state.doc.syncedLines.find(
+              (l) => l.id === lineId,
+            );
+            if (!originalLine) return state;
             const nextLines = utils.updateLyricTimingWithPush(
               state.doc.syncedLines,
               lineId,
               { start, end },
+            );
+            const updatedLine = nextLines.find((l) => l.id === lineId);
+            if (!updatedLine) return state;
+            const lineWithWords = wordTiming.updateLineWordsForRangeChange(
+              originalLine,
+              updatedLine.start,
+              updatedLine.end,
+            );
+            const withWords = nextLines.map((line) =>
+              line.id === lineId ? lineWithWords : line,
+            );
+            const newDoc = utils.applyDocWithSyncedLines(state.doc, withWords);
+            const newSelected = utils.ensureSelectedLine(
+              newDoc.syncedLines,
+              state.selectedLineId,
+            );
+            return { doc: newDoc, selectedLineId: newSelected };
+          },
+          undefined,
+          baseState,
+        );
+      },
+
+      setWordRangeLive: (lineId, wordId, start, end) => {
+        const { doc } = get();
+        const line = doc.syncedLines.find((l) => l.id === lineId);
+        if (!line || !line.words) return;
+        const wordIndex = line.words.findIndex((w) => w.id === wordId);
+        if (wordIndex < 0) return;
+
+        const nextWords = wordTiming.updateWordRange(
+          line.words,
+          wordIndex,
+          start,
+          end,
+          line.start,
+          line.end,
+        );
+        const nextLines = doc.syncedLines.map((l) =>
+          l.id === lineId ? { ...l, words: nextWords } : l,
+        );
+        set({ doc: utils.applyDocLive(doc, nextLines) });
+      },
+
+      setWordRange: (lineId, wordId, start, end, baseState) => {
+        commit(
+          "Resize word",
+          (state) => {
+            const line = state.doc.syncedLines.find((l) => l.id === lineId);
+            if (!line || !line.words) return state;
+            const wordIndex = line.words.findIndex((w) => w.id === wordId);
+            if (wordIndex < 0) return state;
+
+            const nextWords = wordTiming.updateWordRange(
+              line.words,
+              wordIndex,
+              start,
+              end,
+              line.start,
+              line.end,
+            );
+            const nextLines = state.doc.syncedLines.map((l) =>
+              l.id === lineId ? { ...l, words: nextWords } : l,
             );
             const newDoc = utils.applyDocWithSyncedLines(state.doc, nextLines);
             const newSelected = utils.ensureSelectedLine(
@@ -234,7 +357,7 @@ export const useLyricsStore = create<LyricsStore>()(
           "Edit text",
           (state) => {
             const nextLines = state.doc.syncedLines.map((line) =>
-              line.id === lineId ? { ...line, text } : line,
+              line.id === lineId ? { ...line, text, words: undefined } : line,
             );
             return {
               ...state,
@@ -242,6 +365,35 @@ export const useLyricsStore = create<LyricsStore>()(
             };
           },
           "edit-text",
+        );
+      },
+
+      setWordText: (lineId, wordId, text) => {
+        commit(
+          "Edit word text",
+          (state) => {
+            const line = state.doc.syncedLines.find((l) => l.id === lineId);
+            if (!line || !line.words) return state;
+            const word = line.words.find((w) => w.id === wordId);
+            if (!word) return state;
+
+            const nextWords = line.words.map((w) =>
+              w.id === wordId ? { ...w, text } : w,
+            );
+            const nextLine = {
+              ...line,
+              words: nextWords,
+              text: wordTiming.deriveLineTextFromWords(nextWords),
+            };
+            const nextLines = state.doc.syncedLines.map((l) =>
+              l.id === lineId ? nextLine : l,
+            );
+            return {
+              ...state,
+              doc: utils.applyDocWithSyncedLines(state.doc, nextLines),
+            };
+          },
+          "edit-word-text",
         );
       },
 
@@ -268,10 +420,11 @@ export const useLyricsStore = create<LyricsStore>()(
           const parsed = utils.parseLrc(rawLrc);
           const model = utils.lrcToLyricsModel(parsed);
 
-          const syncedLines = model.lines.map((l) => ({
-            ...l,
-            id: utils.createLineId(),
-          }));
+          const syncedLines = model.lines.map((l) => {
+            const withId = { ...l, id: utils.createLineId() };
+            const withWordIds = utils.assignWordIdsForLine(withId);
+            return wordTiming.normalizeWordsWithinLine(withWordIds);
+          });
 
           const mergedMeta = { ...state.doc.meta };
           if (model.meta.title) mergedMeta.title = model.meta.title;
@@ -318,11 +471,22 @@ export const useLyricsStore = create<LyricsStore>()(
               if (edit.id) {
                 const existing = currentLines.find((l) => l.id === edit.id);
                 if (existing) {
+                  if (edit.words) {
+                    return {
+                      ...existing,
+                      start: edit.start,
+                      end: edit.end,
+                      text: edit.text,
+                      words: edit.words,
+                    };
+                  }
+                  const textChanged = existing.text !== edit.text;
                   return {
                     ...existing,
                     start: edit.start,
                     end: edit.end,
                     text: edit.text,
+                    words: textChanged ? undefined : existing.words,
                   };
                 }
               }
@@ -332,6 +496,7 @@ export const useLyricsStore = create<LyricsStore>()(
                 start: edit.start,
                 end: edit.end,
                 text: edit.text,
+                words: edit.words,
               };
             });
 

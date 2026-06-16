@@ -8,6 +8,7 @@
   },
   "tabs": {
     "synced": "Đồng bộ",
+    "karaoke": "Karaoke",
     "plain": "Văn bản",
     "meta": "Thông tin"
   },
@@ -28,6 +29,9 @@
     "fetch": "Tải media",
     "fetching": "Đang tải...",
     "transcribe": "Phiên âm",
+    "transcribeMode": "Chế độ",
+    "modeNormal": "Bình thường",
+    "modeKaraoke": "Karaoke",
     "working": "Đang xử lý...",
     "metadata": "Thông tin",
     "track": "Bài hát",
@@ -41,7 +45,8 @@
   },
   "syncedMode": {
     "lineEdit": "Sửa dòng",
-    "textEdit": "Sửa text"
+    "textEdit": "Sửa text",
+    "karaoke": "Karaoke"
   },
   "plainLyrics": "Lời bài hát",
   "textEditor": {

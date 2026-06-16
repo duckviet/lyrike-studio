@@ -40,12 +40,14 @@ export default function StudioPage() {
   const mediaInfo = useEditorMediaStore((s) => s.mediaInfo);
   const syncedLines = useLyricsStore((s) => s.doc.syncedLines);
   const setActiveLine = useLyricsStore((s) => s.setActiveLine);
+  const setActiveWord = useLyricsStore((s) => s.setActiveWord);
   const loadDraft = useLyricsStore((s) => s.loadDraft);
   const { saveDraft } = useDraft(loadDraft);
 
   const { isPlaying, currentTime } = usePlaybackSync({
     syncedLines,
     setActiveLine,
+    setActiveWord,
   });
 
   const videoRef = useRef<{
@@ -93,6 +95,10 @@ export default function StudioPage() {
     handleSeekTo(line.start);
   };
 
+  const onSeekWord = (word: { start: number }) => {
+    handleSeekTo(word.start);
+  };
+
   const onExportLrc = () => {
     const lrcContent = useLyricsStore.getState().exportToLrc();
     const doc = useLyricsStore.getState().doc;
@@ -119,6 +125,7 @@ export default function StudioPage() {
         lyrics={
           <LyricsPanel
             onSeekLine={onSeekLine}
+            onSeekWord={onSeekWord}
             onExportLrc={onExportLrc}
           />
         }

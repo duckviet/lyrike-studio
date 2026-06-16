@@ -59,18 +59,42 @@ export const TimelinePanel = ({
   const doc = useLyricsStore((s) => s.doc);
   const selectedLineId = useLyricsStore((s) => s.selectedLineId);
   const activeLineId = useLyricsStore((s) => s.activeLineId);
+  const selectedWordId = useLyricsStore((s) => s.selectedWordId);
+  const activeWordId = useLyricsStore((s) => s.activeWordId);
+  const tab = useLyricsStore((s) => s.tab);
   const selectLine = useLyricsStore((s) => s.selectLine);
+  const selectWord = useLyricsStore((s) => s.selectWord);
   const clearSelection = useLyricsStore((s) => s.clearSelection);
-  const onSelectLine = (lineId: string | null) => {
+  const onSelectLine = useCallback((lineId: string | null) => {
     if (lineId === null) clearSelection();
     else selectLine(lineId);
-  };
-  const onGetBaseState = (): LyricsHistoryState => ({
+  }, [clearSelection, selectLine]);
+
+  const onSelectWord = useCallback((lineId: string, wordId: string) => {
+    selectLine(lineId);
+    selectWord(lineId, wordId);
+  }, [selectLine, selectWord]);
+
+  const onGetBaseState = useCallback((): LyricsHistoryState => ({
     doc: useLyricsStore.getState().doc,
     selectedLineId: useLyricsStore.getState().selectedLineId,
-  });
+  }), []);
+
   const onInsertAtGap = useLyricsStore((s) => s.insertAtRange);
   const onDeleteGap = useLyricsStore((s) => s.deleteGap);
+  const setWordRangeLive = useLyricsStore((s) => s.setWordRangeLive);
+  const setWordRange = useLyricsStore((s) => s.setWordRange);
+  const setLineRangeLive = useLyricsStore((s) => s.setLineRangeLive);
+  const setLineRange = useLyricsStore((s) => s.setLineRange);
+
+  const handleDeleteGap = useCallback((gap: import("@/features/lyrics-sync/lib/gap-utils").GapRegion) => {
+    onDeleteGap(
+      gap.start,
+      gap.end,
+      gap.prevLineId ?? null,
+      gap.nextLineId ?? null,
+    );
+  }, [onDeleteGap]);
 
   const onExtendLine = useCallback(
     (lineId: string, edge: "start" | "end", newTime: number) => {
@@ -100,6 +124,10 @@ export const TimelinePanel = ({
     },
     [onSeekTo],
   );
+
+  const handleSeekWord = useCallback((word: { start: number }) => {
+    handleSeekTo(word.start);
+  }, [handleSeekTo]);
 
   const handleSeekBy = useCallback(
     (delta: number) => {
@@ -203,23 +231,20 @@ export const TimelinePanel = ({
             scrollLeft={waveScrollLeft}
             activeLineId={activeLineId}
             selectedLineId={selectedLineId}
+            activeWordId={activeWordId}
+            selectedWordId={selectedWordId}
+            syncedMode={tab === "karaoke" ? "karaoke" : "line"}
             onSelectLine={onSelectLine}
-            onResize={useLyricsStore.getState().setLineRangeLive}
-            onResizeCommit={useLyricsStore.getState().setLineRange}
+            onSelectWord={onSelectWord}
+            onSeekWord={handleSeekWord}
+            onResize={setLineRangeLive}
+            onResizeCommit={setLineRange}
+            onWordRangeLive={setWordRangeLive}
+            onWordRangeCommit={setWordRange}
             onGetBaseState={onGetBaseState}
             onInsertAtGap={onInsertAtGap}
             onExtendLine={onExtendLine}
-            onDeleteGap={
-              onDeleteGap
-                ? (gap) =>
-                    onDeleteGap(
-                      gap.start,
-                      gap.end,
-                      gap.prevLineId ?? null,
-                      gap.nextLineId ?? null,
-                    )
-                : undefined
-            }
+            onDeleteGap={handleDeleteGap}
           />
         )}
       </div>
