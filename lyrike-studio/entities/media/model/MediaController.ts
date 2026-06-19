@@ -70,13 +70,22 @@ export class MediaController {
   }
 
   setSource(sourceUrl: string): void {
+    if (this.audio.src === sourceUrl) return;
     this.audio.src = sourceUrl;
     this.audio.load();
     this.emit("sourcechange", { sourceUrl });
   }
 
   async play(): Promise<void> {
-    await this.audio.play();
+    try {
+      await this.audio.play();
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        // Safe to ignore: play request was interrupted by pause
+        return;
+      }
+      console.warn("Audio play failed:", err);
+    }
   }
 
   pause(): void {
@@ -109,6 +118,10 @@ export class MediaController {
 
   getCurrentTime(): number {
     return this.audio.currentTime;
+  }
+
+  isPlaying(): boolean {
+    return this.audio ? !this.audio.paused : false;
   }
 
   getMediaElement(): HTMLAudioElement {

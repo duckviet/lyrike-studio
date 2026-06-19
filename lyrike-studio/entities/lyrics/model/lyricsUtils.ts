@@ -37,6 +37,20 @@ export function createLineId(): string {
   return `line-${crypto.randomUUID()}`;
 }
 
+export function assignWordIdsForLine(line: LyricLine): LyricLine {
+  if (!line.words || line.words.length === 0) {
+    return line;
+  }
+
+  return {
+    ...line,
+    words: line.words.map((word, index) => ({
+      ...word,
+      id: `word-${line.id}-${index}`,
+    })),
+  };
+}
+
 export function applyDocWithSyncedLines(
   doc: LyricsDoc,
   nextLines: LyricLine[],

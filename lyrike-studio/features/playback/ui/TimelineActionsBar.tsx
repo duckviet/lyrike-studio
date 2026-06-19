@@ -1,7 +1,9 @@
 import { useTranslations } from "next-intl";
+import { memo } from "react";
 import { useEditorUIStore } from "@/features/editor/store/editorUIStore";
 import { useEditorMediaStore } from "@/features/editor/store/editorMediaStore";
 import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
+import { usePlaybackTimeSnapshot } from "@/features/playback/model/playbackClock";
 import { TIMING, WAVEFORM } from "@/shared/config/constants";
 import { formatTime } from "@/shared/utils/formatters";
 import { editorWaveformController } from "@/features/editor/store/editorControllers";
@@ -19,7 +21,6 @@ import { EditorButton, EditorSegmentedControl } from "@/features/editor";
 
 interface TimelineActionsBarProps {
   isPlaying: boolean;
-  currentTime: number;
   duration: number;
   peakSource: "original" | "demucs";
   setPeakSource: (val: "original" | "demucs") => void;
@@ -29,9 +30,8 @@ interface TimelineActionsBarProps {
   onOpenShortcutsHelp: () => void;
 }
 
-export function TimelineActionsBar({
+export const TimelineActionsBar = memo(function TimelineActionsBar({
   isPlaying,
-  currentTime,
   duration,
   peakSource,
   setPeakSource,
@@ -141,9 +141,7 @@ export function TimelineActionsBar({
         >
           {t("loop")}
         </EditorButton>
-        <div className="inline-flex h-9 min-w-[130px] items-center justify-center rounded-control border border-line bg-bg px-3 text-center font-mono text-xs font-medium tabular-nums text-primary">
-          {formatTime(currentTime)} / {formatTime(duration)}
-        </div>
+        <TimeDisplay duration={duration} />
         <div className="inline-flex h-9 items-center gap-0.5 rounded-control border border-line bg-bg p-0.5">
           <EditorButton
             className="h-full min-h-0 w-8 p-0"
@@ -184,6 +182,16 @@ export function TimelineActionsBar({
           variant="ghost"
         />
       </div>
+    </div>
+  );
+});
+
+function TimeDisplay({ duration }: { readonly duration: number }) {
+  const currentTime = usePlaybackTimeSnapshot(true);
+
+  return (
+    <div className="inline-flex h-9 min-w-[130px] items-center justify-center rounded-control border border-line bg-bg px-3 text-center font-mono text-xs font-medium tabular-nums text-primary">
+      {formatTime(currentTime)} / {formatTime(duration)}
     </div>
   );
 }

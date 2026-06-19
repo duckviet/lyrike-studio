@@ -2,6 +2,7 @@ import { useCallback, useRef, useEffect } from "react";
 import type { LyricLine } from "@/entities/lyrics";
 import { computeResize } from "../lib/drag-math";
 import type { DragEdge, DragState, RegionResizeCallbacks } from "./types";
+import { clearLiveDragRange } from "./liveDragStore";
 
 interface Options extends RegionResizeCallbacks {
   pxPerSec: number;
@@ -18,6 +19,7 @@ export function useRegionDrag(opts: Options) {
 
   const trackRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
+  const captureTargetRef = useRef<HTMLElement | null>(null);
   const lastResultRef = useRef<{
     lineId: string;
     start: number;
@@ -28,7 +30,9 @@ export function useRegionDrag(opts: Options) {
   const beginDrag = useCallback(
     (event: React.PointerEvent, line: LyricLine, edge: DragEdge) => {
       event.stopPropagation();
-      trackRef.current?.setPointerCapture(event.pointerId);
+      const captureTarget = event.currentTarget as HTMLElement;
+      captureTarget.setPointerCapture?.(event.pointerId);
+      captureTargetRef.current = captureTarget;
 
       dragRef.current = {
         lineId: line.id,
@@ -80,7 +84,7 @@ export function useRegionDrag(opts: Options) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    trackRef.current?.releasePointerCapture(event.pointerId);
+    captureTargetRef.current?.releasePointerCapture?.(event.pointerId);
 
     const last = lastResultRef.current;
     if (last) {
@@ -90,10 +94,12 @@ export function useRegionDrag(opts: Options) {
         last.end,
         drag.baseState,
       );
+      clearLiveDragRange(last.lineId);
     }
 
     dragRef.current = null;
     lastResultRef.current = null;
+    captureTargetRef.current = null;
   }, []);
 
   return {

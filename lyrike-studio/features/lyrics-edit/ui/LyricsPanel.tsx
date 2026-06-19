@@ -8,14 +8,17 @@ import { useLrcFileImport } from "../model/useLrcFileImport";
 import { PlainLyricsEditor } from "./PlainLyricsEditor";
 import PanelToolbar from "./PanelToolBar";
 import SyncedLinesList from "./SyncedLinesList";
+import KaraokeLinesList from "./KaraokeLinesList";
 import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
 import { formatTime } from "@/shared/utils/formatters";
 
 export function LyricsPanel({
   onSeekLine,
+  onSeekWord,
   onExportLrc,
 }: {
   onSeekLine: (line: LyricLine) => void;
+  onSeekWord: (word: { start: number }) => void;
   onExportLrc: () => void;
 }) {
   const doc = useLyricsStore((s) => s.doc);
@@ -29,6 +32,8 @@ export function LyricsPanel({
   const setMeta = useLyricsStore((s) => s.setMeta);
   const importFromLrc = useLyricsStore((s) => s.importFromLrc);
   const applyTextEdits = useLyricsStore((s) => s.applyTextEdits);
+  const selectedWordId = useLyricsStore((s) => s.selectedWordId);
+  const activeWordId = useLyricsStore((s) => s.activeWordId);
 
   const lyricsState: LyricsState = {
     doc,
@@ -67,6 +72,21 @@ export function LyricsPanel({
           listRef={listRef}
           formatTime={formatTimeStr}
           onSeekLine={onSeekLine}
+          onApplyTextEdits={applyTextEdits}
+        />
+      )}
+
+      {lyricsState.tab === "karaoke" && (
+        <KaraokeLinesList
+          lines={lyricsState.doc.syncedLines}
+          activeLineId={lyricsState.activeLineId}
+          selectedLineId={lyricsState.selectedLineId}
+          activeWordId={activeWordId}
+          selectedWordId={selectedWordId}
+          listRef={listRef}
+          formatTime={formatTimeStr}
+          onSeekLine={onSeekLine}
+          onSeekWord={onSeekWord}
           onApplyTextEdits={applyTextEdits}
         />
       )}

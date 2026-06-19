@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { cn } from "@/shared/lib/utils";
 import type { LyricLine } from "@/entities/lyrics";
+import { useLiveLineRange } from "../../model/liveDragStore";
 
 interface RegionBoxProps {
   line: LyricLine;
@@ -26,13 +27,16 @@ export const RegionBox = memo(function RegionBox({
   onBeginDrag,
   onSelect,
 }: RegionBoxProps) {
-  const left = line.start * pxPerSec;
-  const width = Math.max((line.end - line.start) * pxPerSec, 1);
+  const liveRange = useLiveLineRange(line.id);
+  const start = liveRange?.start ?? line.start;
+  const end = liveRange?.end ?? line.end;
+  const left = start * pxPerSec;
+  const width = Math.max((end - start) * pxPerSec, 1);
 
   return (
     <div
       className={cn(
-        "absolute top-1.5 bottom-1.5 flex items-stretch",
+        "absolute top-1.5 bottom-1.5 flex items-stretch will-change-transform",
         "rounded-control overflow-hidden border-0",
         !isDragging && "transition-colors duration-150",
         isActive
@@ -42,7 +46,7 @@ export const RegionBox = memo(function RegionBox({
             : "bg-white/10 hover:bg-white/20",
       )}
       style={{
-        left: `${left}px`,
+        transform: `translateX(${left}px)`,
         width: `${width}px`,
         zIndex: isActive ? 40 : isSelected ? 35 : 20,
       }}

@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { cn } from "@/shared/lib/utils";
 import type { GapRegion } from "../../lib/gap-utils";
 import { LYRICS_GAP } from "@/shared/config/constants";
@@ -9,11 +9,11 @@ interface GapRegionBoxProps {
   pxPerSec: number;
   isSelected: boolean;
   onSelect: (id: string) => void;
-  onInsert: () => void;
-  onExtendPrev: (() => void) | null;
-  onExtendNext: (() => void) | null;
+  onInsert: (gap: GapRegion) => void;
+  onExtendPrev: ((gap: GapRegion) => void) | null;
+  onExtendNext: ((gap: GapRegion) => void) | null;
   onDeselect: () => void;
-  onDelete?: (() => void) | null;
+  onDelete?: ((gap: GapRegion) => void) | null;
 }
 
 export const GapRegionBox = memo(function GapRegionBox({
@@ -29,6 +29,10 @@ export const GapRegionBox = memo(function GapRegionBox({
 }: GapRegionBoxProps) {
   const left = gap.start * pxPerSec;
   const widthPx = Math.max((gap.end - gap.start) * pxPerSec, 0);
+  const handleInsert = useCallback(() => onInsert(gap), [gap, onInsert]);
+  const handleExtendPrev = useCallback(() => onExtendPrev?.(gap), [gap, onExtendPrev]);
+  const handleExtendNext = useCallback(() => onExtendNext?.(gap), [gap, onExtendNext]);
+  const handleDelete = useCallback(() => onDelete?.(gap), [gap, onDelete]);
 
   if (widthPx < LYRICS_GAP.MIN_GAP_PX) return null;
 
@@ -73,10 +77,10 @@ export const GapRegionBox = memo(function GapRegionBox({
         <GapPopup
           gap={gap}
           widthPx={widthPx}
-          onInsert={onInsert}
-          onExtendPrev={onExtendPrev}
-          onExtendNext={onExtendNext}
-          onDelete={onDelete ?? null}
+          onInsert={handleInsert}
+          onExtendPrev={onExtendPrev ? handleExtendPrev : null}
+          onExtendNext={onExtendNext ? handleExtendNext : null}
+          onDelete={onDelete ? handleDelete : null}
           onClose={onDeselect}
         />
       )}

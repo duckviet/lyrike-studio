@@ -28,6 +28,7 @@ export default function PanelToolbar({
 
   const LYRICS_TABS = [
     { id: "synced", label: tabs("synced") },
+    { id: "karaoke", label: tabs("karaoke") },
     { id: "plain", label: tabs("plain") },
     { id: "meta", label: tabs("meta") },
   ] satisfies { id: LyricsTabId; label: string }[];

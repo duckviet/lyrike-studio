@@ -3,39 +3,47 @@ type LrcMetaKey = "ar" | "ti" | "al" | "by" | "offset" | "length";
 export type LrcMeta = Partial<Record<LrcMetaKey, string>>;
 
 export type EnhancedWordToken = {
-  time: number;
-  text: string;
+  readonly time: number;
+  readonly text: string;
 };
 
 export type ParsedLrcLine = {
-  time: number;
-  text: string;
-  enhanced: EnhancedWordToken[];
+  readonly time: number;
+  readonly text: string;
+  readonly enhanced: readonly EnhancedWordToken[];
 };
 
 export type ParsedLrcDoc = {
-  meta: LrcMeta;
-  lines: ParsedLrcLine[];
+  readonly meta: LrcMeta;
+  readonly lines: readonly ParsedLrcLine[];
+};
+
+export type LyricsModelWord = {
+  readonly id: string;
+  readonly start: number;
+  readonly end: number;
+  readonly text: string;
 };
 
 export type LyricsModelLine = {
-  start: number;
-  end: number;
-  text: string;
+  readonly start: number;
+  readonly end: number;
+  readonly text: string;
+  readonly words?: readonly LyricsModelWord[];
 };
 
 export type LyricsModelMeta = {
-  title: string;
-  artist: string;
-  album: string;
-  by: string;
-  offset: number;
+  readonly title: string;
+  readonly artist: string;
+  readonly album: string;
+  readonly by: string;
+  readonly offset: number;
 };
 
 export type LyricsModel = {
-  meta: LyricsModelMeta;
-  lines: LyricsModelLine[];
-  plainLyrics: string;
+  readonly meta: LyricsModelMeta;
+  readonly lines: readonly LyricsModelLine[];
+  readonly plainLyrics: string;
 };
 
 const META_KEYS: LrcMetaKey[] = ["ar", "ti", "al", "by", "offset", "length"];
@@ -89,6 +97,28 @@ function parseEnhancedTokens(text: string): EnhancedWordToken[] {
 
 function removeEnhancedMarkers(text: string): string {
   return text.replace(/<\d{1,3}:\d{2}(?:\.\d+)?>/g, "").trim();
+}
+
+function buildModelWords(
+  tokens: readonly EnhancedWordToken[],
+  lineEnd: number,
+  lineIndex: number,
+): readonly LyricsModelWord[] | undefined {
+  if (tokens.length === 0) {
+    return undefined;
+  }
+
+  return tokens.map((token, wordIndex) => {
+    const nextStart = tokens[wordIndex + 1]?.time;
+    const end = nextStart ?? lineEnd;
+
+    return {
+      id: `word-${lineIndex}-${wordIndex}`,
+      start: Number(token.time.toFixed(2)),
+      end: Number(end.toFixed(2)),
+      text: token.text,
+    };
+  });
 }
 
 function parseLine(line: string): ParsedLrcLine[] {
@@ -183,16 +213,20 @@ export function lrcToLyricsModel(
     .map((line, index, arr) => {
       const nextStart = arr[index + 1]?.time;
       const fallbackEnd = Math.max(line.time + 4, fallbackDuration);
-      const end =
-        nextStart !== undefined
+      const end = Number(
+        (nextStart !== undefined
           ? Math.max(line.time + MIN_LINE_LENGTH, nextStart - MIN_LINE_LENGTH)
-          : fallbackEnd;
-
-      return {
+          : fallbackEnd
+        ).toFixed(2),
+      );
+      const words = buildModelWords(line.enhanced, end, index);
+      const modelLine: LyricsModelLine = {
         start: Number(line.time.toFixed(2)),
-        end: Number(end.toFixed(2)),
+        end,
         text: line.text,
       };
+
+      return words === undefined ? modelLine : { ...modelLine, words };
     });
 
   return {
@@ -209,15 +243,12 @@ export function lrcToLyricsModel(
 }
 
 export function lyricsModelToLrc(input: LyricsModel): ParsedLrcDoc {
-  const maxEnd = input.lines.reduce((acc, line) => Math.max(acc, line.end), 0);
-
   const meta: LrcMeta = {
     ar: input.meta.artist || undefined,
     ti: input.meta.title || undefined,
     al: input.meta.album || undefined,
     by: input.meta.by || undefined,
     offset: input.meta.offset ? String(input.meta.offset) : undefined,
-    length: maxEnd > 0 ? formatTimestamp(maxEnd) : undefined,
   };
 
   const lines: ParsedLrcLine[] = input.lines
@@ -226,7 +257,11 @@ export function lyricsModelToLrc(input: LyricsModel): ParsedLrcDoc {
     .map((line) => ({
       time: Number(line.start.toFixed(3)),
       text: line.text,
-      enhanced: [],
+      enhanced:
+        line.words?.map((word) => ({
+          time: Number(word.start.toFixed(3)),
+          text: word.text,
+        })) ?? [],
     }));
 
   return {

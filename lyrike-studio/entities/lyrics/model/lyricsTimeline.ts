@@ -1,9 +1,4 @@
-export type LyricLine = {
-  id: string;
-  start: number;
-  end: number;
-  text: string;
-};
+import type { LyricLine, LyricWord } from "./types";
 
 const MIN_LINE_GAP = 0.24;
 
@@ -48,6 +43,20 @@ export function findActiveLyricIndex(
   return lines.findIndex(
     (line) => currentTime >= line.start && currentTime <= line.end,
   );
+}
+
+export function findActiveWord(
+  line: LyricLine,
+  currentTime: number,
+): LyricWord | null {
+  if (!line.words || line.words.length === 0) {
+    return null;
+  }
+
+  const word = line.words.find(
+    (w) => currentTime >= w.start && currentTime <= w.end,
+  );
+  return word ?? null;
 }
 
 export function updateLyricTiming(

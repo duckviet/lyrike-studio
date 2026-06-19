@@ -9,4 +9,5 @@ export {
   type LyricsMeta,
 } from "./model/types";
 export { type LyricsTabId } from "./config/enums";
-export { findActiveLyricIndex, type LyricLine } from "./model/lyricsTimeline";
+export { type LyricLine, type LyricWord } from "./model/types";
+export { findActiveLyricIndex, findActiveWord } from "./model/lyricsTimeline";

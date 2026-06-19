@@ -1,5 +1,6 @@
 export const LYRICS_TAB = {
   SYNCED: "synced",
+  KARAOKE: "karaoke",
   PLAIN: "plain",
   META: "meta",
 } as const;

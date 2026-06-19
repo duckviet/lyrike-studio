@@ -8,6 +8,7 @@
   },
   "tabs": {
     "synced": "Synced",
+    "karaoke": "Karaoke",
     "plain": "Plain",
     "meta": "Meta"
   },
@@ -28,6 +29,9 @@
     "fetch": "Fetch Media",
     "fetching": "Fetching...",
     "transcribe": "Transcribe",
+    "transcribeMode": "Mode",
+    "modeNormal": "Normal",
+    "modeKaraoke": "Karaoke",
     "working": "Working...",
     "metadata": "Metadata",
     "track": "Track",
@@ -41,7 +45,8 @@
   },
   "syncedMode": {
     "lineEdit": "Line Edit",
-    "textEdit": "Text Edit"
+    "textEdit": "Text Edit",
+    "karaoke": "Karaoke"
   },
   "plainLyrics": "Plain Lyrics",
   "textEditor": {

@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["es2022", "dom"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": false,
+    "outDir": "../.omo/tmp/studio-node-tests",
+    "rootDir": ".",
+    "incremental": false,
+    "jsx": "preserve",
+    "plugins": []
+  },
+  "include": ["**/*.test.ts"],
+  "exclude": ["node_modules", ".next"]
+}

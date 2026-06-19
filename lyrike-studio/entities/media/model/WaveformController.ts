@@ -1,5 +1,4 @@
 import WaveSurfer from "wavesurfer.js";
-import Hover from "wavesurfer.js/dist/plugins/hover.esm.js";
 import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
 
 import type { LyricLine } from "@/entities/lyrics";
@@ -15,6 +14,7 @@ type InitOptions = {
 
 export class WaveformController {
   private waveSurfer: WaveSurfer | null = null;
+  private media: HTMLMediaElement | null = null;
   private seekHandler: ((time: number) => void) | null = null;
   private scrollHandler: ((scrollLeft: number) => void) | null = null;
   private zoomHandler: ((px: number) => void) | null = null;
@@ -23,6 +23,8 @@ export class WaveformController {
   private loopRange: { start: number; end: number } | null = null;
 
   private pendingZoom: number | null = null;
+  private pendingWheelZoom: { readonly pxPerSec: number; readonly scrollLeft: number } | null = null;
+  private zoomFrame: number | null = null;
   private isReady = false;
   private currentPxPerSec = 0;
   private hoverTime = 0;
@@ -54,14 +56,6 @@ export class WaveformController {
       timeInterval: 1,
     });
 
-    const hoverPlugin = Hover.create({
-      lineColor: "#2f3ea8",
-      lineWidth: 1,
-      labelColor: "#ffffff",
-      labelBackground: "#2f3ea8",
-      labelSize: "10px",
-    });
-
     this.waveSurfer = WaveSurfer.create({
       container: options.container,
       waveColor: "#4f46e5",
@@ -69,15 +63,16 @@ export class WaveformController {
       cursorColor: "#ffffff",
       cursorWidth: 2,
       height: 140,
-      barWidth: 2,
+      barWidth: 4,
       barGap: 1,
       barRadius: 2,
       normalize: true,
       interact: true,
       hideScrollbar: true,
-      plugins: [timelinePlugin, hoverPlugin],
+      plugins: [timelinePlugin],
     });
 
+    this.media = options.media;
     this.seekHandler = options.onSeek;
     this.scrollHandler = options.onScroll ?? null;
     this.zoomHandler = options.onZoomChange ?? null;
@@ -143,13 +138,22 @@ export class WaveformController {
         // Clamp to the same range as the UI slider (20-240)
         newPxPerSec = Math.max(20, Math.min(240, newPxPerSec));
 
-        if (newPxPerSec !== oldPxPerSec) {
-          this.setZoom(newPxPerSec);
+        if (newPxPerSec === oldPxPerSec) return;
 
-          // Re-adjust scroll to keep the time under the mouse position
-          const newScrollLeft = timeAtCursor * newPxPerSec - mouseX;
-          this.waveSurfer.setScroll(newScrollLeft);
-        }
+        this.pendingWheelZoom = {
+          pxPerSec: newPxPerSec,
+          scrollLeft: timeAtCursor * newPxPerSec - mouseX,
+        };
+        if (this.zoomFrame !== null) return;
+
+        this.zoomFrame = requestAnimationFrame(() => {
+          this.zoomFrame = null;
+          const next = this.pendingWheelZoom;
+          this.pendingWheelZoom = null;
+          if (!next || !this.waveSurfer) return;
+          this.setZoom(next.pxPerSec);
+          this.waveSurfer.setScroll(next.scrollLeft);
+        });
       } else if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
         // Horizontal scroll with touchpad swipe (two fingers)
         e.preventDefault();
@@ -220,8 +224,12 @@ export class WaveformController {
 
   syncTime(currentTime: number): void {
     if (!this.waveSurfer) return;
-    const drift = Math.abs(this.waveSurfer.getCurrentTime() - currentTime);
-    if (drift > 0.2) {
+    if (this.media?.seeking) {
+      const drift = Math.abs(this.waveSurfer.getCurrentTime() - currentTime);
+      if (drift > 0.2) {
+        this.waveSurfer.setTime(currentTime);
+      }
+    } else {
       this.waveSurfer.setTime(currentTime);
     }
   }
@@ -255,12 +263,18 @@ export class WaveformController {
   }
 
   destroy(): void {
+    this.media = null;
     this.loopLineId = null;
     this.loopRange = null;
     this.isReady = false;
     this.pendingZoom = null;
+    this.pendingWheelZoom = null;
     this.pendingLoad = null;
     this.currentPxPerSec = 0;
+    if (this.zoomFrame !== null) {
+      cancelAnimationFrame(this.zoomFrame);
+      this.zoomFrame = null;
+    }
 
     if (this.wheelHandler || this.pointerMoveHandler) {
       this.initializedContainers.forEach((container) => {

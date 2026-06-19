@@ -9,7 +9,7 @@ import {
   useTranscribeMutation,
   usePublishMutation,
 } from "@/features/media/queries";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { formatTime } from "@/shared/utils/formatters";
 import Image from "next/image";
 import { LoaderCircle, Radio, Sparkles } from "lucide-react";
@@ -32,6 +32,10 @@ export function SourcePanel() {
   const setTranscribeState = useEditorMediaStore((s) => s.setTranscribeState);
   const setPeaksState = useEditorMediaStore((s) => s.setPeaksState);
   const setPeaksMessage = useEditorMediaStore((s) => s.setPeaksMessage);
+
+  const [transcribeMode, setTranscribeMode] = useState<"normal" | "karaoke">(
+    "normal",
+  );
 
   const hydrateFromMedia = useLyricsStore((s) => s.hydrateFromMedia);
   const importFromLrc = useLyricsStore((s) => s.importFromLrc);
@@ -128,12 +132,21 @@ export function SourcePanel() {
     }
     setTranscribeState("loading");
     try {
-      await transcribeMutation.transcribeAsync(mediaInfo.videoId);
+      await transcribeMutation.transcribeAsync({
+        videoId: mediaInfo.videoId,
+        mode: transcribeMode,
+      });
       setTranscribeState("ready");
     } catch {
       setTranscribeState("error");
     }
-  }, [mediaInfo, transcribeMutation, setSourceMessage, setTranscribeState]);
+  }, [
+    mediaInfo,
+    transcribeMode,
+    transcribeMutation,
+    setSourceMessage,
+    setTranscribeState,
+  ]);
 
   const onPublish = useCallback(async () => {
     if (!mediaInfo) {
@@ -184,6 +197,20 @@ export function SourcePanel() {
           >
             {fetchState === "loading" ? t("fetching") : t("fetch")}
           </EditorButton>
+
+          <label className="flex items-center gap-2 text-sm text-ink-light">
+            <span className="text-ink-light-soft">{t("transcribeMode")}</span>
+            <select
+              value={transcribeMode}
+              onChange={(e) =>
+                setTranscribeMode(e.target.value as "normal" | "karaoke")
+              }
+              className="rounded-control border border-line bg-white px-2 py-1 text-sm text-ink outline-none focus:border-primary-deep"
+            >
+              <option value="normal">{t("modeNormal")}</option>
+              <option value="karaoke">{t("modeKaraoke")}</option>
+            </select>
+          </label>
 
           <EditorButton
             className="w-full"

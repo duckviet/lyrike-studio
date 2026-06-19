@@ -6,13 +6,15 @@ from pathlib import Path
 from typing import Optional, List
 from fastapi import HTTPException
 
-from core.config import MEDIA_CACHE_DIR, AUDIO_CACHE_DIR, YOUTUBE_COOKIES_PATH
+from core.config import MEDIA_CACHE_DIR, AUDIO_CACHE_DIR, YOUTUBE_COOKIES_PATH, LOCAL_COOKIES_PATH
 from core.utils import utc_now_iso
 
 def _get_cookie_opt() -> dict:
     """Return cookiefile option if the file exists."""
     if YOUTUBE_COOKIES_PATH.exists():
         return {"cookiefile": str(YOUTUBE_COOKIES_PATH)}
+    if LOCAL_COOKIES_PATH.exists():
+        return {"cookiefile": str(LOCAL_COOKIES_PATH)}
     return {}
 
 def find_cached_audio(video_id: str) -> Optional[Path]:
