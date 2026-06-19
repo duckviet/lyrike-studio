@@ -63,7 +63,7 @@ export function buildPublishPayload(params: {
     params.mediaInfo?.artistName ||
     ""
   ).trim();
-  const albumName = params.lyricsState.doc.meta.album.trim();
+  const albumName = params.lyricsState.doc.meta.album.trim() || undefined;
 
   const syncedLyrics = params.exportLrc().trim();
   const plainLyrics = buildPlainLyrics(params.lyricsState);

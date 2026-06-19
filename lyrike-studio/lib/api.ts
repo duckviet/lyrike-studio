@@ -116,7 +116,7 @@ export type PublishChallengeResponse = {
 export type PublishLyricsPayload = {
   trackName: string;
   artistName: string;
-  albumName: string;
+  albumName?: string;
   duration: number;
   plainLyrics: string;
   syncedLyrics: string;
