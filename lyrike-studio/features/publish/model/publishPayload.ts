@@ -31,9 +31,7 @@ function assertValidPayload(payload: PublishLyricsPayload): void {
   if (!payload.artistName) {
     throw new Error("Missing Artist Name.");
   }
-  if (!payload.albumName) {
-    throw new Error("Missing Album Name.");
-  }
+
   if (!Number.isFinite(payload.duration) || payload.duration <= 0) {
     throw new Error("Invalid Duration in seconds.");
   }

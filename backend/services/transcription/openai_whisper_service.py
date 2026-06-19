@@ -29,7 +29,7 @@ class OpenAIWhisperTranscriptionProvider(BaseTranscriptionProvider):
                 timestamp_granularities=["word", "segment"],
             )
 
-        # # Save to log file to check
+        # Save to log file to check
         # try:
         #     import json
         #     log_dir = Path(__file__).parent.parent.parent / "logs"
