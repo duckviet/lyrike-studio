@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
+import { getPlaybackTime } from "@/features/playback/model/playbackClock";
 import { TIMING } from "@/shared/config/constants";
 import { useKeyCombo, type KeyComboHandler } from "@/shared/hooks/useKeyCombo";
 
 type Deps = {
   enabled?: boolean;
-  currentTime: number;
   onTogglePlayback: () => void;
   onSeekBy: (delta: number) => void;
   onSeekTo: (time: number) => void;
@@ -38,19 +38,12 @@ const isModalOpen = () => {
 
 export function useEditorKeyboardShortcuts({
   enabled = true,
-  currentTime,
   onTogglePlayback,
   onSeekBy,
   onSeekTo,
   onSaveDraft,
   onOpenShortcutsHelp,
 }: Deps) {
-  const currentTimeRef = useRef(currentTime);
-
-  useEffect(() => {
-    currentTimeRef.current = currentTime;
-  }, [currentTime]);
-
   const getSelectedLine = useCallback(() => {
     const { selectedLineId, doc } = useLyricsStore.getState();
     if (!selectedLineId) return null;
@@ -145,7 +138,7 @@ export function useEditorKeyboardShortcuts({
         key: "t",
         handler: () => {
           if (isInputFocused() || isModalOpen()) return;
-          useLyricsStore.getState().tapSync(currentTimeRef.current);
+          useLyricsStore.getState().tapSync(getPlaybackTime());
         },
       },
       {

@@ -5,6 +5,7 @@ import type { LyricLine, LyricWord } from "@/entities/lyrics";
 import type { LyricsHistoryState } from "@/entities/lyrics/store/lyricsStore";
 import { computeWordDragResult } from "../lib/word-drag-math";
 import type { DragEdge } from "../lib/drag-math";
+import { clearLiveDragRange } from "./liveDragStore";
 
 type WordDragCallbacks = {
   onWordRangeLive: (
@@ -149,6 +150,7 @@ export function useWordRegionDrag(opts: Options) {
         last.end,
         drag.baseState,
       );
+      clearLiveDragRange(last.wordId);
     }
 
     dragRef.current = null;

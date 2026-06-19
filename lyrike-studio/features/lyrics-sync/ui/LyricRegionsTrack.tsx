@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, memo, useCallback } from "react";
+import { forwardRef, useImperativeHandle, useRef, useCallback, useMemo } from "react";
 import type { LyricLine, LyricWord } from "@/entities/lyrics";
 import type { LyricsHistoryState } from "@/entities/lyrics/store/lyricsStore";
 import { computeGaps, type GapRegion } from "../lib/gap-utils";
@@ -16,7 +16,6 @@ interface Props extends RegionResizeCallbacks {
   lines: LyricLine[];
   duration: number;
   pxPerSec: number;
-  scrollLeft: number;
   activeLineId: string | null;
   selectedLineId: string | null;
   activeWordId?: string | null;
@@ -47,11 +46,12 @@ interface Props extends RegionResizeCallbacks {
   onDeleteGap?: (gap: GapRegion) => void;
 }
 
-export const LyricRegionsTrack = memo(function LyricRegionsTrack({
+export type LyricRegionsTrackHandle = { readonly setScrollLeft: (scrollLeft: number) => void };
+
+export const LyricRegionsTrack = forwardRef<LyricRegionsTrackHandle, Props>(function LyricRegionsTrack({
   lines,
   duration,
   pxPerSec,
-  scrollLeft,
   activeLineId,
   selectedLineId,
   activeWordId,
@@ -66,8 +66,16 @@ export const LyricRegionsTrack = memo(function LyricRegionsTrack({
   onExtendLine,
   onDeleteGap,
   ...resizeCbs
-}: Props) {
+}: Props, ref) {
   const innerRef = useRef<HTMLDivElement>(null);
+
+  const setScrollLeft = useCallback((nextScrollLeft: number) => {
+    if (innerRef.current) {
+      innerRef.current.style.transform = `translateX(-${nextScrollLeft}px)`;
+    }
+  }, []);
+
+  useImperativeHandle(ref, () => ({ setScrollLeft }), [setScrollLeft]);
 
   const { selectedGapId, selectGap, clearGap } = useGapSelection();
 
@@ -98,16 +106,15 @@ export const LyricRegionsTrack = memo(function LyricRegionsTrack({
         onSelectLine(lineId);
       },
     });
-
-  // Imperative scroll (avoid re-render)
-  useEffect(() => {
-    if (innerRef.current) {
-      innerRef.current.style.transform = `translateX(-${scrollLeft}px)`;
-    }
-  }, [scrollLeft]);
+  const linePointerMove = handlers.onPointerMove;
+  const linePointerUp = handlers.onPointerUp;
+  const linePointerCancel = handlers.onPointerCancel;
+  const wordPointerMove = wordHandlers.onPointerMove;
+  const wordPointerUp = wordHandlers.onPointerUp;
+  const wordPointerCancel = wordHandlers.onPointerCancel;
 
   const totalWidth = Math.max(duration * pxPerSec, 0);
-  const gaps = computeGaps(lines, duration);
+  const gaps = useMemo(() => computeGaps(lines, duration), [lines, duration]);
 
   const handleSelectGap = useCallback(
     (id: string) => {
@@ -153,20 +160,53 @@ export const LyricRegionsTrack = memo(function LyricRegionsTrack({
     [clearGap, onSelectLine, onSelectWord, onSeekWord],
   );
 
-  const mergedHandlers = {
+  const handleInsertGap = useCallback(
+    (gap: GapRegion) => onInsertAtGap(gap.start, gap.end),
+    [onInsertAtGap],
+  );
+
+  const handleExtendPrevGap = useCallback(
+    (gap: GapRegion) => {
+      if (gap.prevLineId) onExtendLine(gap.prevLineId, "end", gap.end);
+    },
+    [onExtendLine],
+  );
+
+  const handleExtendNextGap = useCallback(
+    (gap: GapRegion) => {
+      if (gap.nextLineId) onExtendLine(gap.nextLineId, "start", gap.start);
+    },
+    [onExtendLine],
+  );
+
+  const handleDeleteGapAction = useCallback(
+    (gap: GapRegion) => {
+      onDeleteGap?.(gap);
+    },
+    [onDeleteGap],
+  );
+
+  const mergedHandlers = useMemo(() => ({
     onPointerMove: (e: React.PointerEvent) => {
-      handlers.onPointerMove(e);
-      wordHandlers.onPointerMove(e);
+      linePointerMove(e);
+      wordPointerMove(e);
     },
     onPointerUp: (e: React.PointerEvent) => {
-      handlers.onPointerUp(e);
-      wordHandlers.onPointerUp(e);
+      linePointerUp(e);
+      wordPointerUp(e);
     },
     onPointerCancel: (e: React.PointerEvent) => {
-      handlers.onPointerCancel(e);
-      wordHandlers.onPointerCancel(e);
+      linePointerCancel(e);
+      wordPointerCancel(e);
     },
-  };
+  }), [
+    linePointerMove,
+    linePointerUp,
+    linePointerCancel,
+    wordPointerMove,
+    wordPointerUp,
+    wordPointerCancel,
+  ]);
 
   return (
     <div
@@ -178,6 +218,7 @@ export const LyricRegionsTrack = memo(function LyricRegionsTrack({
     >
       <div
         ref={innerRef}
+        data-testid="lyric-regions-track-inner"
         className="relative h-full will-change-transform"
         style={{ width: `${totalWidth}px` }}
       >
@@ -189,18 +230,10 @@ export const LyricRegionsTrack = memo(function LyricRegionsTrack({
             isSelected={gap.id === selectedGapId}
             onSelect={handleSelectGap}
             onDeselect={clearGap}
-            onInsert={() => onInsertAtGap(gap.start, gap.end)}
-            onExtendPrev={
-              gap.prevLineId
-                ? () => onExtendLine(gap.prevLineId!, "end", gap.end)
-                : null
-            }
-            onExtendNext={
-              gap.nextLineId
-                ? () => onExtendLine(gap.nextLineId!, "start", gap.start)
-                : null
-            }
-            onDelete={onDeleteGap ? () => onDeleteGap(gap) : null}
+            onInsert={handleInsertGap}
+            onExtendPrev={gap.prevLineId ? handleExtendPrevGap : null}
+            onExtendNext={gap.nextLineId ? handleExtendNextGap : null}
+            onDelete={onDeleteGap ? handleDeleteGapAction : null}
           />
         ))}
 

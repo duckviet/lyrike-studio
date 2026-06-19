@@ -1,9 +1,10 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { cn } from "@/shared/lib/utils";
 import type { LyricLine, LyricWord } from "@/entities/lyrics";
 import { computeSegmentLayout } from "@/features/lyrics-sync/lib/karaoke-region-layout";
+import { useLiveLineRange } from "../../model/liveDragStore";
 import { WordRegionBox } from "./WordRegionBox";
 
 interface KaraokeRegionGroupProps {
@@ -40,16 +41,25 @@ export const KaraokeRegionGroup = memo(function KaraokeRegionGroup({
   onSelectLine,
   onSelectWord,
 }: KaraokeRegionGroupProps) {
-  const layout = computeSegmentLayout(line, pxPerSec);
-  const hasWords = (line.words?.length ?? 0) > 0;
+  const liveRange = useLiveLineRange(line.id);
+  const renderedLine = useMemo(
+    () => mergeLiveLineRange(line, liveRange),
+    [line, liveRange],
+  );
+  const layout = useMemo(
+    () => computeSegmentLayout(renderedLine, pxPerSec),
+    [renderedLine, pxPerSec],
+  );
+  const hasWords = (renderedLine.words?.length ?? 0) > 0;
 
   return (
     <div
       data-karaoke-segment-id={line.id}
       className="absolute h-8"
       style={{
-        left: layout.left,
+        transform: `translateX(${layout.left}px) translateY(-50%)`,
         width: layout.width,
+        top: "50%",
       }}
     >
       <button
@@ -62,14 +72,21 @@ export const KaraokeRegionGroup = memo(function KaraokeRegionGroup({
           "absolute inset-0 h-full w-full rounded-inner border transition-colors duration-150",
           "text-[0.65rem] font-medium select-none overflow-hidden whitespace-nowrap px-2",
           isActive
-            ? "border-amber-400 text-white"
+            ? "border-amber/60 text-white"
             : isSelected
-              ? "border-amber-400/60 text-white/90"
+              ? "border-amber/40 text-white/90"
               : "border-white/10 text-white/70 hover:text-white",
+          !hasWords && (
+            isActive
+              ? "bg-amber/40"
+              : isSelected
+                ? "bg-amber/30"
+                : "bg-white/10 hover:bg-white/20"
+          ),
         )}
         style={{
           left: 0,
-          width: layout.width,
+          width: "100%",
         }}
         onClick={() => onSelectLine(line.id)}
         onPointerDown={(e) => {
@@ -89,12 +106,13 @@ export const KaraokeRegionGroup = memo(function KaraokeRegionGroup({
         layout.words.map((wordLayout, index) => (
           <WordRegionBox
             key={wordLayout.word.id}
-            line={line}
+            line={renderedLine}
             word={wordLayout.word}
             isActive={wordLayout.word.id === activeWordId}
             isSelected={wordLayout.word.id === selectedWordId}
             left={wordLayout.left}
             width={wordLayout.width}
+            pxPerSec={pxPerSec}
             onPointerDown={onPointerDownWord}
             onSelect={onSelectWord}
             isFirst={index === 0}
@@ -104,3 +122,27 @@ export const KaraokeRegionGroup = memo(function KaraokeRegionGroup({
     </div>
   );
 });
+
+function mergeLiveLineRange(
+  line: LyricLine,
+  liveRange: { readonly start: number; readonly end: number } | null,
+): LyricLine {
+  if (liveRange === null) return line;
+  const duration = line.end - line.start;
+  const nextDuration = liveRange.end - liveRange.start;
+  const words = line.words?.map((word) => {
+    if (duration <= 0) {
+      const delta = liveRange.start - line.start;
+      return { ...word, start: word.start + delta, end: word.end + delta };
+    }
+    const startRatio = (word.start - line.start) / duration;
+    const endRatio = (word.end - line.start) / duration;
+    return {
+      ...word,
+      start: liveRange.start + startRatio * nextDuration,
+      end: liveRange.start + endRatio * nextDuration,
+    };
+  });
+
+  return { ...line, start: liveRange.start, end: liveRange.end, words };
+}

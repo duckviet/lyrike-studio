@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { LyricsHistoryState } from "@/entities/lyrics";
-import { LyricRegionsTrack } from "@/features/lyrics-sync/ui/LyricRegionsTrack";
+import {
+  LyricRegionsTrack,
+  type LyricRegionsTrackHandle,
+} from "@/features/lyrics-sync/ui/LyricRegionsTrack";
 import {
   usePeaksQuery,
   useDemucsPeaksQuery,
@@ -16,6 +19,10 @@ import {
   editorMediaController,
 } from "@/features/editor/store/editorControllers";
 import { calcExtendLinePatch } from "@/features/playback/model/extendLine";
+import {
+  setLiveLineRange,
+  setLiveWordRange,
+} from "@/features/lyrics-sync/model/liveDragStore";
 import { getAudioUrl } from "@/lib/api";
 import { useTranslations } from "next-intl";
 import { TimelineActionsBar } from "./TimelineActionsBar";
@@ -23,7 +30,6 @@ import { EditorPanel } from "@/features/editor";
 
 export const TimelinePanel = ({
   isPlaying = false,
-  currentTime = 0,
   onSaveDraft,
   onTogglePlayback,
   onSeekTo,
@@ -31,7 +37,6 @@ export const TimelinePanel = ({
   onOpenShortcutsHelp,
 }: {
   isPlaying?: boolean;
-  currentTime?: number;
   onSaveDraft?: () => void;
   onTogglePlayback?: () => void;
   onSeekTo?: (time: number) => void;
@@ -41,14 +46,12 @@ export const TimelinePanel = ({
   const t = useTranslations("dashboard.editor");
   const waveHostRef = useRef<HTMLDivElement>(null);
   const timelineHostRef = useRef<HTMLDivElement>(null);
+  const regionsTrackRef = useRef<LyricRegionsTrackHandle>(null);
   const isInitialized = useRef(false);
 
   // Context / Stores
   const zoomLevel = useEditorUIStore((s) => s.zoomLevel);
-  const waveScrollLeft = useEditorUIStore((s) => s.waveScrollLeft);
-  const wavePxPerSec = useEditorUIStore((s) => s.wavePxPerSec);
   const onZoomChange = useEditorUIStore((s) => s.handleZoomChange);
-  const onScroll = useEditorUIStore((s) => s.handleScroll);
 
   const mediaInfo = useEditorMediaStore((s) => s.mediaInfo);
   const peaksInfo = useEditorMediaStore((s) => s.peaksInfo);
@@ -82,9 +85,7 @@ export const TimelinePanel = ({
 
   const onInsertAtGap = useLyricsStore((s) => s.insertAtRange);
   const onDeleteGap = useLyricsStore((s) => s.deleteGap);
-  const setWordRangeLive = useLyricsStore((s) => s.setWordRangeLive);
   const setWordRange = useLyricsStore((s) => s.setWordRange);
-  const setLineRangeLive = useLyricsStore((s) => s.setLineRangeLive);
   const setLineRange = useLyricsStore((s) => s.setLineRange);
 
   const handleDeleteGap = useCallback((gap: import("@/features/lyrics-sync/lib/gap-utils").GapRegion) => {
@@ -161,7 +162,9 @@ export const TimelinePanel = ({
       timelineContainer: timelineHostRef.current,
       media: editorMediaController.getMediaElement(),
       onSeek: (time: number) => handleSeekTo(time),
-      onScroll: (scrollLeft: number) => onScroll?.(scrollLeft),
+      onScroll: (scrollLeft: number) => {
+        regionsTrackRef.current?.setScrollLeft(scrollLeft);
+      },
       onZoomChange: (pxPerSec: number) => onZoomChange(pxPerSec),
     });
     isInitialized.current = true;
@@ -170,10 +173,11 @@ export const TimelinePanel = ({
       isInitialized.current = false;
       editorWaveformController.destroy();
     };
-  }, [handleSeekTo, onScroll, onZoomChange]);
+  }, [handleSeekTo, onZoomChange]);
 
   useEffect(() => {
     if (!audioUrl || !mediaInfo) return;
+    editorMediaController.setSource(audioUrl);
     editorWaveformController.load(
       audioUrl,
       currentPeaksInfo?.peaks ?? null,
@@ -182,8 +186,10 @@ export const TimelinePanel = ({
   }, [audioUrl, currentPeaksInfo, mediaInfo]);
 
   useEffect(() => {
-    editorWaveformController.syncTime(currentTime);
-  }, [currentTime]);
+    return editorMediaController.subscribe("timeupdate", ({ currentTime }) => {
+      editorWaveformController.syncTime(currentTime);
+    });
+  }, []);
 
   useEffect(() => {
     editorWaveformController.setZoom(zoomLevel);
@@ -196,7 +202,6 @@ export const TimelinePanel = ({
     >
       <TimelineActionsBar
         isPlaying={isPlaying}
-        currentTime={currentTime}
         duration={duration}
         peakSource={peakSource}
         onOpenShortcutsHelp={onOpenShortcutsHelp ?? (() => undefined)}
@@ -225,10 +230,10 @@ export const TimelinePanel = ({
 
         {mediaInfo && (
           <LyricRegionsTrack
+            ref={regionsTrackRef}
             lines={doc.syncedLines}
             duration={duration}
-            pxPerSec={wavePxPerSec || zoomLevel}
-            scrollLeft={waveScrollLeft}
+            pxPerSec={zoomLevel}
             activeLineId={activeLineId}
             selectedLineId={selectedLineId}
             activeWordId={activeWordId}
@@ -237,9 +242,11 @@ export const TimelinePanel = ({
             onSelectLine={onSelectLine}
             onSelectWord={onSelectWord}
             onSeekWord={handleSeekWord}
-            onResize={setLineRangeLive}
+            onResize={setLiveLineRange}
             onResizeCommit={setLineRange}
-            onWordRangeLive={setWordRangeLive}
+            onWordRangeLive={(_lineId, wordId, start, end) => {
+              setLiveWordRange(wordId, start, end);
+            }}
             onWordRangeCommit={setWordRange}
             onGetBaseState={onGetBaseState}
             onInsertAtGap={onInsertAtGap}

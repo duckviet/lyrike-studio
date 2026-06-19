@@ -3,7 +3,8 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { Clapperboard } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { TIMING } from "@/shared/config/constants";
+import { editorMediaController } from "@/features/editor/store/editorControllers";
+import { syncVideoPlayerToMediaController } from "@/features/playback/model/videoPlayerSync";
 
 interface VideoPlayerProps {
   videoId: string | null;
@@ -13,8 +14,17 @@ interface YTPlayer {
   playVideo(): void;
   pauseVideo(): void;
   seekTo(time: number, allowSeekAhead: boolean): void;
+  mute(): void;
   getCurrentTime(): number;
   getPlayerState(): number;
+  addEventListener(
+    event: string,
+    listener: (event: { data: number }) => void,
+  ): void;
+  removeEventListener(
+    event: string,
+    listener: (event: { data: number }) => void,
+  ): void;
   destroy(): void;
 }
 
@@ -26,6 +36,13 @@ interface WindowWithYT {
   YT?: YouTubeAPI;
   onYouTubeIframeAPIReady?: () => void;
 }
+
+const hasPlayerMethod = <T extends keyof YTPlayer>(
+  player: YTPlayer | null,
+  method: T,
+): player is YTPlayer & Record<T, YTPlayer[T]> => {
+  return typeof player?.[method] === "function";
+};
 
 export const VideoPlayer = forwardRef<
   {
@@ -39,15 +56,32 @@ export const VideoPlayer = forwardRef<
   const t = useTranslations("editor.video");
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const syncCleanupRef = useRef<(() => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
-    play: () => playerRef.current?.playVideo(),
-    pause: () => playerRef.current?.pauseVideo(),
-    seekTo: (time: number) => playerRef.current?.seekTo(time, true),
+    play: () => {
+      if (hasPlayerMethod(playerRef.current, "playVideo")) {
+        playerRef.current.playVideo();
+      }
+    },
+    pause: () => {
+      if (hasPlayerMethod(playerRef.current, "pauseVideo")) {
+        playerRef.current.pauseVideo();
+      }
+    },
+    seekTo: (time: number) => {
+      if (hasPlayerMethod(playerRef.current, "seekTo")) {
+        playerRef.current.seekTo(time, true);
+      }
+    },
     seekBy: (delta: number) => {
-      const current = playerRef.current?.getCurrentTime() ?? 0;
-      playerRef.current?.seekTo(current + delta, true);
+      if (
+        hasPlayerMethod(playerRef.current, "getCurrentTime") &&
+        hasPlayerMethod(playerRef.current, "seekTo")
+      ) {
+        const current = playerRef.current.getCurrentTime() ?? 0;
+        playerRef.current.seekTo(current + delta, true);
+      }
     },
   }));
 
@@ -65,36 +99,10 @@ export const VideoPlayer = forwardRef<
     });
   };
 
-  const startPolling = () => {
-    stopPolling();
-    pollRef.current = setInterval(() => {
-      if (!playerRef.current) return;
-      try {
-        const time = playerRef.current.getCurrentTime() ?? 0;
-        const state = playerRef.current.getPlayerState();
-        const isPlaying = state === 1;
-
-        window.dispatchEvent(
-          new CustomEvent("video-timeupdate", {
-            detail: { currentTime: time, isPlaying },
-          }),
-        );
-      } catch {
-        // YT API throws when iframe not ready - safe to ignore
-      }
-    }, TIMING.POLL_INTERVAL_MS);
-  };
-
-  const stopPolling = () => {
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
-  };
-
   useEffect(() => {
     if (!videoId) {
-      stopPolling();
+      syncCleanupRef.current?.();
+      syncCleanupRef.current = null;
       playerRef.current?.destroy();
       playerRef.current = null;
       return;
@@ -102,7 +110,8 @@ export const VideoPlayer = forwardRef<
 
     const initPlayer = async () => {
       await loadYTApi();
-      stopPolling();
+      syncCleanupRef.current?.();
+      syncCleanupRef.current = null;
       if (playerRef.current) {
         playerRef.current.destroy();
         playerRef.current = null;
@@ -118,9 +127,23 @@ export const VideoPlayer = forwardRef<
             controls: 1,
             rel: 0,
             modestbranding: 1,
+            playsinline: 1,
           },
           events: {
-            onReady: () => startPolling(),
+            onReady: () => {
+              if (!playerRef.current) return;
+              if (hasPlayerMethod(playerRef.current, "mute")) {
+                playerRef.current.mute();
+              }
+              syncCleanupRef.current = syncVideoPlayerToMediaController(
+                playerRef.current,
+                editorMediaController,
+              );
+              if (process.env.NODE_ENV === "development") {
+                (window as unknown as Record<string, unknown>).__ytPlayer =
+                  playerRef.current;
+              }
+            },
           },
         },
       );
@@ -129,7 +152,8 @@ export const VideoPlayer = forwardRef<
     initPlayer();
 
     return () => {
-      stopPolling();
+      syncCleanupRef.current?.();
+      syncCleanupRef.current = null;
       playerRef.current?.destroy();
       playerRef.current = null;
     };

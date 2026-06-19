@@ -44,7 +44,7 @@ export default function StudioPage() {
   const loadDraft = useLyricsStore((s) => s.loadDraft);
   const { saveDraft } = useDraft(loadDraft);
 
-  const { isPlaying, currentTime } = usePlaybackSync({
+  const { isPlaying } = usePlaybackSync({
     syncedLines,
     setActiveLine,
     setActiveWord,
@@ -109,7 +109,6 @@ export default function StudioPage() {
 
   useEditorKeyboardShortcuts({
     enabled: !isShortcutsHelpOpen,
-    currentTime,
     onTogglePlayback: handleTogglePlayback,
     onSeekBy: handleSeekBy,
     onSeekTo: handleSeekTo,
@@ -144,7 +143,6 @@ export default function StudioPage() {
         timeline={
           <TimelinePanel
             isPlaying={isPlaying}
-            currentTime={currentTime}
             onSaveDraft={handleSaveDraft}
             onTogglePlayback={handleTogglePlayback}
             onSeekTo={handleSeekTo}

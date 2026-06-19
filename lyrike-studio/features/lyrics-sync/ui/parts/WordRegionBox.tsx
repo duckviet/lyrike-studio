@@ -3,6 +3,7 @@
 import { memo, useRef } from "react";
 import { cn } from "@/shared/lib/utils";
 import type { LyricLine, LyricWord } from "@/entities/lyrics";
+import { useLiveWordRange } from "../../model/liveDragStore";
 
 interface WordRegionBoxProps {
   line: LyricLine;
@@ -11,6 +12,7 @@ interface WordRegionBoxProps {
   isSelected: boolean;
   left: number;
   width: number;
+  pxPerSec: number;
   isFirst?: boolean;
   isLast?: boolean;
   onPointerDown: (
@@ -29,12 +31,20 @@ export const WordRegionBox = memo(function WordRegionBox({
   isSelected,
   left,
   width,
+  pxPerSec,
   isFirst,
   isLast,
   onPointerDown,
   onSelect,
 }: WordRegionBoxProps) {
   const ref = useRef<HTMLButtonElement>(null);
+  const liveRange = useLiveWordRange(word.id);
+  const renderedLeft =
+    liveRange === null ? left : (liveRange.start - line.start) * pxPerSec;
+  const renderedWidth =
+    liveRange === null
+      ? width
+      : Math.max((liveRange.end - liveRange.start) * pxPerSec, 1);
 
   return (
     <button
@@ -45,22 +55,22 @@ export const WordRegionBox = memo(function WordRegionBox({
       aria-label={`Word ${word.text.trim()} ${word.start.toFixed(2)}s–${word.end.toFixed(2)}s`}
       title={`${word.text.trim()} (${word.start.toFixed(2)}s–${word.end.toFixed(2)}s)`}
       className={cn(
-        "absolute top-0 h-full min-w-[4px] cursor-grab",
+        "absolute top-0 h-full min-w-[4px] cursor-grab will-change-transform",
         "flex items-center justify-center overflow-hidden text-[0.65rem]",
         "select-none whitespace-nowrap px-1",
-        "focus:outline-none focus:ring-2 focus:ring-amber-400/50",
+        "focus:outline-none focus:ring-2 focus:ring-amber/50",
         isFirst && "rounded-l-inner",
         isLast && "rounded-r-inner",
-        !isLast && "border-l border-white/20",
+        !isFirst && "border-l",
         isActive
-          ? cn("bg-amber-400 text-black font-semibold shadow-sm", !isLast && "border-l border-amber-500")
+          ? cn("bg-amber/40 text-white font-semibold shadow-sm", !isFirst && "border-amber/60")
           : isSelected
-            ? cn("bg-amber-400/40 text-white", !isLast && "border-l border-amber-300/50")
-            : "bg-white/10 text-white/80 hover:bg-white/25 hover:text-white",
+            ? cn("bg-amber/30 text-white", !isFirst && "border-amber/40")
+            : cn("bg-white/10 text-white/80 hover:bg-white/25 hover:text-white", !isFirst && "border-white/20"),
       )}
       style={{
-        left,
-        width,
+        transform: `translateX(${renderedLeft}px)`,
+        width: renderedWidth,
       }}
       onClick={() => onSelect(line, word)}
       onPointerDown={(e) => {

@@ -163,7 +163,7 @@ export function updateLineWordsForRangeChange(
   newEnd: number,
 ): LyricLine {
   if (!line.words || line.words.length === 0) {
-    return line;
+    return { ...line, start: newStart, end: newEnd };
   }
 
   const oldStart = line.start;

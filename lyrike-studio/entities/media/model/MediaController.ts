@@ -70,6 +70,7 @@ export class MediaController {
   }
 
   setSource(sourceUrl: string): void {
+    if (this.audio.src === sourceUrl) return;
     this.audio.src = sourceUrl;
     this.audio.load();
     this.emit("sourcechange", { sourceUrl });
@@ -117,6 +118,10 @@ export class MediaController {
 
   getCurrentTime(): number {
     return this.audio.currentTime;
+  }
+
+  isPlaying(): boolean {
+    return this.audio ? !this.audio.paused : false;
   }
 
   getMediaElement(): HTMLAudioElement {
