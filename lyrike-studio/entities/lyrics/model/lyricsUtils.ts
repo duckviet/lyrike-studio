@@ -56,18 +56,20 @@ export function applyDocWithSyncedLines(
   nextLines: LyricLine[],
 ): LyricsDoc {
   const sorted = sortByStart(nextLines);
+  const normalized = sorted.map((line) => assignWordIdsForLine(line));
   return {
     ...doc,
-    syncedLines: sorted,
-    plainLyrics: toPlainLyrics(sorted),
+    syncedLines: normalized,
+    plainLyrics: toPlainLyrics(normalized),
   };
 }
 
 export function applyDocRaw(doc: LyricsDoc, nextLines: LyricLine[]): LyricsDoc {
+  const normalized = nextLines.map((line) => assignWordIdsForLine(line));
   return {
     ...doc,
-    syncedLines: nextLines,
-    plainLyrics: toPlainLyrics(nextLines),
+    syncedLines: normalized,
+    plainLyrics: toPlainLyrics(normalized),
   };
 }
 

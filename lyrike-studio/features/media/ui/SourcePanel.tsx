@@ -9,7 +9,7 @@ import {
   useTranscribeMutation,
   usePublishMutation,
 } from "@/features/media/queries";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatTime } from "@/shared/utils/formatters";
 import Image from "next/image";
 import { LoaderCircle, Radio, Sparkles } from "lucide-react";
@@ -46,6 +46,9 @@ export function SourcePanel() {
   const tab = useLyricsStore((s) => s.tab);
   const isAutoSyncEnabled = useLyricsStore((s) => s.isAutoSyncEnabled);
 
+  const canUndo = useLyricsStore((s) => s.canUndo);
+  const canRedo = useLyricsStore((s) => s.canRedo);
+
   const lyricsState = useMemo(
     () => ({
       doc,
@@ -53,24 +56,13 @@ export function SourcePanel() {
       activeLineId,
       tab,
       isAutoSyncEnabled,
-      canUndo: false,
-      canRedo: false,
+      canUndo,
+      canRedo,
     }),
-    [doc, selectedLineId, activeLineId, tab, isAutoSyncEnabled],
+    [doc, selectedLineId, activeLineId, tab, isAutoSyncEnabled, canUndo, canRedo],
   );
 
-  const loadMediaMutation = useLoadMedia({
-    onSuccess: (info) => {
-      hydrateFromMedia({
-        duration: info.duration,
-        title: info.trackName,
-        artist: info.artistName,
-      });
-    },
-    onError: (error) => {
-      setSourceMessage(error.message);
-    },
-  });
+  const loadMediaMutation = useLoadMedia();
 
   const transcribeMutation = useTranscribeMutation({
     onSuccess: (lrc) => {
@@ -81,7 +73,7 @@ export function SourcePanel() {
       setSourceMessage(`Transcription failed: ${error.message}`);
     },
     onStatusChange: (status) => {
-      if (status === "starting" || status === "running") {
+      if (status === "starting" || status === "running" || status === "queued") {
         setSourceMessage(`Transcribing... ${status}`);
       }
     },
@@ -96,12 +88,31 @@ export function SourcePanel() {
     },
   });
 
+  const transcribeAbortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      transcribeAbortControllerRef.current?.abort();
+    };
+  }, []);
+
   const onFetch = useCallback(async () => {
     if (!sourceInput.trim()) {
       setSourceMessage("Please enter a valid source URL.");
       setFetchState("error");
       return;
     }
+
+    // Abort any running transcription job since the media is being changed
+    transcribeAbortControllerRef.current?.abort();
+    transcribeAbortControllerRef.current = null;
+
+    // Clear old state & media to avoid stale UI
+    setMediaInfo(null);
+    setTranscribeState("idle");
+    setPeaksState("idle");
+    setPeaksMessage("No peaks generated yet.");
+
     setSourceMessage("Fetching metadata and caching audio...");
     setFetchState("loading");
     try {
@@ -110,9 +121,18 @@ export function SourcePanel() {
       setPeaksInfo(data.peaksInfo);
       setPeaksState(data.peaksState);
       setPeaksMessage(data.peaksMessage);
+      hydrateFromMedia({
+        duration: data.mediaInfo.duration,
+        title: data.mediaInfo.trackName,
+        artist: data.mediaInfo.artistName,
+      });
+      setSourceMessage("Media loaded successfully.");
       setFetchState("ready");
-    } catch {
+    } catch (error) {
       setFetchState("error");
+      setSourceMessage(
+        error instanceof Error ? error.message : "Failed to fetch media."
+      );
     }
   }, [
     sourceInput,
@@ -123,6 +143,8 @@ export function SourcePanel() {
     setPeaksInfo,
     setPeaksState,
     setPeaksMessage,
+    setTranscribeState,
+    hydrateFromMedia,
   ]);
 
   const onTranscribe = useCallback(async () => {
@@ -130,14 +152,24 @@ export function SourcePanel() {
       setSourceMessage("Load media before transcribing.");
       return;
     }
+    // Abort any existing transcription first
+    transcribeAbortControllerRef.current?.abort();
+    const controller = new AbortController();
+    transcribeAbortControllerRef.current = controller;
+
     setTranscribeState("loading");
     try {
       await transcribeMutation.transcribeAsync({
         videoId: mediaInfo.videoId,
         mode: transcribeMode,
+        signal: controller.signal,
       });
+      if (controller.signal.aborted) return;
       setTranscribeState("ready");
-    } catch {
+    } catch (err: any) {
+      if (err?.message === "Aborted" || controller.signal.aborted) {
+        return;
+      }
       setTranscribeState("error");
     }
   }, [
@@ -153,11 +185,15 @@ export function SourcePanel() {
       setSourceMessage("Load media before publishing.");
       return;
     }
-    await publishMutation.publishAsync({
-      lyricsState,
-      mediaInfo,
-      exportToLrc,
-    });
+    try {
+      await publishMutation.publishAsync({
+        lyricsState,
+        mediaInfo,
+        exportToLrc,
+      });
+    } catch (error) {
+      console.warn("Publish failed:", error);
+    }
   }, [lyricsState, mediaInfo, publishMutation, exportToLrc, setSourceMessage]);
 
   return (
@@ -264,7 +300,7 @@ export function SourcePanel() {
                   height={112}
                   src={`https://i.ytimg.com/vi/${mediaInfo.videoId}/mqdefault.jpg`}
                   className="aspect-square w-28 rounded-inner border border-line-soft bg-bg object-cover"
-                  alt="Thumbnail"
+                  alt={mediaInfo.trackName || "Track thumbnail"}
                 />
                 <div className="flex-1 min-w-0 flex flex-col gap-3">
                   <div className="min-w-0 grid gap-1">
@@ -291,7 +327,7 @@ export function SourcePanel() {
                     {t("duration")}
                   </span>
                   <span className="text-sm font-medium text-ink-light wrap-break-word font-mono">
-                    {formatTime(mediaInfo.duration)}
+                    {mediaInfo.duration ? formatTime(mediaInfo.duration) : "--:--"}
                   </span>
                 </div>
                 <div className="min-w-0 grid gap-1">
@@ -306,12 +342,10 @@ export function SourcePanel() {
             </div>
           </section>
 
-          {mediaInfo && (
-            <PublishCard
-              publishState={publishMutation.state}
-              onPublish={onPublish}
-            />
-          )}
+          <PublishCard
+            publishState={publishMutation.state}
+            onPublish={onPublish}
+          />
         </>
       )}
     </article>

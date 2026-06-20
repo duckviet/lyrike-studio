@@ -70,26 +70,22 @@ export function syncVideoPlayerToMediaController(
   let suppressPlayerToControllerUntil = 0;
   let suppressControllerToPlayerUntil = 0;
   let pendingSeekTimeout: ReturnType<typeof setTimeout> | null = null;
-  let isControllerInitiatedSeek = false;
+  let controllerSeekUntil = 0;
+
+  const getNow = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
   const isPlayerToControllerSuppressed = () =>
-    typeof performance !== "undefined" &&
-    performance.now() < suppressPlayerToControllerUntil;
+    getNow() < suppressPlayerToControllerUntil;
 
   const isControllerToPlayerSuppressed = () =>
-    typeof performance !== "undefined" &&
-    performance.now() < suppressControllerToPlayerUntil;
+    getNow() < suppressControllerToPlayerUntil;
 
   const suppressPlayerToController = (ms = SUPPRESS_AFTER_CONTROLLER_COMMAND_MS) => {
-    if (typeof performance !== "undefined") {
-      suppressPlayerToControllerUntil = performance.now() + ms;
-    }
+    suppressPlayerToControllerUntil = getNow() + ms;
   };
 
   const suppressControllerToPlayer = (ms = SUPPRESS_AFTER_CONTROLLER_COMMAND_MS) => {
-    if (typeof performance !== "undefined") {
-      suppressControllerToPlayerUntil = performance.now() + ms;
-    }
+    suppressControllerToPlayerUntil = getNow() + ms;
   };
 
   const propagateSeek = () => {
@@ -108,8 +104,7 @@ export function syncVideoPlayerToMediaController(
     if (pendingSeekTimeout) {
       clearTimeout(pendingSeekTimeout);
     }
-    const now =
-      typeof performance !== "undefined" ? performance.now() : 0;
+    const now = getNow();
     const suppressRemaining = Math.max(0, suppressPlayerToControllerUntil - now);
 
     // Suppress controller -> player updates immediately so any concurrent timeupdate
@@ -148,7 +143,7 @@ export function syncVideoPlayerToMediaController(
         const playerJump = Math.abs(playerTime - lastPlayerTime);
         if (playerJump > SEEK_JUMP_THRESHOLD && controllerJump <= SEEK_JUMP_THRESHOLD) {
           // User seeked inside player
-          isControllerInitiatedSeek = false;
+          controllerSeekUntil = 0;
           suppressControllerToPlayer();
           suppressPlayerToController();
           lastPlayerTime = playerTime;
@@ -156,7 +151,7 @@ export function syncVideoPlayerToMediaController(
         } else {
           // Controller jumped or normal drift -> Sync player to controller
           if (controllerJump > SEEK_JUMP_THRESHOLD) {
-            isControllerInitiatedSeek = true;
+            controllerSeekUntil = getNow() + 500;
           }
           player.seekTo(currentTime, true);
           suppressPlayerToController();
@@ -196,8 +191,9 @@ export function syncVideoPlayerToMediaController(
       lastPlayerState === YT_BUFFERING
     ) {
       // The player just finished buffering after a user seek.
-      if (isControllerInitiatedSeek) {
-        isControllerInitiatedSeek = false;
+      const isControllerSeek = getNow() < controllerSeekUntil;
+      if (isControllerSeek) {
+        controllerSeekUntil = 0;
       } else {
         // Give it a moment to settle on the new time, then sync the controller.
         scheduleSeekPropagation();

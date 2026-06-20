@@ -1,5 +1,6 @@
 import WaveSurfer from "wavesurfer.js";
 import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
+import Hover from "wavesurfer.js/dist/plugins/hover.esm.js";
 
 import type { LyricLine } from "@/entities/lyrics";
 
@@ -38,150 +39,176 @@ export class WaveformController {
   private wheelHandler: ((e: WheelEvent) => void) | null = null;
   private pointerMoveHandler: ((e: PointerEvent) => void) | null = null;
   private initializedContainers: HTMLElement[] = [];
+  private unsubscribes: (() => void)[] = [];
 
   init(options: InitOptions): void {
-    this.destroy();
-    options.container.style.scrollbarWidth = "none";
-    (
-      options.container.style as CSSStyleDeclaration & {
-        msOverflowStyle?: string;
-      }
-    ).msOverflowStyle = "none";
+    try {
+      this.destroy();
+      options.container.style.scrollbarWidth = "none";
+      (
+        options.container.style as CSSStyleDeclaration & {
+          msOverflowStyle?: string;
+        }
+      ).msOverflowStyle = "none";
 
-    const timelinePlugin = TimelinePlugin.create({
-      container: options.timelineContainer,
-      height: 18,
-      primaryLabelInterval: 10,
-      secondaryLabelInterval: 2,
-      timeInterval: 1,
-    });
-
-    this.waveSurfer = WaveSurfer.create({
-      container: options.container,
-      waveColor: "#4f46e5",
-      progressColor: "#8b5cf6",
-      cursorColor: "#ffffff",
-      cursorWidth: 2,
-      height: 140,
-      barWidth: 4,
-      barGap: 1,
-      barRadius: 2,
-      normalize: true,
-      interact: true,
-      hideScrollbar: true,
-      plugins: [timelinePlugin],
-    });
-
-    this.media = options.media;
-    this.seekHandler = options.onSeek;
-    this.scrollHandler = options.onScroll ?? null;
-    this.zoomHandler = options.onZoomChange ?? null;
-
-    this.waveSurfer.on("ready", () => {
-      this.isReady = true;
-      if (this.pendingZoom !== null) {
-        this.waveSurfer?.zoom(this.pendingZoom);
-        this.pendingZoom = null;
-      }
-      this.emitZoom();
-    });
-
-    this.waveSurfer.on("interaction", () => {
-      if (!this.waveSurfer || !this.seekHandler) return;
-      this.seekHandler(this.waveSurfer.getCurrentTime());
-    });
-
-    this.waveSurfer.on("scroll", (startX) => {
-      if (!this.scrollHandler || !this.waveSurfer) return;
-      const px = startX * this.currentPxPerSec;
-      this.scrollHandler(px);
-    });
-
-    this.waveSurfer.on("zoom", (px) => {
-      this.currentPxPerSec = px;
-      this.zoomHandler?.(px);
-    });
-
-    this.waveSurfer.on("timeupdate", (time) => {
-      if (!this.loopRange || !this.waveSurfer || !this.seekHandler) return;
-      if (time >= this.loopRange.end) {
-        this.waveSurfer.setTime(this.loopRange.start);
-        this.seekHandler(this.loopRange.start);
-      }
-    });
-
-    this.pointerMoveHandler = (e: PointerEvent) => {
-      if (!this.waveSurfer || !this.currentPxPerSec) return;
-      const scrollLeft = this.waveSurfer.getScroll();
-      const rect = options.container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      this.hoverTime = (scrollLeft + x) / this.currentPxPerSec;
-    };
-
-    this.wheelHandler = (e: WheelEvent) => {
-      if (!this.waveSurfer || this.currentPxPerSec <= 0) return;
-
-      if (e.ctrlKey || e.metaKey) {
-        // Zoom with touchpad pinch or Ctrl + Wheel
-        e.preventDefault();
-
-        const rect = options.container.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const oldPxPerSec = this.currentPxPerSec;
-        const scrollLeft = this.waveSurfer.getScroll();
-        const timeAtCursor = (scrollLeft + mouseX) / oldPxPerSec;
-
-        // deltaY > 0 is zoom out, deltaY < 0 is zoom in
-        const factor = Math.pow(1.1, -e.deltaY / 50);
-        let newPxPerSec = oldPxPerSec * factor;
-
-        // Clamp to the same range as the UI slider (20-240)
-        newPxPerSec = Math.max(20, Math.min(240, newPxPerSec));
-
-        if (newPxPerSec === oldPxPerSec) return;
-
-        this.pendingWheelZoom = {
-          pxPerSec: newPxPerSec,
-          scrollLeft: timeAtCursor * newPxPerSec - mouseX,
-        };
-        if (this.zoomFrame !== null) return;
-
-        this.zoomFrame = requestAnimationFrame(() => {
-          this.zoomFrame = null;
-          const next = this.pendingWheelZoom;
-          this.pendingWheelZoom = null;
-          if (!next || !this.waveSurfer) return;
-          this.setZoom(next.pxPerSec);
-          this.waveSurfer.setScroll(next.scrollLeft);
-        });
-      } else if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-        // Horizontal scroll with touchpad swipe (two fingers)
-        e.preventDefault();
-        const scrollLeft = this.waveSurfer.getScroll();
-        this.waveSurfer.setScroll(scrollLeft + e.deltaX);
-      }
-    };
-
-    this.initializedContainers = [options.container, options.timelineContainer];
-    this.initializedContainers.forEach((container) => {
-      container.addEventListener("pointermove", this.pointerMoveHandler!);
-      container.addEventListener("wheel", this.wheelHandler!, {
-        passive: false,
+      const timelinePlugin = TimelinePlugin.create({
+        container: options.timelineContainer,
+        height: 18,
+        primaryLabelInterval: 10,
+        secondaryLabelInterval: 2,
+        timeInterval: 1,
       });
-    });
 
-    if (this.pendingLoad) {
-      const { sourceUrl, peaks, duration } = this.pendingLoad;
-      this.pendingLoad = null;
-      this._doLoad(sourceUrl, peaks, duration);
+      const hoverPlugin = Hover.create({
+        lineColor: "#2f3ea8",
+        lineWidth: 1,
+        labelColor: "#ffffff",
+        labelBackground: "#2f3ea8",
+        labelSize: "10px",
+      });
+
+      this.waveSurfer = WaveSurfer.create({
+        container: options.container,
+        media: options.media,
+        waveColor: "#4f46e5",
+        progressColor: "#8b5cf6",
+        cursorColor: "#ffffff",
+        cursorWidth: 2,
+        height: 140,
+        barWidth: 4,
+        barGap: 1,
+        barRadius: 2,
+        normalize: true,
+        interact: true,
+        hideScrollbar: true,
+        plugins: [timelinePlugin, hoverPlugin],
+      });
+
+      this.media = options.media;
+      this.seekHandler = options.onSeek;
+      this.scrollHandler = options.onScroll ?? null;
+      this.zoomHandler = options.onZoomChange ?? null;
+
+      this.unsubscribes.push(
+        this.waveSurfer.on("ready", () => {
+          this.isReady = true;
+          if (this.pendingZoom !== null) {
+            this.waveSurfer?.zoom(this.pendingZoom);
+            this.pendingZoom = null;
+          }
+          this.emitZoom();
+        })
+      );
+
+      this.unsubscribes.push(
+        this.waveSurfer.on("interaction", () => {
+          if (!this.waveSurfer || !this.seekHandler) return;
+          this.seekHandler(this.waveSurfer.getCurrentTime());
+        })
+      );
+
+      this.unsubscribes.push(
+        this.waveSurfer.on("scroll", () => {
+          if (!this.scrollHandler || !this.waveSurfer) return;
+          this.scrollHandler(this.waveSurfer.getScroll());
+        })
+      );
+
+      this.unsubscribes.push(
+        this.waveSurfer.on("zoom", (px) => {
+          if (this.currentPxPerSec === px) return;
+          this.currentPxPerSec = px;
+          this.zoomHandler?.(px);
+        })
+      );
+
+      this.unsubscribes.push(
+        this.waveSurfer.on("timeupdate", (time) => {
+          if (!this.loopRange || !this.waveSurfer || !this.seekHandler) return;
+          if (time >= this.loopRange.end) {
+            this.waveSurfer.setTime(this.loopRange.start);
+            this.seekHandler(this.loopRange.start);
+          }
+        })
+      );
+
+      this.pointerMoveHandler = (e: PointerEvent) => {
+        if (!this.waveSurfer || !this.currentPxPerSec) return;
+        const scrollLeft = this.waveSurfer.getScroll();
+        const rect = options.container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        this.hoverTime = (scrollLeft + x) / this.currentPxPerSec;
+      };
+
+      this.wheelHandler = (e: WheelEvent) => {
+        if (!this.waveSurfer || this.currentPxPerSec <= 0) return;
+
+        if (e.ctrlKey || e.metaKey) {
+          // Zoom with touchpad pinch or Ctrl + Wheel
+          e.preventDefault();
+
+          const rect = options.container.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const oldPxPerSec = this.currentPxPerSec;
+          const scrollLeft = this.waveSurfer.getScroll();
+          const timeAtCursor = (scrollLeft + mouseX) / oldPxPerSec;
+
+          // deltaY > 0 is zoom out, deltaY < 0 is zoom in
+          const factor = Math.pow(1.1, -e.deltaY / 50);
+          let newPxPerSec = oldPxPerSec * factor;
+
+          // Clamp to the same range as the UI slider (20-240)
+          newPxPerSec = Math.max(20, Math.min(240, newPxPerSec));
+
+          if (newPxPerSec === oldPxPerSec) return;
+
+          this.pendingWheelZoom = {
+            pxPerSec: newPxPerSec,
+            scrollLeft: timeAtCursor * newPxPerSec - mouseX,
+          };
+          if (this.zoomFrame !== null) return;
+
+          this.zoomFrame = requestAnimationFrame(() => {
+            this.zoomFrame = null;
+            const next = this.pendingWheelZoom;
+            this.pendingWheelZoom = null;
+            if (!next || !this.waveSurfer) return;
+            this.setZoom(next.pxPerSec);
+            this.waveSurfer.setScroll(next.scrollLeft);
+          });
+        } else if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+          // Horizontal scroll with touchpad swipe (two fingers)
+          e.preventDefault();
+          const scrollLeft = this.waveSurfer.getScroll();
+          this.waveSurfer.setScroll(scrollLeft + e.deltaX);
+        }
+      };
+
+      this.initializedContainers = [options.container, options.timelineContainer];
+      this.initializedContainers.forEach((container) => {
+        container.addEventListener("pointermove", this.pointerMoveHandler!);
+        container.addEventListener("wheel", this.wheelHandler!, {
+          passive: false,
+        });
+      });
+
+      if (this.pendingLoad) {
+        const { sourceUrl, peaks, duration } = this.pendingLoad;
+        this.pendingLoad = null;
+        this._doLoad(sourceUrl, peaks, duration);
+      }
+    } catch (err) {
+      console.error("WaveformController init failed:", err);
     }
   }
 
   private emitZoom() {
     if (!this.waveSurfer) return;
     const px = this.waveSurfer.options?.minPxPerSec ?? this.currentPxPerSec;
-    this.currentPxPerSec = px;
-    this.zoomHandler?.(px);
+    if (this.currentPxPerSec !== px) {
+      this.currentPxPerSec = px;
+      this.zoomHandler?.(px);
+    }
   }
 
   private _doLoad(
@@ -213,10 +240,9 @@ export class WaveformController {
       this.pendingZoom = pxPerSec;
       return;
     }
+    if (this.currentPxPerSec === pxPerSec) return;
     try {
       this.waveSurfer.zoom(pxPerSec);
-      this.currentPxPerSec = pxPerSec;
-      this.zoomHandler?.(pxPerSec);
     } catch (err) {
       console.warn("WaveSurfer zoom failed:", err);
     }
@@ -224,17 +250,11 @@ export class WaveformController {
 
   syncTime(currentTime: number): void {
     if (!this.waveSurfer) return;
-    if (this.media?.seeking) {
-      const drift = Math.abs(this.waveSurfer.getCurrentTime() - currentTime);
-      if (drift > 0.2) {
-        this.waveSurfer.setTime(currentTime);
-      }
-    } else {
+    const drift = Math.abs(this.waveSurfer.getCurrentTime() - currentTime);
+    if (drift > 0.15) {
       this.waveSurfer.setTime(currentTime);
     }
   }
-
-  renderLyricRegions(_lines: LyricLine[], _activeLineId: string | null): void {}
 
   toggleLoop(lineId: string, lines: LyricLine[]): boolean {
     if (this.loopLineId === lineId) {
@@ -285,6 +305,15 @@ export class WaveformController {
     this.wheelHandler = null;
     this.pointerMoveHandler = null;
     this.initializedContainers = [];
+
+    this.unsubscribes.forEach((unsub) => {
+      try {
+        unsub();
+      } catch (e) {
+        // Safe check
+      }
+    });
+    this.unsubscribes = [];
 
     if (this.waveSurfer) {
       this.waveSurfer.destroy();

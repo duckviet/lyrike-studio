@@ -20,14 +20,24 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
     mutationFn: async ({
       videoId,
       mode,
+      signal,
     }: {
       videoId: string;
       mode?: "normal" | "karaoke";
+      signal?: AbortSignal;
     }) => {
       options?.onStatusChange?.("starting");
 
+      if (signal?.aborted) {
+        throw new Error("Aborted");
+      }
+
       // Request transcription
       const response = await requestTranscription(videoId, mode);
+
+      if (signal?.aborted) {
+        throw new Error("Aborted");
+      }
 
       if (response.status === "completed" && response.synced) {
         options?.onStatusChange?.("completed");
@@ -43,6 +53,26 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
         const eventSource = streamTranscription(videoId, mode);
         let resolved = false;
 
+        const onAbort = () => {
+          if (!resolved) {
+            resolved = true;
+            eventSource.close();
+            reject(new Error("Aborted"));
+          }
+        };
+
+        if (signal) {
+          signal.addEventListener("abort", onAbort);
+        }
+
+        const cleanup = () => {
+          resolved = true;
+          eventSource.close();
+          if (signal) {
+            signal.removeEventListener("abort", onAbort);
+          }
+        };
+
         eventSource.onmessage = (event) => {
           try {
             const data = normalizeTranscribeResponse(JSON.parse(event.data));
@@ -50,34 +80,31 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
             options?.onStatusChange?.(data.status);
 
             if (data.status === "completed" && data.synced) {
-              resolved = true;
-              eventSource.close();
+              cleanup();
               resolve(data.synced);
             } else if (data.status === "failed") {
-              resolved = true;
-              eventSource.close();
+              cleanup();
               reject(
                 new Error(data.message || data.error || "Transcription failed"),
               );
             }
           } catch {
-            resolved = true;
-            eventSource.close();
+            cleanup();
             reject(new Error("Invalid transcription stream payload"));
           }
         };
 
         eventSource.onerror = () => {
           if (!resolved) {
-            eventSource.close();
+            cleanup();
             reject(new Error("EventSource connection failed"));
           }
         };
 
         // Timeout after 2 minutes
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           if (!resolved) {
-            eventSource.close();
+            cleanup();
             reject(new Error("Transcription timeout"));
           }
         }, 120000);

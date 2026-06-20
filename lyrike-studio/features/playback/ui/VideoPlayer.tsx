@@ -44,6 +44,26 @@ const hasPlayerMethod = <T extends keyof YTPlayer>(
   return typeof player?.[method] === "function";
 };
 
+let ytApiPromise: Promise<void> | null = null;
+function loadYTApi(): Promise<void> {
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise<void>((resolve) => {
+    const win = window as WindowWithYT;
+    if (win.YT?.Player) return resolve();
+    const prev = win.onYouTubeIframeAPIReady;
+    win.onYouTubeIframeAPIReady = () => {
+      prev?.();
+      resolve();
+    };
+    if (!document.querySelector('script[src*="iframe_api"]')) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(tag);
+    }
+  });
+  return ytApiPromise;
+}
+
 export const VideoPlayer = forwardRef<
   {
     play: () => void;
@@ -85,20 +105,6 @@ export const VideoPlayer = forwardRef<
     },
   }));
 
-  const loadYTApi = () => {
-    return new Promise<void>((resolve) => {
-      const win = window as WindowWithYT;
-      if (win.YT?.Player) {
-        resolve();
-        return;
-      }
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      document.head.appendChild(tag);
-      win.onYouTubeIframeAPIReady = resolve;
-    });
-  };
-
   useEffect(() => {
     if (!videoId) {
       syncCleanupRef.current?.();
@@ -108,8 +114,11 @@ export const VideoPlayer = forwardRef<
       return;
     }
 
+    let cancelled = false;
     const initPlayer = async () => {
       await loadYTApi();
+      if (cancelled) return;
+
       syncCleanupRef.current?.();
       syncCleanupRef.current = null;
       if (playerRef.current) {
@@ -131,7 +140,7 @@ export const VideoPlayer = forwardRef<
           },
           events: {
             onReady: () => {
-              if (!playerRef.current) return;
+              if (cancelled || !playerRef.current) return;
               if (hasPlayerMethod(playerRef.current, "mute")) {
                 playerRef.current.mute();
               }
@@ -152,6 +161,7 @@ export const VideoPlayer = forwardRef<
     initPlayer();
 
     return () => {
+      cancelled = true;
       syncCleanupRef.current?.();
       syncCleanupRef.current = null;
       playerRef.current?.destroy();

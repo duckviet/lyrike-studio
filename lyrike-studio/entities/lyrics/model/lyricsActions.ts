@@ -15,6 +15,7 @@ type MinimalState = {
   activeLineId: string | null;
   isAutoSyncEnabled: boolean;
   focusLineId: string | null;
+  selectedWordId: string | null;
 };
 
 type StoreApi = {
@@ -267,17 +268,29 @@ export const buildSplitLineAction =
 
 export const buildSplitAtTimeAction =
   (set: StoreApi["set"], get: StoreApi["get"]) => (time: number) => {
-    const { doc } = get();
+    const { doc, selectedLineId, selectedWordId } = get();
     const lines = doc.syncedLines;
+
+    let splitTime = time;
+    if (selectedLineId && selectedWordId) {
+      const line = lines.find((l) => l.id === selectedLineId);
+      const word = line?.words?.find((w) => w.id === selectedWordId);
+      if (word) {
+        splitTime = word.start;
+      }
+    }
+
+    splitTime = Number(splitTime.toFixed(2));
+
     const index = lines.findIndex(
-      (line: LyricLine) => time > line.start && time < line.end,
+      (line: LyricLine) => splitTime >= line.start && splitTime <= line.end,
     );
     if (index < 0) return;
 
     const line = lines[index];
     if (
-      time < line.start + TIMING.MIN_LINE_LENGTH_SEC ||
-      time > line.end - TIMING.MIN_LINE_LENGTH_SEC
+      splitTime < line.start + TIMING.MIN_LINE_LENGTH_SEC ||
+      splitTime > line.end - TIMING.MIN_LINE_LENGTH_SEC
     ) {
       return;
     }
@@ -296,16 +309,16 @@ export const buildSplitAtTimeAction =
       leftWords = [];
       rightWords = [];
       for (const w of line.words!) {
-        if (w.end <= time) {
+        if (w.end <= splitTime) {
           leftWords.push({ ...w });
-        } else if (w.start >= time) {
+        } else if (w.start >= splitTime) {
           rightWords.push({ ...w });
         } else {
           const mid = w.start + (w.end - w.start) / 2;
-          if (mid < time) {
-            leftWords.push({ ...w, end: time });
+          if (mid < splitTime) {
+            leftWords.push({ ...w, end: splitTime });
           } else {
-            rightWords.push({ ...w, start: time });
+            rightWords.push({ ...w, start: splitTime });
           }
         }
       }
@@ -316,13 +329,13 @@ export const buildSplitAtTimeAction =
 
     let first: LyricLine = {
       ...line,
-      end: time,
+      end: splitTime,
       text: leftText,
       words: leftWords,
     };
     let second: LyricLine = {
       id: utils.createLineId(),
-      start: time,
+      start: splitTime,
       end: line.end,
       text: rightText,
       words: rightWords,
@@ -344,6 +357,7 @@ export const buildSplitAtTimeAction =
     set({
       doc: utils.applyDocWithSyncedLines(doc, nextLines),
       selectedLineId: second.id,
+      selectedWordId: null,
     });
   };
 

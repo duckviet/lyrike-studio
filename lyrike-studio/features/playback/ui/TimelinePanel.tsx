@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { LyricsHistoryState } from "@/entities/lyrics";
+import type { GapRegion } from "@/features/lyrics-sync/lib/gap-utils";
 import {
   LyricRegionsTrack,
   type LyricRegionsTrackHandle,
@@ -47,7 +48,6 @@ export const TimelinePanel = ({
   const waveHostRef = useRef<HTMLDivElement>(null);
   const timelineHostRef = useRef<HTMLDivElement>(null);
   const regionsTrackRef = useRef<LyricRegionsTrackHandle>(null);
-  const isInitialized = useRef(false);
 
   // Context / Stores
   const zoomLevel = useEditorUIStore((s) => s.zoomLevel);
@@ -88,7 +88,7 @@ export const TimelinePanel = ({
   const setWordRange = useLyricsStore((s) => s.setWordRange);
   const setLineRange = useLyricsStore((s) => s.setLineRange);
 
-  const handleDeleteGap = useCallback((gap: import("@/features/lyrics-sync/lib/gap-utils").GapRegion) => {
+  const handleDeleteGap = useCallback((gap: GapRegion) => {
     onDeleteGap(
       gap.start,
       gap.end,
@@ -154,36 +154,46 @@ export const TimelinePanel = ({
       ? demucsPeaksQuery.data
       : originalPeaksQuery.data || peaksInfo;
 
+  const handleSeekToRef = useRef(handleSeekTo);
+  const onZoomChangeRef = useRef(onZoomChange);
+
+  useEffect(() => {
+    handleSeekToRef.current = handleSeekTo;
+  }, [handleSeekTo]);
+
+  useEffect(() => {
+    onZoomChangeRef.current = onZoomChange;
+  }, [onZoomChange]);
+
   useEffect(() => {
     if (!waveHostRef.current || !timelineHostRef.current) return;
-    isInitialized.current = false;
     editorWaveformController.init({
       container: waveHostRef.current,
       timelineContainer: timelineHostRef.current,
       media: editorMediaController.getMediaElement(),
-      onSeek: (time: number) => handleSeekTo(time),
+      onSeek: (time: number) => handleSeekToRef.current(time),
       onScroll: (scrollLeft: number) => {
         regionsTrackRef.current?.setScrollLeft(scrollLeft);
       },
-      onZoomChange: (pxPerSec: number) => onZoomChange(pxPerSec),
+      onZoomChange: (pxPerSec: number) => onZoomChangeRef.current(pxPerSec),
     });
-    isInitialized.current = true;
 
     return () => {
-      isInitialized.current = false;
       editorWaveformController.destroy();
     };
-  }, [handleSeekTo, onZoomChange]);
+  }, []);
+
+  const peaks = currentPeaksInfo?.peaks ?? null;
 
   useEffect(() => {
-    if (!audioUrl || !mediaInfo) return;
+    if (!audioUrl || !duration) return;
     editorMediaController.setSource(audioUrl);
     editorWaveformController.load(
       audioUrl,
-      currentPeaksInfo?.peaks ?? null,
-      mediaInfo.duration,
+      peaks,
+      duration,
     );
-  }, [audioUrl, currentPeaksInfo, mediaInfo]);
+  }, [audioUrl, peaks, duration]);
 
   useEffect(() => {
     return editorMediaController.subscribe("timeupdate", ({ currentTime }) => {

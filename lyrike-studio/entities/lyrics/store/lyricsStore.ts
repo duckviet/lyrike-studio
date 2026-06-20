@@ -203,9 +203,10 @@ export const useLyricsStore = create<LyricsStore>()(
       loadDraft: (doc, selectedLineId) => {
         const normalizedDoc: LyricsDoc = {
           ...doc,
-          syncedLines: doc.syncedLines.map((line) =>
-            wordTiming.normalizeWordsWithinLine(line),
-          ),
+          syncedLines: doc.syncedLines.map((line) => {
+            const withIds = utils.assignWordIdsForLine(line);
+            return wordTiming.normalizeWordsWithinLine(withIds);
+          }),
         };
         const selected = utils.ensureSelectedLine(
           normalizedDoc.syncedLines,

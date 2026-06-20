@@ -109,7 +109,9 @@ export class MediaController {
       Math.min(nextTime, duration || Number.MAX_SAFE_INTEGER),
     );
     this.audio.currentTime = clamped;
-    this.emit("timeupdate", { currentTime: this.audio.currentTime });
+    if (this.audio.paused) {
+      this.emit("timeupdate", { currentTime: this.audio.currentTime });
+    }
   }
 
   seekBy(deltaSeconds: number): void {
