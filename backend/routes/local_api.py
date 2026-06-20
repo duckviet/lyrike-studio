@@ -12,6 +12,7 @@ from core.utils import (
     utc_now_iso,
     normalize_video_id,
     load_json,
+    sanitize_youtube_url,
 )
 from services.audio_service import (
     find_cached_audio,
@@ -39,8 +40,12 @@ def fetch_media(request: Request, body: FetchRequest):
     if not body.url and not body.videoId:
         raise HTTPException(status_code=400, detail="Provide url or videoId")
 
+    if body.url:
+        body.url = sanitize_youtube_url(body.url)
+
     normalized_vid: str | None = None
     info = None
+
 
     if body.videoId:
         normalized_vid = normalize_video_id(body.videoId)
