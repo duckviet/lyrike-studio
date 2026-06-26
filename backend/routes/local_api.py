@@ -29,7 +29,12 @@ from services.transcription_service import (
     run_transcription_job,
     transcript_path,
 )
-from services.metadata_service import load_metadata, save_metadata, peaks_path
+from services.metadata_service import (
+    load_metadata,
+    save_metadata,
+    save_peaks,
+    peaks_path,
+)
 
 router = APIRouter(prefix="/local-api", tags=["local-api"])
 
@@ -260,5 +265,5 @@ def get_audio_peaks(
         "generatedAt": utc_now_iso(),
         "source": source,
     }
-    save_metadata(safe_video_id, payload)
+    save_peaks(safe_video_id, source, payload)
     return {**payload, "cacheHit": False}
