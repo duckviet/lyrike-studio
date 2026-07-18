@@ -1,12 +1,15 @@
+import { useTranslations } from "next-intl";
 import { ScrollReveal } from "./ScrollReveal";
 
-const metrics = [
-  { value: "LRC", label: "Industry standard" },
-  { value: "No account", label: "No sign-up needed" },
-  { value: "Free", label: "Open source-friendly" },
-];
+interface Metric {
+  value: string;
+  label: string;
+}
 
 export function MetricsBar() {
+  const t = useTranslations("home");
+  const metrics = t.raw("metrics") as Metric[];
+
   return (
     <section className="px-6 py-8 md:px-8">
       <div className="mx-auto max-w-[1200px]">

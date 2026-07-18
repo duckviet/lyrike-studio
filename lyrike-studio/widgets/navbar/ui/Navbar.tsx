@@ -63,7 +63,7 @@ export const Navbar = () => {
           href="/"
         >
           <span className="size-5 shrink-0 rounded-full bg-home-forest" />
-          <span className="truncate">LyricSync</span>
+          <span className="truncate">Lyrike Studio</span>
         </Link>
 
         <div className="flex items-center gap-1.5">

@@ -17,9 +17,9 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LyricSync Editor - Precise, Not Complicated",
+  title: "Lyrike Studio - Precise, Not Complicated",
   description:
-    "The creative side of syncing lyrics. Professional LRC editor with waveform visualization.",
+    "The creative side of syncing lyrics. LRC editor with waveform visualization, word-level karaoke, and LRCLIB publishing.",
 };
 
 import { NextIntlClientProvider } from "next-intl";

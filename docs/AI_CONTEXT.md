@@ -1,8 +1,8 @@
-# Lyrics Studio - AI Context
+# Lyrike Studio - AI Context
 
 ## Product And Naming
 
-- Product display name: Lyrics Studio.
+- Product display name: Lyrike Studio.
 - Migration alias: LRCLIB Publisher.
 - Use alias only for migration notes, compatibility labels, and legacy UI references.
 

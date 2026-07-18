@@ -8,7 +8,7 @@ uv sync --extra cpu # Dùng CPU (khuyến nghị ban đầu)
 
 uv run main.py
 
-# 3. Chạy frontend mới (Lyrics Studio shell)
+# 3. Chạy frontend mới (Lyrike Studio shell)
 
 Frontend mới đang chạy song song để migrate dần, không thay thế ngay UI cũ.
 
@@ -19,4 +19,4 @@ npm run dev
 Mặc định:
 
 - Backend legacy + API: http://localhost:8080
-- Frontend Lyrics Studio shell: http://localhost:5173
+- Frontend Lyrike Studio shell: http://localhost:5173

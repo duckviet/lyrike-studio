@@ -6,6 +6,8 @@ interface LyricLine {
   visible: boolean;
 }
 
+const LOADING_MS = 2200;
+
 export function useTranscriptionLoop() {
   const { elapsedMs } = useLoopProgress(3500);
   const lyrics: LyricLine[] = [
@@ -21,12 +23,14 @@ export function useTranscriptionLoop() {
       visible: elapsedMs >= 1500,
     },
   ];
-  const visibleCount = lyrics.filter((line) => line.visible).length;
-  const isLoading = elapsedMs < 2200;
+  const isLoading = elapsedMs < LOADING_MS;
+  // Progress follows elapsed time so the bar, the lines appearing and
+  // the final "ready" state stay in sync within one loop.
+  const progress = Math.min(100, Math.round((elapsedMs / LOADING_MS) * 100));
 
   return {
     lyrics,
-    progress: isLoading ? Math.round((visibleCount / lyrics.length) * 90) : 100,
+    progress,
     isLoading,
   };
 }

@@ -4,63 +4,50 @@
     "title": "Chính xác, không phức tạp.",
     "subtitle": "Khía cạnh sáng tạo của việc đồng bộ.",
     "cta": "Dùng thử trình soạn thảo",
-    "demo": "Xem demo"
+    "demo": "Khám phá tính năng"
   },
   "overview": {
     "label": "KHÔNG CHỈ LÀ TRÌNH SOẠN THẢO VĂN BẢN",
     "title1": "Vài công cụ hiển thị lời bài hát.",
     "title2": "Công cụ này cảm nhận âm nhạc.",
-    "description": "Hầu hết các trình soạn thảo coi lời bài hát là văn bản thuần túy. Chúng tôi xây dựng công cụ này để hoạt động với chính âm thanh — trực quan hóa dạng sóng, chỉnh sửa dựa trên vùng và đồng bộ bằng cách nhấn phím để bạn cảm nhận nhịp điệu thay vì đoán.",
-    "waveform": "Dạng sóng",
-    "timeline": "Dòng thời gian",
-    "export": "Xuất file"
+    "description": "Mò mẫm mốc thời gian từng dòng một thật tẻ nhạt. Lyrike Studio làm việc với chính âm thanh — trực quan hóa dạng sóng, chỉnh sửa theo vùng và đồng bộ bằng nhấn phím — để người đóng góp LRCLIB và người làm karaoke cảm nhận được nhịp điệu thay vì đoán mò."
   },
-  "features": {
-    "waveform": {
-      "label": "CHỈNH SỬA DẠNG SÓNG",
-      "title": "Kéo. Thay đổi kích thước. Xong.",
-      "description": "Thấy từng âm tiết trên dòng thời gian. Kéo các vùng để khớp với âm nhạc. Thay đổi kích thước chính xác với các tay cầm trực quan."
-    },
-    "transcription": {
-      "label": "TỰ ĐỘNG PHIÊN ÂM",
-      "title": "Dán link. Nhận lại lời bài hát.",
-      "description": "Dán URL YouTube và để dịch vụ phiên âm của chúng tôi trích xuất âm thanh và tạo lời bài hát có mốc thời gian để bạn tinh chỉnh.",
-      "analyzing": "Đang phân tích..."
-    },
-    "tap": {
-      "label": "ĐỒNG BỘ NHẤN PHÍM",
-      "title": "Đồng bộ bằng tai, không phải bằng mắt.",
-      "description": "Phát bản nhạc và nhấn bất kỳ phím nào để đánh dấu từng dòng. Nhịp điệu nằm trong ngón tay bạn, không phải trong việc tìm kiếm mốc thời gian tẻ nhạt."
-    },
-    "export": {
-      "label": "XUẤT FILE",
-      "title": "Một cú nhấp chuột để có .lrc",
-      "description": "Tải xuống các tệp LRC tiêu chuẩn công nghiệp. Tương thích với tất cả các trình phát lời bài hát, ứng dụng karaoke và trình chỉnh sửa phụ đề chính."
-    }
-  },
-  "workflow": {
-    "label": "QUY TRÌNH LÀM VIỆC",
-    "title1": "Không có gì ở đây là vội vã.",
-    "title2": "Bao gồm cả việc căn chỉnh thời gian.",
+  "journey": {
+    "label": "CÁCH HOẠT ĐỘNG",
+    "title1": "Từ một link YouTube",
+    "title2": "tới file .lrc đã đồng bộ.",
+    "screenshotBadge": "Studio thật — không phải mockup",
+    "screenshotAlt": "Trình soạn thảo Lyrike Studio với bài hát đã tải, dòng thời gian dạng sóng và lời đã đồng bộ",
     "steps": [
-      {
-        "title": "Dán URL",
-        "description": "Dán link YouTube hoặc tải lên tệp âm thanh"
-      },
-      {
-        "title": "Âm thanh Sẵn sàng",
-        "description": "Chúng tôi trích xuất âm thanh và tạo dạng sóng"
-      },
-      {
-        "title": "Đồng bộ Dòng",
-        "description": "Chỉnh sửa mốc thời gian hoặc nhấn để đồng bộ thủ công"
-      },
-      {
-        "title": "Xuất LRC",
-        "description": "Tải xuống lời bài hát đã đồng bộ ngay lập tức"
-      }
+      { "title": "Dán link YouTube", "description": "Thả URL vào. Chúng tôi lấy metadata, cache âm thanh và dựng dạng sóng." },
+      { "title": "Tự động phiên âm", "description": "Để dịch vụ phiên âm tạo lời có mốc thời gian cho bạn — hoặc bắt đầu từ văn bản thuần." },
+      { "title": "Nhấn để đồng bộ", "description": "Phát bản nhạc và nhấn phím T để đánh dấu từng dòng đúng nhịp." },
+      { "title": "Tinh chỉnh trên dạng sóng", "description": "Kéo và thay đổi kích thước các vùng để khớp hoàn hảo — chính xác tới timing karaoke từng từ." },
+      { "title": "Xuất hoặc publish", "description": "Tải file .lrc chuẩn — hoặc publish thẳng lên LRCLIB." }
     ]
   },
+  "mock": {
+    "heroPanel": "Dòng thời gian dạng sóng",
+    "chips": ["Dạng sóng", "Vùng", "Xuất LRC"],
+    "regionEditor": "Trình chỉnh sửa vùng",
+    "transcription": "Phiên âm",
+    "listening": "Đang nghe",
+    "ready": "Sẵn sàng",
+    "tapSync": "Đồng bộ nhấn phím",
+    "tapSequence": "Chuỗi nhấn",
+    "lrcExport": "Xuất LRC",
+    "download": "Tải xuống",
+    "preparing": "Đang chuẩn bị",
+    "downloaded": "Đã tải xuống",
+    "sourcePanel": "Nguồn",
+    "fetchMedia": "Lấy media",
+    "audioReady": "Âm thanh sẵn sàng"
+  },
+  "metrics": [
+    { "value": "Từng từ", "label": "Timing karaoke theo âm tiết" },
+    { "value": "LRCLIB", "label": "Publish lên cơ sở dữ liệu cộng đồng" },
+    { "value": "Không tài khoản", "label": "Miễn phí, không cần đăng ký" }
+  ],
   "finalCta": {
     "title": "Sẵn sàng để đồng bộ?",
     "cta": "Mở trình soạn thảo — hoàn toàn miễn phí",

@@ -1,24 +1,9 @@
-export type HomeFeatureId = "waveform" | "transcription" | "tap" | "export";
-
-export interface HomeFeatureDemo {
-  id: HomeFeatureId;
-  align: "left" | "right";
-  surface: "mint" | "slate" | "keylime";
-}
-
 export interface TimelineRegion {
   id: string;
   label: string;
   left: number;
   width: number;
 }
-
-export const homeFeatures: HomeFeatureDemo[] = [
-  { id: "waveform", align: "left", surface: "mint" },
-  { id: "transcription", align: "right", surface: "slate" },
-  { id: "tap", align: "left", surface: "keylime" },
-  { id: "export", align: "right", surface: "mint" },
-];
 
 export const timelineRegions: TimelineRegion[] = [
   { id: "intro", label: "Dancing in the moonlight", left: 6, width: 22 },

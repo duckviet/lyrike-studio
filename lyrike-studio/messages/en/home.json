@@ -4,51 +4,50 @@
     "title": "Precise, not complicated.",
     "subtitle": "The creative side of syncing.",
     "cta": "Try the editor",
-    "demo": "Watch demo"
+    "demo": "Explore features"
   },
   "overview": {
     "label": "NOT JUST ANOTHER TEXT EDITOR",
     "title1": "Some tools show the lyrics.",
     "title2": "This one feels the music.",
-    "description": "Most editors treat lyrics as plain text. We built this one to work with the audio itself — waveform visualization, region-based editing, and tap-to-sync that lets you feel the rhythm instead of guessing.",
-    "waveform": "Waveform",
-    "timeline": "Timeline",
-    "export": "Export"
+    "description": "Hunting timestamps line by line is tedious. Lyrike Studio works with the audio itself — waveform visualization, region-based editing, and tap-to-sync — so LRCLIB contributors and karaoke makers can feel the rhythm instead of guessing."
   },
-  "features": {
-    "waveform": {
-      "label": "WAVEFORM EDITING",
-      "title": "Drag. Resize. Done.",
-      "description": "See every syllable on the timeline. Drag regions to align with the music. Resize with precision using intuitive handles."
-    },
-    "transcription": {
-      "label": "AUTO TRANSCRIPTION",
-      "title": "Paste a link. Get lyrics back.",
-      "description": "Drop a YouTube URL and let our transcription service extract the audio and generate timed lyrics for you to fine-tune.",
-      "analyzing": "Analyzing audio..."
-    },
-    "tap": {
-      "label": "TAP SYNC",
-      "title": "Sync with your ears, not your eyes.",
-      "description": "Play the track and tap any key to mark each line. The rhythm stays in your fingers, not in tedious timestamp hunting."
-    },
-    "export": {
-      "label": "EXPORT",
-      "title": "One click to .lrc",
-      "description": "Download industry-standard LRC files. Compatible with all major lyric players, karaoke apps, and subtitle editors."
-    }
-  },
-  "workflow": {
-    "label": "THE WORKFLOW",
-    "title1": "Nothing here is rushed.",
-    "title2": "Including the timing.",
+  "journey": {
+    "label": "HOW IT WORKS",
+    "title1": "From a YouTube link",
+    "title2": "to a synced .lrc.",
+    "screenshotBadge": "The real studio — not a mockup",
+    "screenshotAlt": "Lyrike Studio editor with a loaded track, waveform timeline and synced lyrics",
     "steps": [
-      { "title": "Paste URL", "description": "Drop a YouTube link or upload audio file" },
-      { "title": "Audio Ready", "description": "We extract the audio and generate waveform" },
-      { "title": "Sync Lines", "description": "Edit timestamps or tap to sync manually" },
-      { "title": "Export LRC", "description": "Download your timed lyrics instantly" }
+      { "title": "Paste a YouTube link", "description": "Drop the URL in. We fetch the metadata, cache the audio, and build the waveform." },
+      { "title": "Auto-transcribe", "description": "Let the transcription service generate timed lyrics for you — or start from plain text." },
+      { "title": "Tap to sync", "description": "Play the track and hit the T key to stamp each line right on the beat." },
+      { "title": "Fine-tune on the waveform", "description": "Drag and resize regions to line everything up — down to word-level karaoke timing." },
+      { "title": "Export or publish", "description": "Download a standard .lrc file — or publish it straight to LRCLIB." }
     ]
   },
+  "mock": {
+    "heroPanel": "Waveform timeline",
+    "chips": ["Waveform", "Regions", "LRC export"],
+    "regionEditor": "Region editor",
+    "transcription": "Transcription",
+    "listening": "Listening",
+    "ready": "Ready",
+    "tapSync": "Tap sync",
+    "tapSequence": "Tap sequence",
+    "lrcExport": "LRC export",
+    "download": "Download",
+    "preparing": "Preparing",
+    "downloaded": "Downloaded",
+    "sourcePanel": "Source",
+    "fetchMedia": "Fetch Media",
+    "audioReady": "Audio ready"
+  },
+  "metrics": [
+    { "value": "Word-level", "label": "Karaoke timing per syllable" },
+    { "value": "LRCLIB", "label": "Publish to the community database" },
+    { "value": "No account", "label": "Free, no sign-up needed" }
+  ],
   "finalCta": {
     "title": "Ready to sync?",
     "cta": "Open the editor — it's free",

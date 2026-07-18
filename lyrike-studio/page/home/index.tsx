@@ -2,7 +2,7 @@
 import { Hero } from "./_components/Hero";
 import { MetricsBar } from "./_components/MetricsBar";
 import { FeatureOverview } from "./_components/FeatureOverview";
-import { WorkflowSteps } from "./_components/WorkflowSteps";
+import { JourneySection } from "./_components/JourneySection";
 import { FinalCTA } from "./_components/FinalCTA";
 import { Footer } from "./_components/Footer";
 
@@ -12,7 +12,7 @@ export const HomePage = () => {
       <Hero />
       <MetricsBar />
       <FeatureOverview />
-      <WorkflowSteps />
+      <JourneySection />
       <FinalCTA />
       <Footer />
     </div>

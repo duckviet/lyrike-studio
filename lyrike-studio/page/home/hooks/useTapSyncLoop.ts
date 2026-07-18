@@ -19,15 +19,21 @@ export function useTapSyncLoop() {
           : elapsedMs < 2400
             ? 3
             : -1;
-  const seconds = Math.floor(elapsedMs / 1000);
   const tapMarks: TapMark[] = demoTapMarks.map((mark) => ({
     ...mark,
     active: activeIndex === mark.index,
   }));
 
+  // Clock shows the timestamp of the line being tapped so it always
+  // agrees with the marks; hold the last one once the sequence ends.
+  const displayIndex = activeIndex >= 0 ? activeIndex : demoTapMarks.length - 1;
+  const completedCount = activeIndex >= 0 ? activeIndex + 1 : demoTapMarks.length;
+
   return {
     tapMarks,
-    clock: `00:${seconds.toString().padStart(2, "0")}`,
+    clock: demoTapMarks[displayIndex].timestamp,
+    completedCount,
+    totalCount: demoTapMarks.length,
     waveformBars: compactWaveBars,
     waveformAnimating: elapsedMs >= 2400 && elapsedMs < 2800,
   };

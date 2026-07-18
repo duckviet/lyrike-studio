@@ -9,6 +9,8 @@ import { WaveformMock } from "./visuals/WaveformMock";
 
 export function Hero() {
   const t = useTranslations("home.hero");
+  const tMock = useTranslations("home.mock");
+  const chips = tMock.raw("chips") as string[];
   const waveform = useWaveformAnimation();
 
   return (
@@ -52,7 +54,7 @@ export function Hero() {
             bodyClassName="flex h-full flex-col gap-5"
             className="h-full min-h-[420px]"
             status={waveform.timeDisplay}
-            title="Waveform timeline"
+            title={tMock("heroPanel")}
             variant="slate"
           >
             <div className="grid gap-4 md:grid-cols-[150px_1fr]">
@@ -81,7 +83,7 @@ export function Hero() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
-              {["Waveform", "Regions", "LRC export"].map((label) => (
+              {chips.map((label) => (
                 <div
                   className="rounded-[12px] border border-home-border bg-home-canvas p-4"
                   key={label}

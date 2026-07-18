@@ -1,12 +1,11 @@
 import { useTranslations } from "next-intl";
 import { ScrollReveal } from "./ScrollReveal";
-import { FeatureCards } from "./FeatureCards";
 
 export function FeatureOverview() {
   const t = useTranslations("home.overview");
 
   return (
-    <section className="bg-home-canvas py-20" id="demo">
+    <section className="bg-home-canvas pt-20">
       <div className="mx-auto max-w-[1200px] px-6 md:px-8">
         <ScrollReveal>
           <span className="mb-4 block text-xs font-semibold uppercase text-home-forest">
@@ -23,13 +22,11 @@ export function FeatureOverview() {
         </ScrollReveal>
 
         <ScrollReveal delay={200}>
-          <p className="mb-12 max-w-[680px] text-lg leading-relaxed text-home-charcoal">
+          <p className="max-w-[680px] text-lg leading-relaxed text-home-charcoal">
             {t("description")}
           </p>
         </ScrollReveal>
       </div>
-
-      <FeatureCards />
     </section>
   );
 }

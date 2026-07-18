@@ -19,7 +19,7 @@ const variantClass = {
 
 export function DemoPanel({
   children,
-  title = "Lyrics Studio",
+  title = "Lyrike Studio",
   status = "Live preview",
   className,
   bodyClassName,

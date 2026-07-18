@@ -6,7 +6,7 @@ The current app is a single legacy page and cannot support DAW-like editing work
 
 ## User Flow
 
-1. Open new Lyrics Studio frontend route.
+1. Open new Lyrike Studio frontend route.
 2. See responsive editor shell with left, center, and right panels on desktop.
 3. On tablet/mobile, switch between tabs for the same panel content.
 4. Continue using legacy page during migration when needed.

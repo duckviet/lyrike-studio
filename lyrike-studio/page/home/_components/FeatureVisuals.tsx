@@ -1,4 +1,5 @@
 import { Check, Download, FileText, LoaderCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/shared/lib/utils";
 import {
   featureWaveBars,
@@ -15,10 +16,11 @@ import { TimelineRegionsMock } from "./visuals/TimelineRegionsMock";
 import { WaveformMock } from "./visuals/WaveformMock";
 
 export function WaveformFeatureVisual() {
+  const t = useTranslations("home.mock");
   const waveform = useWaveformAnimation();
 
   return (
-    <DemoPanel title="Region editor" status={waveform.timeDisplay} variant="mint">
+    <DemoPanel title={t("regionEditor")} status={waveform.timeDisplay} variant="mint">
       <div className="flex flex-col gap-4">
         <WaveformMock
           activeRange={waveform.activeRange}
@@ -36,10 +38,11 @@ export function WaveformFeatureVisual() {
 }
 
 export function TranscriptionFeatureVisual() {
+  const t = useTranslations("home.mock");
   const transcription = useTranscriptionLoop();
 
   return (
-    <DemoPanel title="Transcription" status={transcription.isLoading ? "Listening" : "Ready"} variant="slate">
+    <DemoPanel title={t("transcription")} status={transcription.isLoading ? t("listening") : t("ready")} variant="slate">
       <div className="flex flex-col gap-5">
         <div className="flex items-center gap-3">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-home-canvas">
@@ -77,11 +80,11 @@ export function TranscriptionFeatureVisual() {
 }
 
 export function TapSyncFeatureVisual() {
+  const t = useTranslations("home.mock");
   const tapSync = useTapSyncLoop();
-  const activeCount = tapSync.tapMarks.filter((mark) => mark.active).length;
 
   return (
-    <DemoPanel title="Tap sync" status={tapSync.clock} variant="keylime">
+    <DemoPanel title={t("tapSync")} status={tapSync.clock} variant="keylime">
       <div className="flex flex-col gap-5">
         <div className="grid grid-cols-4 gap-2">
           {tapSync.tapMarks.map((mark) => (
@@ -108,8 +111,8 @@ export function TapSyncFeatureVisual() {
         />
 
         <div className="flex items-center justify-between text-xs text-home-charcoal">
-          <span>Tap sequence</span>
-          <span>{Math.max(activeCount, 1)}/4</span>
+          <span>{t("tapSequence")}</span>
+          <span>{tapSync.completedCount}/{tapSync.totalCount}</span>
         </div>
       </div>
     </DemoPanel>
@@ -117,12 +120,13 @@ export function TapSyncFeatureVisual() {
 }
 
 export function ExportFeatureVisual() {
+  const t = useTranslations("home.mock");
   const exportAnim = useExportAnimation();
   const isPreparing = exportAnim.downloadState === "preparing";
   const isDone = exportAnim.downloadState === "done";
 
   return (
-    <DemoPanel title="LRC export" status="my-song.lrc" variant="mint">
+    <DemoPanel title={t("lrcExport")} status="my-song.lrc" variant="mint">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 text-home-forest">
           <FileText size={18} strokeWidth={1.8} />
@@ -162,7 +166,7 @@ export function ExportFeatureVisual() {
           ) : (
             <Download size={16} strokeWidth={1.8} />
           )}
-          <span>{isDone ? "Downloaded" : isPreparing ? "Preparing" : "Download"}</span>
+          <span>{isDone ? t("downloaded") : isPreparing ? t("preparing") : t("download")}</span>
         </button>
       </div>
     </DemoPanel>

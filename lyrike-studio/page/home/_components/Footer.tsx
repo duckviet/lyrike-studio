@@ -9,7 +9,7 @@ export function Footer() {
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-4">
         <div>
           <Link className="font-serif text-xl text-home-forest" href="/">
-            LyricSync
+            Lyrike Studio
           </Link>
           <p className="mt-1 text-sm text-home-charcoal">{t("tagline")}</p>
         </div>
@@ -22,7 +22,6 @@ export function Footer() {
           >
             GitHub
           </a>
-          <span className="text-home-border">|</span>
         </div>
         <p className="m-0 text-sm text-home-charcoal">{t("copyright")}</p>
       </div>
