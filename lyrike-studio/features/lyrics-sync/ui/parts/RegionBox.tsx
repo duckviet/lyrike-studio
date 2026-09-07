@@ -53,9 +53,16 @@ export const RegionBox = memo(function RegionBox({
       data-id={line.id}
     >
       <div
-        className="w-3 shrink-0 bg-transparent cursor-ew-resize transition-colors duration-150 hover:bg-primary/60"
+        className="group flex w-3 shrink-0 items-center justify-center bg-transparent cursor-ew-resize text-white/70 transition-colors duration-150 hover:bg-primary/60"
         onPointerDown={(e) => onBeginDrag(e, line, "start")}
-      />
+      >
+        <span
+          aria-hidden="true"
+          className="pointer-events-none hidden select-none group-hover:block"
+        >
+          |
+        </span>
+      </div>
       <button
         type="button"
         className="min-w-0 flex-1 cursor-grab overflow-hidden border-0 bg-transparent p-2 text-left text-xs font-medium text-white/85 transition-colors hover:text-white active:cursor-grabbing"
@@ -69,9 +76,16 @@ export const RegionBox = memo(function RegionBox({
         </span>
       </button>
       <div
-        className="w-3 shrink-0 bg-transparent cursor-ew-resize transition-colors duration-150 hover:bg-primary/60"
+        className="group flex w-3 shrink-0 items-center justify-center bg-transparent cursor-ew-resize text-white/70 transition-colors duration-150 hover:bg-primary/60"
         onPointerDown={(e) => onBeginDrag(e, line, "end")}
-      />
+      >
+        <span
+          aria-hidden="true"
+          className="pointer-events-none hidden select-none group-hover:block"
+        >
+          |
+        </span>
+      </div>
     </div>
   );
 });

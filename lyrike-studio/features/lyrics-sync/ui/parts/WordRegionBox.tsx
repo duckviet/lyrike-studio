@@ -55,7 +55,7 @@ export const WordRegionBox = memo(function WordRegionBox({
       aria-label={`Word ${word.text.trim()} ${word.start.toFixed(2)}s–${word.end.toFixed(2)}s`}
       title={`${word.text.trim()} (${word.start.toFixed(2)}s–${word.end.toFixed(2)}s)`}
       className={cn(
-        "absolute top-0 h-full min-w-[4px] cursor-grab will-change-transform",
+        "absolute top-0 h-full min-w-[4px] cursor-grab will-change-transform group",
         "flex items-center justify-center overflow-hidden text-[0.65rem]",
         "select-none whitespace-nowrap px-1",
         "focus:outline-none focus:ring-2 focus:ring-amber/50",
@@ -63,10 +63,16 @@ export const WordRegionBox = memo(function WordRegionBox({
         isLast && "rounded-r-inner",
         !isFirst && "border-l",
         isActive
-          ? cn("bg-amber/40 text-white font-semibold shadow-sm", !isFirst && "border-amber/60")
+          ? cn(
+              "bg-amber/40 text-white font-semibold shadow-sm",
+              !isFirst && "border-amber/60",
+            )
           : isSelected
             ? cn("bg-amber/30 text-white", !isFirst && "border-amber/40")
-            : cn("bg-white/10 text-white/80 hover:bg-white/25 hover:text-white", !isFirst && "border-white/20"),
+            : cn(
+                "bg-white/10 text-white/80 hover:bg-white/25 hover:text-white",
+                !isFirst && "border-white/20",
+              ),
       )}
       style={{
         transform: `translateX(${renderedLeft}px)`,
@@ -85,7 +91,19 @@ export const WordRegionBox = memo(function WordRegionBox({
         onPointerDown(e, line, word, edge);
       }}
     >
-      {word.text.trim()}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 text-white/70 group-hover:block"
+      >
+        |
+      </span>
+      <span>{word.text.trim()}</span>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 text-white/70 group-hover:block"
+      >
+        |
+      </span>
     </button>
   );
 });
