@@ -1,4 +1,56 @@
-# Ease Health — Style Reference
+# Lyrike Studio — Design System
+
+## Landing direction · September 2026
+
+The original Ease Health reference below supplies the existing palette. The home
+page adapts it into a music workspace, using Leonxlnx/taste-skill: variance 7,
+motion 3, density 4. Audience: first-time lyric editors, karaoke makers, and
+LRCLIB contributors. Their first task is understanding the workflow and opening
+the editor; experienced contributors need a direct route into the studio.
+
+### Home composition and tokens
+
+- Cream canvas, forest text and actions, mint demo backdrop; slate is reserved
+  for existing workflow illustrations. No new brand colors.
+- Asymmetric hero: open left-aligned copy, right-hand lyric sheet over a mint
+  surface. The selected lyric and waveform range are the signature detail.
+- Existing Inter for interface and body; existing Playfair Display for major
+  headings, justified by the established lyrical/editorial brand. Mono timestamps
+  use the existing JetBrains Mono font variable.
+- Container 1200px; gutters 24/32px; spacing follows Tailwind's 4px scale:
+  4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64, 80, 96px.
+- Type: labels 12px, interface 14px, body 16/18px, card titles 28/36px,
+  section titles 36/48px, hero 48/60/72px with 1.12 leading and balanced wrap.
+- Surface radius 14px, nested controls 10px, pill labels 999px. Hero demo alone
+  uses a forest-tinted shadow (0 24px 64px at 12% opacity) to lift the lyric sheet.
+- Content sequence: promise → selectable timing example → practical benefits →
+  workflow overview → actual editor screenshot → five numbered steps → open editor.
+
+### Reusable primitives and states
+
+- Primary link: forest fill, cream text, 48px minimum height, 14px radius;
+  mint hover on inverse buttons and 90% forest hover on normal buttons.
+- Section eyebrow: 12px uppercase, 0.16em tracking, forest; short rule before it.
+- Workflow row: numbered text beside an existing DemoPanel; alternating on
+  desktop, reading order preserved on mobile; hairline separators, no outer card.
+- DemoPanel remains the shared illustration frame. Hero lyric rows are native
+  buttons, 48px minimum, with aria-pressed, selected mint fill and forest marker.
+  Selection updates the waveform range; it does not claim to play audio.
+- Focus-visible: 2px forest outline, 4px offset; inverse controls use cream.
+  Hover/press transitions 150–200ms; reduced motion disables transitions.
+
+### Accessibility and scope
+
+English and Vietnamese copy have equal coverage. Headings may wrap naturally;
+no fixed text heights. All new controls support keyboard input, visible focus,
+and 44px touch targets. The hero is visible on first paint. Demonstrations are
+identified as examples; no invented user counts or testimonials. Existing editor,
+backend, and publishing behavior are outside this visual change. Browser evidence
+must cover 375, 768, and 1280px in both languages. No accepted accessibility debt.
+
+---
+
+# Original palette reference: Ease Health
 
 > calm clinical canvas
 

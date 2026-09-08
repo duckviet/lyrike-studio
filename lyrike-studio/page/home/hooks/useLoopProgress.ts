@@ -4,6 +4,8 @@ export function useLoopProgress(durationMs: number) {
   const [elapsedMs, setElapsedMs] = useState(0);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     let frame = 0;
     let startTime = 0;
 

@@ -63,7 +63,7 @@ export function TranscriptionFeatureVisual() {
                 "grid grid-cols-[82px_1fr] items-center gap-3 rounded-[10px] border px-3 py-2 text-sm transition-all duration-300",
                 lyric.visible
                   ? "border-home-forest/25 bg-home-canvas text-home-ink"
-                  : "border-home-border bg-home-canvas/45 text-home-charcoal/55",
+                  : "border-home-border bg-home-canvas/45 text-home-charcoal",
               )}
               key={lyric.timestamp}
             >

@@ -55,6 +55,7 @@ export function ScrollReveal({
 
   return (
     <div
+      data-scroll-reveal
       ref={ref}
       className={className}
       style={{

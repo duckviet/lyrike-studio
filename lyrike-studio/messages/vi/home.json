@@ -1,10 +1,12 @@
 {
   "hero": {
-    "label": "TRÌNH SOẠN THẢO LỜI BÀI HÁT",
-    "title": "Chính xác, không phức tạp.",
-    "subtitle": "Khía cạnh sáng tạo của việc đồng bộ.",
-    "cta": "Dùng thử trình soạn thảo",
-    "demo": "Khám phá tính năng"
+    "label": "ĐỂ LỜI CA CHẠM ĐÚNG NHỊP",
+    "title": "Từng câu hát.",
+    "subtitle": "Đúng từng nhịp.",
+    "description": "Biến bài hát bạn yêu thành lời nhạc khớp nhịp. Đánh dấu thời gian, tinh chỉnh từng câu và chia sẻ cùng mọi người.",
+    "cta": "Bắt đầu đồng bộ",
+    "demo": "Xem cách hoạt động",
+    "note": "Miễn phí · Không cần tài khoản"
   },
   "overview": {
     "label": "KHÔNG CHỈ LÀ TRÌNH SOẠN THẢO VĂN BẢN",
@@ -16,19 +18,38 @@
     "label": "CÁCH HOẠT ĐỘNG",
     "title1": "Từ một link YouTube",
     "title2": "tới file .lrc đã đồng bộ.",
-    "screenshotBadge": "Studio thật — không phải mockup",
+    "screenshotBadge": "Bên trong trình soạn thảo",
     "screenshotAlt": "Trình soạn thảo Lyrike Studio với bài hát đã tải, dòng thời gian dạng sóng và lời đã đồng bộ",
     "steps": [
-      { "title": "Dán link YouTube", "description": "Thả URL vào. Chúng tôi lấy metadata, cache âm thanh và dựng dạng sóng." },
-      { "title": "Tự động phiên âm", "description": "Để dịch vụ phiên âm tạo lời có mốc thời gian cho bạn — hoặc bắt đầu từ văn bản thuần." },
-      { "title": "Nhấn để đồng bộ", "description": "Phát bản nhạc và nhấn phím T để đánh dấu từng dòng đúng nhịp." },
-      { "title": "Tinh chỉnh trên dạng sóng", "description": "Kéo và thay đổi kích thước các vùng để khớp hoàn hảo — chính xác tới timing karaoke từng từ." },
-      { "title": "Xuất hoặc publish", "description": "Tải file .lrc chuẩn — hoặc publish thẳng lên LRCLIB." }
+      {
+        "title": "Dán link YouTube",
+        "description": "Thả URL vào. Chúng tôi lấy metadata, cache âm thanh và dựng dạng sóng."
+      },
+      {
+        "title": "Tự động phiên âm",
+        "description": "Để dịch vụ phiên âm tạo lời có mốc thời gian cho bạn — hoặc bắt đầu từ văn bản thuần."
+      },
+      {
+        "title": "Nhấn để đồng bộ",
+        "description": "Phát bản nhạc và nhấn phím T để đánh dấu từng dòng đúng nhịp."
+      },
+      {
+        "title": "Tinh chỉnh trên dạng sóng",
+        "description": "Kéo và thay đổi kích thước các vùng để khớp hoàn hảo — chính xác tới timing karaoke từng từ."
+      },
+      {
+        "title": "Xuất hoặc publish",
+        "description": "Tải file .lrc chuẩn — hoặc publish thẳng lên LRCLIB."
+      }
     ]
   },
   "mock": {
     "heroPanel": "Dòng thời gian dạng sóng",
-    "chips": ["Dạng sóng", "Vùng", "Xuất LRC"],
+    "chips": [
+      "Dạng sóng",
+      "Vùng",
+      "Xuất LRC"
+    ],
     "regionEditor": "Trình chỉnh sửa vùng",
     "transcription": "Phiên âm",
     "listening": "Đang nghe",
@@ -44,9 +65,18 @@
     "audioReady": "Âm thanh sẵn sàng"
   },
   "metrics": [
-    { "value": "Từng từ", "label": "Timing karaoke theo âm tiết" },
-    { "value": "LRCLIB", "label": "Publish lên cơ sở dữ liệu cộng đồng" },
-    { "value": "Không tài khoản", "label": "Miễn phí, không cần đăng ký" }
+    {
+      "value": "Từng từ",
+      "label": "Timing karaoke theo âm tiết"
+    },
+    {
+      "value": "LRCLIB",
+      "label": "Publish lên cơ sở dữ liệu cộng đồng"
+    },
+    {
+      "value": "Không tài khoản",
+      "label": "Miễn phí, không cần đăng ký"
+    }
   ],
   "finalCta": {
     "title": "Sẵn sàng để đồng bộ?",
@@ -54,7 +84,14 @@
     "description": "Không cần tài khoản. Không cần cài đặt. Chỉ cần dán và chạy."
   },
   "footer": {
-    "tagline": "Được tạo ra với ♪ dành cho những người yêu âm nhạc",
+    "tagline": "Để từng câu hát tìm đúng nhịp của mình.",
     "copyright": "© 2026"
+  },
+  "preview": {
+    "badge": "Ví dụ tương tác",
+    "trackLabel": "BẢN NHẠC MẪU",
+    "timeline": "Dòng thời gian",
+    "instruction": "Chọn một câu hát để thử",
+    "precision": "Chính xác từng câu"
   }
 }

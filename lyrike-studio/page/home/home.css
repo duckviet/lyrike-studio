@@ -1,0 +1,54 @@
+.lyrike-home {
+  --home-sheet-shadow: 0 24px 64px rgb(15 62 23 / 12%);
+}
+
+.lyrike-home .home-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--home-forest);
+}
+
+.lyrike-home .home-eyebrow::before {
+  content: "";
+  width: 24px;
+  height: 1px;
+  flex-shrink: 0;
+  background: currentColor;
+}
+
+.lyrike-home .home-action {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 24px;
+  border-radius: var(--home-radius);
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 150ms, transform 150ms;
+}
+
+.lyrike-home .home-action:active { transform: translateY(1px); }
+.lyrike-home .home-lyric-sheet { box-shadow: var(--home-sheet-shadow); }
+.lyrike-home .home-lyric-row { cursor: pointer; transition: background-color 150ms; }
+.lyrike-home :is(a, button):focus-visible { outline: 2px solid var(--home-forest); outline-offset: 4px; }
+.lyrike-home .home-inverse :is(a, button):focus-visible { outline-color: var(--home-canvas); }
+.lyrike-home #demo { scroll-margin-top: 96px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lyrike-home *, .lyrike-home *::before, .lyrike-home *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .lyrike-home [data-scroll-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

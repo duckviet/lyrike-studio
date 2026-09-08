@@ -23,7 +23,7 @@ export function WaveformMock({
   className,
 }: WaveformMockProps) {
   const roundedClass = variant === "compact" ? "rounded-[3px]" : "rounded-[6px]";
-  const gapClass = variant === "compact" ? "gap-0.5" : "gap-1";
+  const gapClass = variant === "compact" ? "gap-0.5" : "gap-px";
 
   return (
     <div
@@ -55,7 +55,7 @@ export function WaveformMock({
             <span
               aria-hidden="true"
               className={cn(
-                "min-w-[2px] flex-1 transition-colors duration-200",
+                "min-w-0 flex-1 transition-colors duration-200",
                 roundedClass,
                 isActive ? "bg-home-forest" : "bg-home-forest/35",
               )}

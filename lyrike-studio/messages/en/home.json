@@ -1,10 +1,12 @@
 {
   "hero": {
-    "label": "LYRICS TIMING EDITOR",
-    "title": "Precise, not complicated.",
-    "subtitle": "The creative side of syncing.",
-    "cta": "Try the editor",
-    "demo": "Explore features"
+    "label": "A LITTLE CLOSER TO THE MUSIC",
+    "title": "Every word.",
+    "subtitle": "Right on time.",
+    "description": "Turn the songs you love into beautifully synced lyrics. Find the beat, fine-tune every line, and share it with the world.",
+    "cta": "Start syncing",
+    "demo": "See how it works",
+    "note": "Free to use · No account required"
   },
   "overview": {
     "label": "NOT JUST ANOTHER TEXT EDITOR",
@@ -16,19 +18,38 @@
     "label": "HOW IT WORKS",
     "title1": "From a YouTube link",
     "title2": "to a synced .lrc.",
-    "screenshotBadge": "The real studio — not a mockup",
+    "screenshotBadge": "Inside the editor",
     "screenshotAlt": "Lyrike Studio editor with a loaded track, waveform timeline and synced lyrics",
     "steps": [
-      { "title": "Paste a YouTube link", "description": "Drop the URL in. We fetch the metadata, cache the audio, and build the waveform." },
-      { "title": "Auto-transcribe", "description": "Let the transcription service generate timed lyrics for you — or start from plain text." },
-      { "title": "Tap to sync", "description": "Play the track and hit the T key to stamp each line right on the beat." },
-      { "title": "Fine-tune on the waveform", "description": "Drag and resize regions to line everything up — down to word-level karaoke timing." },
-      { "title": "Export or publish", "description": "Download a standard .lrc file — or publish it straight to LRCLIB." }
+      {
+        "title": "Paste a YouTube link",
+        "description": "Drop the URL in. We fetch the metadata, cache the audio, and build the waveform."
+      },
+      {
+        "title": "Auto-transcribe",
+        "description": "Let the transcription service generate timed lyrics for you — or start from plain text."
+      },
+      {
+        "title": "Tap to sync",
+        "description": "Play the track and hit the T key to stamp each line right on the beat."
+      },
+      {
+        "title": "Fine-tune on the waveform",
+        "description": "Drag and resize regions to line everything up — down to word-level karaoke timing."
+      },
+      {
+        "title": "Export or publish",
+        "description": "Download a standard .lrc file — or publish it straight to LRCLIB."
+      }
     ]
   },
   "mock": {
     "heroPanel": "Waveform timeline",
-    "chips": ["Waveform", "Regions", "LRC export"],
+    "chips": [
+      "Waveform",
+      "Regions",
+      "LRC export"
+    ],
     "regionEditor": "Region editor",
     "transcription": "Transcription",
     "listening": "Listening",
@@ -44,9 +65,18 @@
     "audioReady": "Audio ready"
   },
   "metrics": [
-    { "value": "Word-level", "label": "Karaoke timing per syllable" },
-    { "value": "LRCLIB", "label": "Publish to the community database" },
-    { "value": "No account", "label": "Free, no sign-up needed" }
+    {
+      "value": "Word-level",
+      "label": "Karaoke timing per syllable"
+    },
+    {
+      "value": "LRCLIB",
+      "label": "Publish to the community database"
+    },
+    {
+      "value": "No account",
+      "label": "Free, no sign-up needed"
+    }
   ],
   "finalCta": {
     "title": "Ready to sync?",
@@ -54,7 +84,14 @@
     "description": "No account needed. No install. Just paste & go."
   },
   "footer": {
-    "tagline": "Made with ♪ for music lovers",
+    "tagline": "A place for every word in the music.",
     "copyright": "© 2026"
+  },
+  "preview": {
+    "badge": "Interactive example",
+    "trackLabel": "SAMPLE TRACK",
+    "timeline": "Waveform timeline",
+    "instruction": "Select a lyric to explore",
+    "precision": "Line-level precision"
   }
 }
