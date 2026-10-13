@@ -327,3 +327,31 @@ test("player time jump while playing is not reverted by immediate controller tim
   // It should seek the controller to 25
   assert.deepEqual(controller.calls, [{ method: "seek", args: [25] }]);
 });
+
+// Regression: clicking the waveform must not be reverted by a stale player reading.
+
+test("waveform click is not reverted when the player still reports its old time", async () => {
+  const controller = createMockController(10, true);
+  const player = createMockPlayer(10);
+
+  syncVideoPlayerToMediaController(player, controller);
+  await new Promise((resolve) => setTimeout(resolve, 350));
+  controller.calls.length = 0;
+
+  // YouTube accepts seekTo but keeps reporting the old position while it buffers.
+  player.seekTo = (t, allow) => {
+    player.calls.push({ method: "seekTo", args: [t, allow] });
+  };
+
+  // Waveform click: video + controller are told to jump to 60.
+  controller.seek(60);
+  player.emitStateChange(3); // BUFFERING
+  await new Promise((resolve) => setTimeout(resolve, 700));
+  player.emitStateChange(1); // PLAYING again, but getCurrentTime() is still ~10
+  await new Promise((resolve) => setTimeout(resolve, 600));
+
+  const reverted = controller.calls.filter(
+    (c) => c.method === "seek" && (c.args[0] as number) < 59,
+  );
+  assert.equal(reverted.length, 0);
+});

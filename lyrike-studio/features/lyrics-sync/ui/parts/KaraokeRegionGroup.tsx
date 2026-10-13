@@ -6,6 +6,7 @@ import type { LyricLine, LyricWord } from "@/entities/lyrics";
 import { computeSegmentLayout } from "@/features/lyrics-sync/lib/karaoke-region-layout";
 import { useLiveLineRange } from "../../model/liveDragStore";
 import { WordRegionBox } from "./WordRegionBox";
+import { RegionGrip, gripWidthFor, lineTone } from "./RegionGrip";
 
 interface KaraokeRegionGroupProps {
   line: LyricLine;
@@ -52,73 +53,74 @@ export const KaraokeRegionGroup = memo(function KaraokeRegionGroup({
   );
   const hasWords = (renderedLine.words?.length ?? 0) > 0;
 
+  const gripWidth = gripWidthFor(layout.width);
+
   return (
     <div
       data-karaoke-segment-id={line.id}
-      className="absolute h-8"
+      className="absolute"
       style={{
-        transform: `translateX(${layout.left}px) translateY(-50%)`,
+        transform: `translateX(${layout.left}px)`,
         width: layout.width,
-        top: "50%",
+        top: 4,
+        bottom: 4,
+        zIndex: isActive ? 40 : isSelected ? 35 : 20,
       }}
     >
-      <button
-        type="button"
+      {/* Line bar: drag the body to move the whole line, grips to resize it. */}
+      <div
         data-line-id={line.id}
-        aria-pressed={isSelected}
-        aria-label={`Segment ${line.text} ${line.start.toFixed(2)}s–${line.end.toFixed(2)}s`}
-        title={`${line.text} (${line.start.toFixed(2)}s–${line.end.toFixed(2)}s)`}
         className={cn(
-          "absolute inset-0 h-full w-full rounded-inner border transition-colors duration-150",
-          "text-[0.65rem] font-medium select-none overflow-hidden whitespace-nowrap px-2",
-          isActive
-            ? "border-amber/60 text-white"
-            : isSelected
-              ? "border-amber/40 text-white/90"
-              : "border-white/10 text-white/70 hover:text-white",
-          !hasWords && (
-            isActive
-              ? "bg-amber/40"
-              : isSelected
-                ? "bg-amber/30"
-                : "bg-white/10 hover:bg-white/20"
-          ),
+          "absolute inset-x-0 top-0 flex items-stretch overflow-hidden rounded-control transition-colors duration-150",
+          hasWords ? "h-5" : "h-full",
+          lineTone(isActive, isSelected),
         )}
-        style={{
-          left: 0,
-          width: "100%",
-        }}
-        onClick={() => onSelectLine(line.id)}
-        onPointerDown={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const edgeThreshold = 8;
-          const relativeX = e.clientX - rect.left;
-          let edge: "start" | "end" | "move" = "move";
-          if (relativeX <= edgeThreshold) edge = "start";
-          else if (relativeX >= rect.width - edgeThreshold) edge = "end";
-          onPointerDownLine(e, line, edge);
-        }}
       >
-        {!hasWords && line.text}
-      </button>
+        <RegionGrip
+          edge="start"
+          width={gripWidth}
+          onPointerDown={(e) => onPointerDownLine(e, line, "start")}
+        />
+        <button
+          type="button"
+          aria-pressed={isSelected}
+          aria-label={`Segment ${line.text} ${line.start.toFixed(2)}s–${line.end.toFixed(2)}s`}
+          title={`${line.text} (${line.start.toFixed(2)}s–${line.end.toFixed(2)}s)`}
+          className="min-w-0 flex-1 cursor-grab overflow-hidden whitespace-nowrap border-0 bg-transparent p-1 text-left text-[0.65rem] font-medium text-white/85 select-none transition-colors hover:text-white active:cursor-grabbing"
+          style={{ touchAction: "none" }}
+          onClick={() => onSelectLine(line.id)}
+          onDragStart={(e) => e.preventDefault()}
+          onPointerDown={(e) => onPointerDownLine(e, line, "move")}
+        >
+          {line.text}
+        </button>
+        <RegionGrip
+          edge="end"
+          width={gripWidth}
+          onPointerDown={(e) => onPointerDownLine(e, line, "end")}
+        />
+      </div>
 
-      {hasWords &&
-        layout.words.map((wordLayout, index) => (
-          <WordRegionBox
-            key={wordLayout.word.id}
-            line={renderedLine}
-            word={wordLayout.word}
-            isActive={wordLayout.word.id === activeWordId}
-            isSelected={wordLayout.word.id === selectedWordId}
-            left={wordLayout.left}
-            width={wordLayout.width}
-            pxPerSec={pxPerSec}
-            onPointerDown={onPointerDownWord}
-            onSelect={onSelectWord}
-            isFirst={index === 0}
-            isLast={index === layout.words.length - 1}
-          />
-        ))}
+      {hasWords && (
+        <div className="absolute inset-x-0 bottom-0 top-6">
+          {layout.words.map((wordLayout, index) => (
+            <WordRegionBox
+              key={wordLayout.word.id}
+              line={renderedLine}
+              word={wordLayout.word}
+              isActive={wordLayout.word.id === activeWordId}
+              isSelected={wordLayout.word.id === selectedWordId}
+              left={wordLayout.left}
+              width={wordLayout.width}
+              pxPerSec={pxPerSec}
+              onPointerDown={onPointerDownWord}
+              onSelect={onSelectWord}
+              isFirst={index === 0}
+              isLast={index === layout.words.length - 1}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 });

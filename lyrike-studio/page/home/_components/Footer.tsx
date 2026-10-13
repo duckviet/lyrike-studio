@@ -6,7 +6,7 @@ export function Footer() {
 
   return (
     <footer className="border-t border-home-border bg-home-canvas px-6 py-10 md:px-8">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-4">
+      <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4">
         <div>
           <Link className="font-serif text-xl text-home-forest" href="/">
             Lyrike Studio

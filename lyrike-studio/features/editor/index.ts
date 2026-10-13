@@ -6,3 +6,6 @@ export { EditorPanel } from "./ui/EditorPanel";
 export { EditorSegmentedControl } from "./ui/EditorSegmentedControl";
 export { EditorStatusCallout } from "./ui/EditorStatusCallout";
 export { KeyboardShortcutsHelp } from "./ui/KeyboardShortcutsHelp";
+
+export { EditorBusyOverlay } from "./ui/EditorBusyOverlay";
+export { useEditorBusy, type EditorBusyReason } from "./model/useEditorBusy";

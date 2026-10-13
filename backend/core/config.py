@@ -28,6 +28,8 @@ for d in [MEDIA_CACHE_DIR, AUDIO_CACHE_DIR, TRANSCRIPT_CACHE_DIR, PEAKS_CACHE_DI
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ENABLE_LYRICS_REFINEMENT = os.getenv("ENABLE_LYRICS_REFINEMENT", "false").lower() in ("true", "1", "yes")
 TRANSCRIPTION_PROVIDER = os.getenv("TRANSCRIPTION_PROVIDER", "openai-whisper")
+# Words shorter than this (seconds) are widened by borrowing time from neighbours.
+MIN_WORD_DURATION = float(os.getenv("MIN_WORD_DURATION", "0.12"))
 OPENAI_TRANSCRIPTION_MODEL = os.getenv("OPENAI_TRANSCRIPTION_MODEL", "whisper-1")
 
 if not OPENAI_API_KEY:

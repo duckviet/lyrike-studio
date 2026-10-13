@@ -4,6 +4,10 @@ const SEEK_JUMP_THRESHOLD = 0.3;
 const SEEK_PROPAGATION_DELAY_MS = 100;
 const SUPPRESS_AFTER_CONTROLLER_COMMAND_MS = 300;
 const SEEK_POLL_INTERVAL_MS = 250;
+// How long a controller-commanded seek may stay unconfirmed by the player.
+// YouTube can take well over a second to land on an unbuffered position.
+const PENDING_SEEK_TIMEOUT_MS = 5000;
+const STALE_READING_TOLERANCE = 0.5;
 
 const YT_UNSTARTED = -1;
 const YT_PLAYING = 1;
@@ -58,6 +62,9 @@ interface MediaControllerLike {
  *   time to settle.
  * - Only forwarding a seek when the player time jumps while paused, or when
  *   the player leaves the BUFFERING state after a user seek.
+ * - After the controller commands the player to seek, readings that still sit
+ *   at the player's old position are treated as "not caught up yet" rather
+ *   than as a user seek, so a slow video never drags the transport back.
  */
 export function syncVideoPlayerToMediaController(
   player: VideoPlayerLike,
@@ -71,6 +78,7 @@ export function syncVideoPlayerToMediaController(
   let suppressControllerToPlayerUntil = 0;
   let pendingSeekTimeout: ReturnType<typeof setTimeout> | null = null;
   let controllerSeekUntil = 0;
+  let pendingSeek: { from: number; until: number } | null = null;
 
   const getNow = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
@@ -88,9 +96,35 @@ export function syncVideoPlayerToMediaController(
     suppressControllerToPlayerUntil = getNow() + ms;
   };
 
+  /**
+   * True while the player has not yet reached a position the controller
+   * commanded it to seek to, and still reports its pre-seek time.
+   */
+  const isStaleReading = (playerTime: number) => {
+    if (!pendingSeek) return false;
+    if (getNow() > pendingSeek.until) {
+      pendingSeek = null;
+      return false;
+    }
+    const caughtUp =
+      Math.abs(playerTime - mediaController.getCurrentTime()) <=
+      SYNC_DRIFT_THRESHOLD;
+    if (caughtUp) {
+      pendingSeek = null;
+      return false;
+    }
+    if (Math.abs(playerTime - pendingSeek.from) <= STALE_READING_TOLERANCE) {
+      return true;
+    }
+    // Player is somewhere else entirely: the user seeked inside the iframe.
+    pendingSeek = null;
+    return false;
+  };
+
   const propagateSeek = () => {
     if (isPlayerToControllerSuppressed()) return;
     const playerTime = player.getCurrentTime();
+    if (isStaleReading(playerTime)) return;
     const drift = Math.abs(playerTime - mediaController.getCurrentTime());
     if (drift > USER_SEEK_DRIFT_THRESHOLD) {
       suppressPlayerToController();
@@ -141,7 +175,11 @@ export function syncVideoPlayerToMediaController(
       const drift = Math.abs(playerTime - currentTime);
       if (drift > SYNC_DRIFT_THRESHOLD) {
         const playerJump = Math.abs(playerTime - lastPlayerTime);
-        if (playerJump > SEEK_JUMP_THRESHOLD && controllerJump <= SEEK_JUMP_THRESHOLD) {
+        if (
+          playerJump > SEEK_JUMP_THRESHOLD &&
+          controllerJump <= SEEK_JUMP_THRESHOLD &&
+          !isStaleReading(playerTime)
+        ) {
           // User seeked inside player
           controllerSeekUntil = 0;
           suppressControllerToPlayer();
@@ -152,6 +190,10 @@ export function syncVideoPlayerToMediaController(
           // Controller jumped or normal drift -> Sync player to controller
           if (controllerJump > SEEK_JUMP_THRESHOLD) {
             controllerSeekUntil = getNow() + 500;
+            pendingSeek = {
+              from: playerTime,
+              until: getNow() + PENDING_SEEK_TIMEOUT_MS,
+            };
           }
           player.seekTo(currentTime, true);
           suppressPlayerToController();
@@ -217,6 +259,7 @@ export function syncVideoPlayerToMediaController(
     if (state !== YT_PLAYING && state !== YT_PAUSED) return;
 
     const playerTime = player.getCurrentTime();
+    if (isStaleReading(playerTime)) return;
     const jump = Math.abs(playerTime - lastPlayerTime);
     if (jump > SEEK_JUMP_THRESHOLD) {
       scheduleSeekPropagation();

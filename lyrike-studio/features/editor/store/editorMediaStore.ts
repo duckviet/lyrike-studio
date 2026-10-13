@@ -2,6 +2,12 @@ import { create } from "zustand";
 import type { FetchMediaResponse, PeaksResponse } from "@/lib/api";
 import type { PublishFlowState } from "@/features/publish";
 
+const TRANSCRIBE_ACTIVE = new Set(["loading", "starting", "queued", "running"]);
+
+export function isTranscribeActive(state: string): boolean {
+  return TRANSCRIBE_ACTIVE.has(state);
+}
+
 export type LoadState = "idle" | "loading" | "ready" | "error";
 
 export interface EditorMediaStoreState {

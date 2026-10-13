@@ -1,3 +1,5 @@
+import "../globals.css";
+
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
 
@@ -25,6 +27,7 @@ export const metadata: Metadata = {
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { Navbar } from "@/widgets/navbar";
+import { Providers } from "../providers";
 import { routing } from "@/shared/lib/i18n/routing";
 
 export function generateStaticParams() {
@@ -43,13 +46,16 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
+      suppressHydrationWarning
       className={`${playfair.variable} ${inter.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <NextIntlClientProvider messages={messages}>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-        </NextIntlClientProvider>
+        <Providers>
+          <NextIntlClientProvider messages={messages}>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+          </NextIntlClientProvider>
+        </Providers>
       </body>
     </html>
   );

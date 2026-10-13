@@ -1,6 +1,5 @@
 "use client";
 
-import { MetaForm } from "@/features/lyrics-edit/ui/MetaForm";
 import type { LyricsState } from "@/entities/lyrics";
 import type { LyricLine } from "@/entities/lyrics";
 import { useLyricsPanelScroll } from "../model/useLyricsPanelScroll";
@@ -11,6 +10,8 @@ import SyncedLinesList from "./SyncedLinesList";
 import KaraokeLinesList from "./KaraokeLinesList";
 import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
 import { formatTime } from "@/shared/utils/formatters";
+import { useTranslations } from "next-intl";
+import { EditorBusyOverlay, useEditorBusy } from "@/features/editor";
 
 export function LyricsPanel({
   onSeekLine,
@@ -21,6 +22,8 @@ export function LyricsPanel({
   onSeekWord: (word: { start: number }) => void;
   onExportLrc: () => void;
 }) {
+  const tBusy = useTranslations("editor.busy");
+  const { isBusy, reason } = useEditorBusy();
   const doc = useLyricsStore((s) => s.doc);
   const selectedLineId = useLyricsStore((s) => s.selectedLineId);
   const tab = useLyricsStore((s) => s.tab);
@@ -29,7 +32,6 @@ export function LyricsPanel({
 
   const setTab = useLyricsStore((s) => s.setTab);
   const setPlainLyrics = useLyricsStore((s) => s.setPlainLyrics);
-  const setMeta = useLyricsStore((s) => s.setMeta);
   const importFromLrc = useLyricsStore((s) => s.importFromLrc);
   const applyTextEdits = useLyricsStore((s) => s.applyTextEdits);
   const selectedWordId = useLyricsStore((s) => s.selectedWordId);
@@ -55,6 +57,7 @@ export function LyricsPanel({
 
   return (
     <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-outer bg-[#f4f5f4]">
+      <EditorBusyOverlay busy={isBusy} label={reason ? tBusy(reason) : ""}>
       <PanelToolbar
         activeTab={lyricsState.tab}
         onTabChange={setTab}
@@ -98,9 +101,7 @@ export function LyricsPanel({
         />
       )}
 
-      {lyricsState.tab === "meta" && (
-        <MetaForm meta={lyricsState.doc.meta} onUpdateMetaField={setMeta} />
-      )}
+      </EditorBusyOverlay>
     </article>
   );
 }

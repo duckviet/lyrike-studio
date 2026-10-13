@@ -14,7 +14,7 @@ import { editorMediaController } from "@/features/editor/store/editorControllers
 import { usePlaybackSync } from "@/features/lyrics-sync/model/usePlaybackSync";
 import { KeyboardShortcutsHelp } from "@/features/editor/ui/KeyboardShortcutsHelp";
 import { useEditorKeyboardShortcuts } from "@/features/editor/model/useEditorKeyboardShortcuts";
-import { EditorPanel } from "@/features/editor";
+import { EditorPanel, useEditorBusy } from "@/features/editor";
 import { EditorLayout } from "@/widgets/editor-layout";
 import { useTranslations } from "next-intl";
 
@@ -43,6 +43,7 @@ export default function StudioPage() {
   const setActiveWord = useLyricsStore((s) => s.setActiveWord);
   const loadDraft = useLyricsStore((s) => s.loadDraft);
   const { saveDraft } = useDraft(loadDraft);
+  const { isBusy } = useEditorBusy();
 
   const { isPlaying } = usePlaybackSync({
     syncedLines,
@@ -109,6 +110,7 @@ export default function StudioPage() {
 
   useEditorKeyboardShortcuts({
     enabled: !isShortcutsHelpOpen,
+    lockEditing: isBusy,
     onTogglePlayback: handleTogglePlayback,
     onSeekBy: handleSeekBy,
     onSeekTo: handleSeekTo,

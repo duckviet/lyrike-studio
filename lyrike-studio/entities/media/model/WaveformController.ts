@@ -3,6 +3,7 @@ import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
 import Hover from "wavesurfer.js/dist/plugins/hover.esm.js";
 
 import type { LyricLine } from "@/entities/lyrics";
+import { WAVEFORM } from "@/shared/config/constants";
 
 type InitOptions = {
   container: HTMLElement;
@@ -157,8 +158,11 @@ export class WaveformController {
           const factor = Math.pow(1.1, -e.deltaY / 50);
           let newPxPerSec = oldPxPerSec * factor;
 
-          // Clamp to the same range as the UI slider (20-240)
-          newPxPerSec = Math.max(20, Math.min(240, newPxPerSec));
+          // Clamp to the same range as the UI slider
+          newPxPerSec = Math.max(
+            WAVEFORM.MIN_ZOOM,
+            Math.min(WAVEFORM.MAX_ZOOM, newPxPerSec),
+          );
 
           if (newPxPerSec === oldPxPerSec) return;
 

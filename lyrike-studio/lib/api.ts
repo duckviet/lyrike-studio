@@ -172,13 +172,14 @@ export type TranscribeMode = "normal" | "karaoke";
 export async function requestTranscription(
   videoId: string,
   mode: TranscribeMode = "normal",
+  lyrics?: string,
 ): Promise<TranscribeResponse> {
   const response = await fetch(buildUrl("/local-api/transcribe"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ videoId, mode }),
+    body: JSON.stringify({ videoId, mode, lyrics: lyrics?.trim() || undefined }),
   });
 
   return normalizeTranscribeResponse(await parseJsonOrThrow(response));

@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ExtractRequest(BaseModel):
@@ -17,6 +17,7 @@ class TranscribeRequest(BaseModel):
     force: bool = False
     enableRefinement: bool = True
     mode: str = "normal"
+    lyrics: Optional[str] = Field(default=None, max_length=20000)
 
     def validated_mode(self) -> str:
         mode = self.mode.lower().strip()

@@ -89,9 +89,15 @@ def process_audio(
     output_vocal_path: Optional[str] = None,
     provider_name: Optional[str] = None,
     mode: str = "normal",
+    lyrics: Optional[str] = None,
 ):
     """Run transcription on an audio file, optionally running Demucs first."""
     provider = get_transcription_provider(provider_name)
+
+    def run_provider(path: Path) -> TranscriptionResult:
+        if lyrics:
+            return provider.align_lyrics(path, lyrics)
+        return provider.transcribe(path)
 
     def format_result(result: TranscriptionResult):
         if mode == "karaoke":
@@ -106,11 +112,11 @@ def process_audio(
             if output_vocal_path:
                 shutil.copyfile(vocals_path, output_vocal_path)
 
-            result = provider.transcribe(Path(vocals_path))
+            result = run_provider(Path(vocals_path))
             synced, plain = format_result(result)
             return synced, plain, result
 
-    result = provider.transcribe(Path(audio_path))
+    result = run_provider(Path(audio_path))
     synced, plain = format_result(result)
     return synced, plain, result
 
@@ -122,7 +128,11 @@ def run_transcription_job(
     enable_refinement: bool = True,
     provider_name: Optional[str] = None,
     mode: str = "normal",
+    lyrics: Optional[str] = None,
 ) -> None:
+    if lyrics:
+        enable_refinement = False  # never let AI rewrite the user's own text
+
     # OpenAI provider already works on mixed audio — skip Demucs
     actual_provider = (provider_name or TRANSCRIPTION_PROVIDER).lower()
     if "openai" in actual_provider:
@@ -151,6 +161,7 @@ def run_transcription_job(
             output_vocal_path=str(vocal_cache_path) if use_demucs else None,
             provider_name=provider_name,
             mode=mode,
+            lyrics=lyrics,
         )
 
         is_ai_refined = False
@@ -192,6 +203,7 @@ def run_transcription_job(
             "is_ai_refined": is_ai_refined,
             "model": model,
             "mode": mode,
+            "hasLyrics": bool(lyrics),
             "updatedAt": utc_now_iso(),
         }
 

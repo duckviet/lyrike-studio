@@ -4,13 +4,14 @@
     "artist": "Artist",
     "album": "Album",
     "by": "By",
-    "offset": "Offset"
+    "offset": "Offset",
+    "lrcTags": "LRC file tags",
+    "lrcTagsHint": "Written into the exported .lrc only; not sent to LRCLIB."
   },
   "tabs": {
     "synced": "Synced",
     "karaoke": "Karaoke",
-    "plain": "Plain",
-    "meta": "Meta"
+    "plain": "Plain"
   },
   "toolbar": {
     "importLrc": "Import LRC",
@@ -37,7 +38,16 @@
     "track": "Track",
     "artist": "Artist",
     "duration": "Duration",
-    "status": "Status"
+    "status": "Status",
+    "providedLyrics": "Lyrics (optional)",
+    "uploadLyrics": "Upload .txt/.lrc",
+    "clearLyrics": "Clear",
+    "providedLyricsPlaceholder": "Paste plain lyrics here — one line per lyric line…",
+    "providedLyricsHint": "Your lyrics will be used as the text; the model only finds the timing.",
+    "lyricsFileTooLarge": "Lyrics file is too large.",
+    "tabSource": "Source",
+    "tabPublish": "Publish",
+    "noSource": "Load media first"
   },
   "video": {
     "title": "Reference video",
@@ -51,5 +61,33 @@
   "plainLyrics": "Plain Lyrics",
   "textEditor": {
     "format": "Format: [mm:ss.xx:mm:ss.xx] lyrics text"
+  },
+  "publish": {
+    "checklist": "Publish checklist",
+    "duration": "Duration",
+    "checkTrack": "Track name",
+    "checkArtist": "Artist name",
+    "checkDuration": "Duration known",
+    "checkLyrics": "Lyrics present",
+    "fillGaps": "Mark instrumental breaks with {symbol}",
+    "fillGapsMin": "Gap at least",
+    "fillGapsCount": "{count} marker(s)"
+  },
+  "toast": {
+    "fetching": "Fetching media…",
+    "fetchDone": "Media loaded: {title}",
+    "fetchFailed": "Fetch failed: {message}",
+    "enterUrl": "Please enter a YouTube URL first.",
+    "transcribing": "Transcribing… ({status})",
+    "transcribeDone": "Transcription finished — lyrics imported to the editor.",
+    "transcribeFailed": "Transcription failed: {message}",
+    "publishing": "Publishing to LRCLIB…",
+    "publishDone": "Lyrics published to LRCLIB.",
+    "publishFailed": "Publish failed: {message}"
+  },
+  "busy": {
+    "fetching": "Fetching media…",
+    "transcribing": "Transcribing — editing is locked",
+    "publishing": "Publishing…"
   }
 }

@@ -8,7 +8,7 @@ export function FinalCTA() {
   const t = useTranslations("home.finalCta");
   return (
     <section className="home-inverse bg-home-canvas px-6 py-16 md:px-8 md:py-24">
-      <div className="mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-8 rounded-[14px] bg-home-forest p-8 text-home-canvas md:p-12 lg:flex-row lg:items-center">
+      <div className="mx-auto flex max-w-[1440px] flex-col items-start justify-between gap-8 rounded-[14px] bg-home-forest p-8 text-home-canvas md:p-12 lg:flex-row lg:items-center">
         <div>
           <AudioLines aria-hidden="true" className="mb-6 text-home-mint" size={32} strokeWidth={1.5} />
           <h2 className="text-balance font-serif text-4xl font-normal leading-tight md:text-5xl">{t("title")}</h2>

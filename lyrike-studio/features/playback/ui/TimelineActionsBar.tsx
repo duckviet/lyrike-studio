@@ -6,6 +6,7 @@ import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
 import { usePlaybackTimeSnapshot } from "@/features/playback/model/playbackClock";
 import { TIMING, WAVEFORM } from "@/shared/config/constants";
 import { formatTime } from "@/shared/utils/formatters";
+import { sliderToZoom, zoomToSlider } from "@/shared/utils/zoomScale";
 import { editorWaveformController } from "@/features/editor/store/editorControllers";
 import {
   CircleQuestionMark,
@@ -17,7 +18,11 @@ import {
   SplitSquareHorizontalIcon,
   Undo2,
 } from "lucide-react";
-import { EditorButton, EditorSegmentedControl } from "@/features/editor";
+import {
+  EditorButton,
+  EditorSegmentedControl,
+  useEditorBusy,
+} from "@/features/editor";
 
 interface TimelineActionsBarProps {
   isPlaying: boolean;
@@ -43,6 +48,7 @@ export const TimelineActionsBar = memo(function TimelineActionsBar({
   const t = useTranslations("dashboard.editor");
 
   const mediaInfo = useEditorMediaStore((s) => s.mediaInfo);
+  const { isBusy } = useEditorBusy();
 
   const zoomLevel = useEditorUIStore((s) => s.zoomLevel);
   const onZoomChange = useEditorUIStore((s) => s.handleZoomChange);
@@ -113,11 +119,12 @@ export const TimelineActionsBar = memo(function TimelineActionsBar({
         <input
           className="w-full max-w-[260px] h-1.5 border-0 rounded-full bg-bg appearance-none cursor-pointer p-0 accent-primary"
           type="range"
-          min={WAVEFORM.MIN_ZOOM}
-          max={WAVEFORM.MAX_ZOOM}
-          step={WAVEFORM.ZOOM_STEP}
-          value={zoomLevel}
-          onChange={(e) => onZoomChange(Number(e.target.value))}
+          min={0}
+          max={WAVEFORM.ZOOM_SLIDER_STEPS}
+          step={1}
+          value={zoomToSlider(zoomLevel)}
+          aria-valuetext={`${Math.round(zoomLevel)} px/s`}
+          onChange={(e) => onZoomChange(sliderToZoom(Number(e.target.value)))}
         />
       </div>
 
@@ -129,6 +136,7 @@ export const TimelineActionsBar = memo(function TimelineActionsBar({
             useLyricsStore.getState().splitAtTime(time);
           }}
           size="sm"
+          disabled={isBusy}
           title="Split line at hover position"
           variant="secondary"
         >
@@ -146,7 +154,7 @@ export const TimelineActionsBar = memo(function TimelineActionsBar({
           <EditorButton
             className="h-full min-h-0 w-8 p-0"
             icon={<Undo2 size={14} />}
-            disabled={!canUndo}
+            disabled={!canUndo || isBusy}
             onClick={onUndo}
             title={t("undo")}
             variant="ghost"
@@ -156,7 +164,7 @@ export const TimelineActionsBar = memo(function TimelineActionsBar({
           <EditorButton
             className="h-full min-h-0 w-8 p-0"
             icon={<Redo2 size={14} />}
-            disabled={!canRedo}
+            disabled={!canRedo || isBusy}
             onClick={onRedo}
             title={t("redo")}
             variant="ghost"
@@ -168,6 +176,7 @@ export const TimelineActionsBar = memo(function TimelineActionsBar({
             className="h-full min-h-0 w-8 p-0"
             icon={<Save size={14} />}
             onClick={onSaveDraft}
+            disabled={isBusy}
             title={t("draft")}
             variant="ghost"
           >

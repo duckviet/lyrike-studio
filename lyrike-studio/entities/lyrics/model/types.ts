@@ -30,7 +30,7 @@ export type LyricsDoc = {
 export type LyricsState = {
   readonly doc: LyricsDoc
   readonly selectedLineId: string | null
-  readonly tab: 'synced' | 'karaoke' | 'plain' | 'meta'
+  readonly tab: 'synced' | 'karaoke' | 'plain'
   readonly canUndo: boolean
   readonly canRedo: boolean
   readonly activeLineId: string | null

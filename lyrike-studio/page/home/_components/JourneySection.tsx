@@ -39,7 +39,7 @@ export function JourneySection() {
 
   return (
     <section className="bg-home-canvas py-16 md:py-20" id="demo">
-      <div className="mx-auto max-w-[1200px] px-6 md:px-8">
+      <div className="mx-auto max-w-[1440px] px-6 md:px-8">
         <ScrollReveal>
           <span className="home-eyebrow mb-4">
             {t("label")}

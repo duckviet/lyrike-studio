@@ -6,22 +6,17 @@ import { EditorButton, EditorStatusCallout } from "@/features/editor";
 interface PublishCardProps {
   publishState: PublishFlowState | null;
   onPublish: () => void;
+  disabled?: boolean;
 }
 
-export function PublishCard({ publishState, onPublish }: PublishCardProps) {
+export function PublishCard({ publishState, onPublish, disabled = false }: PublishCardProps) {
   const t = useTranslations("dashboard.publish");
 
   return (
-    <section className="flex flex-col gap-3 pr-4 pb-2">
-      <div className="flex items-center">
-        <span className="inline-flex rounded-md bg-primary-10 text-primary px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wider border border-primary-20">
-          {t("label")}
-        </span>
-      </div>
-
+    <section className="flex flex-col gap-3">
       <EditorButton
         className="w-full"
-        disabled={publishState?.status === "running"}
+        disabled={disabled || publishState?.status === "running"}
         icon={
           publishState?.status === "running" ? (
             <LoaderCircle className="animate-spin" size={16} />

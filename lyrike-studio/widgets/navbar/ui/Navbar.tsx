@@ -57,7 +57,7 @@ export const Navbar = () => {
 
   return (
     <nav className="sticky left-0 right-0 top-0 z-50 border-b border-home-border bg-home-canvas/90 px-4 py-3 backdrop-blur-md md:px-8">
-      <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4">
+      <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4">
         <Link
           className="flex min-w-0 items-center gap-3 font-serif text-xl font-normal text-home-forest"
           href="/"

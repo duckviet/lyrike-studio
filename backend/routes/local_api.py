@@ -114,10 +114,16 @@ def transcribe_media(request: Request, body: TranscribeRequest):
     if not video_id:
         raise HTTPException(status_code=400, detail="Invalid videoId")
 
+    lyrics = (body.lyrics or "").strip() or None
+
     output_file = transcript_path(video_id)
-    if output_file.exists() and not body.force:
+    if output_file.exists() and not body.force and not lyrics:
         cached = load_json(output_file)
-        if cached and cached.get("mode", "normal") == body.validated_mode():
+        if (
+            cached
+            and cached.get("mode", "normal") == body.validated_mode()
+            and not cached.get("hasLyrics")
+        ):
             # Keys match what transcription_service.py saves: "synced" / "plain"
             job_data = {**cached, "status": "completed"}
             with JOB_LOCK:
@@ -128,8 +134,11 @@ def transcribe_media(request: Request, body: TranscribeRequest):
         current_job = TRANSCRIBE_JOBS.get(video_id)
         if current_job and current_job.get("status") == "running":
             return {"videoId": video_id, "status": "running", "job": current_job}
-        if current_job and current_job.get("status") == "completed":
-            if current_job.get("mode", "normal") == body.validated_mode():
+        if current_job and current_job.get("status") == "completed" and not lyrics:
+            if (
+                current_job.get("mode", "normal") == body.validated_mode()
+                and not current_job.get("hasLyrics")
+            ):
                 return {"videoId": video_id, "status": "completed", **current_job}
 
     audio_file = find_cached_audio(video_id)
@@ -138,6 +147,10 @@ def transcribe_media(request: Request, body: TranscribeRequest):
             status_code=404,
             detail="Audio cache not found. Call /local-api/fetch first.",
         )
+
+    with JOB_LOCK:
+        # Drop any stale finished job so the SSE stream doesn't replay it.
+        TRANSCRIBE_JOBS[video_id] = {"status": "queued", "updatedAt": utc_now_iso()}
 
     worker = threading.Thread(
         target=run_transcription_job,
@@ -148,6 +161,7 @@ def transcribe_media(request: Request, body: TranscribeRequest):
             body.enableRefinement,
             None,
             body.validated_mode(),
+            lyrics,
         ),
         daemon=True,
     )

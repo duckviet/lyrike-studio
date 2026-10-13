@@ -4,13 +4,14 @@
     "artist": "Nghệ sĩ",
     "album": "Album",
     "by": "Thu cao sĩ",
-    "offset": "Độ lệch"
+    "offset": "Độ lệch",
+    "lrcTags": "Thẻ trong file LRC",
+    "lrcTagsHint": "Chỉ ghi vào file .lrc xuất ra; không gửi lên LRCLIB."
   },
   "tabs": {
     "synced": "Đồng bộ",
     "karaoke": "Karaoke",
-    "plain": "Văn bản",
-    "meta": "Thông tin"
+    "plain": "Văn bản"
   },
   "toolbar": {
     "importLrc": "Nhập LRC",
@@ -37,7 +38,16 @@
     "track": "Bài hát",
     "artist": "Nghệ sĩ",
     "duration": "Thời lượng",
-    "status": "Trạng thái"
+    "status": "Trạng thái",
+    "providedLyrics": "Lời bài hát (tuỳ chọn)",
+    "uploadLyrics": "Tải lên .txt/.lrc",
+    "clearLyrics": "Xoá",
+    "providedLyricsPlaceholder": "Dán lời bài hát (plain) vào đây — mỗi dòng một câu…",
+    "providedLyricsHint": "Lời của bạn sẽ được dùng làm nội dung; mô hình chỉ xác định thời gian.",
+    "lyricsFileTooLarge": "Tệp lời bài hát quá lớn.",
+    "tabSource": "Nguồn",
+    "tabPublish": "Xuất bản",
+    "noSource": "Hãy tải media trước"
   },
   "video": {
     "title": "Video tham chiếu",
@@ -51,5 +61,33 @@
   "plainLyrics": "Lời bài hát",
   "textEditor": {
     "format": "Định dạng: [phút.giây.phút.giây] lời bài hát"
+  },
+  "publish": {
+    "checklist": "Điều kiện xuất bản",
+    "duration": "Thời lượng",
+    "checkTrack": "Tên bài hát",
+    "checkArtist": "Tên nghệ sĩ",
+    "checkDuration": "Có thời lượng",
+    "checkLyrics": "Có lời bài hát",
+    "fillGaps": "Đánh dấu đoạn nhạc nền bằng {symbol}",
+    "fillGapsMin": "Khoảng trống từ",
+    "fillGapsCount": "{count} dòng đánh dấu"
+  },
+  "toast": {
+    "fetching": "Đang tải media…",
+    "fetchDone": "Đã tải media: {title}",
+    "fetchFailed": "Tải thất bại: {message}",
+    "enterUrl": "Hãy nhập link YouTube trước.",
+    "transcribing": "Đang phiên âm… ({status})",
+    "transcribeDone": "Phiên âm xong — lời đã được nhập vào trình sửa.",
+    "transcribeFailed": "Phiên âm thất bại: {message}",
+    "publishing": "Đang xuất bản lên LRCLIB…",
+    "publishDone": "Đã xuất bản lyrics lên LRCLIB.",
+    "publishFailed": "Xuất bản thất bại: {message}"
+  },
+  "busy": {
+    "fetching": "Đang tải media…",
+    "transcribing": "Đang phiên âm — tạm khóa chỉnh sửa",
+    "publishing": "Đang xuất bản…"
   }
 }

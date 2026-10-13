@@ -30,7 +30,6 @@ export default function PanelToolbar({
     { id: "synced", label: tabs("synced") },
     { id: "karaoke", label: tabs("karaoke") },
     { id: "plain", label: tabs("plain") },
-    { id: "meta", label: tabs("meta") },
   ] satisfies { id: LyricsTabId; label: string }[];
 
   return (

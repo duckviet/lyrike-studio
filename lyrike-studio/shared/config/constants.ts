@@ -14,8 +14,9 @@ export const TIMING = {
 export const WAVEFORM = {
   DEFAULT_ZOOM_PX_PER_SEC: 52,
   MIN_ZOOM: 20,
-  MAX_ZOOM: 240,
-  ZOOM_STEP: 2,
+  MAX_ZOOM: 600,
+  /** Slider resolution; the slider is logarithmic so low zoom stays fine-grained. */
+  ZOOM_SLIDER_STEPS: 1000,
 } as const;
 
 export const UI = {

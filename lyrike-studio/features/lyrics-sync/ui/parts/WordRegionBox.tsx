@@ -1,9 +1,10 @@
 "use client";
 
-import { memo, useRef } from "react";
+import { memo } from "react";
 import { cn } from "@/shared/lib/utils";
 import type { LyricLine, LyricWord } from "@/entities/lyrics";
 import { useLiveWordRange } from "../../model/liveDragStore";
+import { RegionGrip, gripWidthFor } from "./RegionGrip";
 
 interface WordRegionBoxProps {
   line: LyricLine;
@@ -37,7 +38,6 @@ export const WordRegionBox = memo(function WordRegionBox({
   onPointerDown,
   onSelect,
 }: WordRegionBoxProps) {
-  const ref = useRef<HTMLButtonElement>(null);
   const liveRange = useLiveWordRange(word.id);
   const renderedLeft =
     liveRange === null ? left : (liveRange.start - line.start) * pxPerSec;
@@ -45,22 +45,25 @@ export const WordRegionBox = memo(function WordRegionBox({
     liveRange === null
       ? width
       : Math.max((liveRange.end - liveRange.start) * pxPerSec, 1);
+  const gripWidth = gripWidthFor(renderedWidth, 8);
+  const label = word.text.trim();
+  const range = `${word.start.toFixed(2)}s–${word.end.toFixed(2)}s`;
+
+  const begin =
+    (edge: "start" | "end" | "move") => (e: React.PointerEvent) => {
+      e.stopPropagation();
+      onPointerDown(e, line, word, edge);
+    };
 
   return (
-    <button
-      ref={ref}
-      type="button"
+    <div
       data-karaoke-word-id={word.id}
-      aria-pressed={isSelected}
-      aria-label={`Word ${word.text.trim()} ${word.start.toFixed(2)}s–${word.end.toFixed(2)}s`}
-      title={`${word.text.trim()} (${word.start.toFixed(2)}s–${word.end.toFixed(2)}s)`}
+      title={`${label} (${range})`}
       className={cn(
-        "absolute top-0 h-full min-w-[4px] cursor-grab will-change-transform group",
-        "flex items-center justify-center overflow-hidden text-[0.65rem]",
-        "select-none whitespace-nowrap px-1",
-        "focus:outline-none focus:ring-2 focus:ring-amber/50",
-        isFirst && "rounded-l-inner",
-        isLast && "rounded-r-inner",
+        "absolute top-0 flex h-full min-w-[6px] items-stretch overflow-hidden will-change-transform",
+        "text-[0.65rem] select-none whitespace-nowrap",
+        isFirst && "rounded-l-control",
+        isLast && "rounded-r-control",
         !isFirst && "border-l",
         isActive
           ? cn(
@@ -78,32 +81,21 @@ export const WordRegionBox = memo(function WordRegionBox({
         transform: `translateX(${renderedLeft}px)`,
         width: renderedWidth,
       }}
-      onClick={() => onSelect(line, word)}
-      onPointerDown={(e) => {
-        e.stopPropagation();
-        const rect = ref.current?.getBoundingClientRect();
-        if (!rect) return;
-        const edgeThreshold = 8;
-        const relativeX = e.clientX - rect.left;
-        let edge: "start" | "end" | "move" = "move";
-        if (relativeX <= edgeThreshold) edge = "start";
-        else if (relativeX >= rect.width - edgeThreshold) edge = "end";
-        onPointerDown(e, line, word, edge);
-      }}
     >
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 text-white/70 group-hover:block"
+      <RegionGrip edge="start" width={gripWidth} onPointerDown={begin("start")} />
+      <button
+        type="button"
+        aria-pressed={isSelected}
+        aria-label={`Word ${label} ${range}`}
+        className="flex min-w-0 flex-1 cursor-grab items-center justify-center overflow-hidden border-0 bg-transparent p-0 text-inherit select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-amber/50 active:cursor-grabbing"
+        style={{ touchAction: "none" }}
+        onClick={() => onSelect(line, word)}
+        onDragStart={(e) => e.preventDefault()}
+        onPointerDown={begin("move")}
       >
-        |
-      </span>
-      <span>{word.text.trim()}</span>
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 text-white/70 group-hover:block"
-      >
-        |
-      </span>
-    </button>
+        <span className="overflow-hidden text-ellipsis">{label}</span>
+      </button>
+      <RegionGrip edge="end" width={gripWidth} onPointerDown={begin("end")} />
+    </div>
   );
 });

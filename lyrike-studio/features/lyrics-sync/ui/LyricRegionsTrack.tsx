@@ -211,7 +211,9 @@ export const LyricRegionsTrack = forwardRef<LyricRegionsTrackHandle, Props>(func
   return (
     <div
       ref={trackRef}
-      className="relative z-20 h-11 shrink-0 select-none rounded-b-inner border border-white/10 border-t-0 bg-[#092a0e]"
+      className={`relative z-20 shrink-0 select-none rounded-b-inner border border-white/10 border-t-0 bg-[#092a0e] transition-[height] duration-150 ${
+        syncedMode === "karaoke" ? "h-[68px]" : "h-11"
+      }`}
       style={{ overflowX: "clip", overflowY: "visible", touchAction: "none" }}
       onClick={clearGap}
       {...mergedHandlers}

@@ -6,6 +6,7 @@ from openai import OpenAI
 
 from core.config import OPENAI_API_KEY, OPENAI_TRANSCRIPTION_MODEL
 from .base import BaseTranscriptionProvider
+from . import lyrics_alignment as la
 from .types import TranscriptionResult, TranscribedSegment, TranscribedWord
 
 logger = logging.getLogger("openai_whisper_service")
@@ -18,15 +19,47 @@ class OpenAIWhisperTranscriptionProvider(BaseTranscriptionProvider):
         self.client = OpenAI(api_key=OPENAI_API_KEY)
         self.model = OPENAI_TRANSCRIPTION_MODEL
 
-    def transcribe(self, audio_path: Path) -> TranscriptionResult:
+    def align_lyrics(self, audio_path: Path, lyrics: str) -> TranscriptionResult:
+        """Transcribe with the lyrics as a prompt, then map user text onto ASR timings."""
+        lines = la.split_lines(la.clean_lyrics(lyrics))
+        if not lines:
+            raise ValueError("Provided lyrics are empty.")
+
+        # Whisper only reads the last ~224 prompt tokens; a leading excerpt biases spelling/vocab.
+        prompt = " ".join(lines)[:600]
+        result = self.transcribe(audio_path, prompt=prompt)
+
+        asr_words = [w for seg in result.segments for w in seg.words]
+        if not asr_words:
+            raise ValueError("No vocals detected to align the lyrics against.")
+
+        tokens = la.tokenize_lyrics(lines, result.language)
+        times = la.times_from_asr_words([t.text for t in tokens], asr_words, result.language)
+        duration = max(w.end for w in asr_words)
+        filled = la.fill_missing_times(times, 0.0, duration)
+        segments = la.build_line_segments(lines, tokens, filled)
+        matched = sum(1 for t in times if t[0] is not None)
+        logger.info(f"Mapped lyrics onto OpenAI timings: {matched}/{len(tokens)} tokens matched.")
+
+        return TranscriptionResult(
+            provider=f"openai-{self.model}-lyrics",
+            language=result.language,
+            segments=segments,
+            plain_text="\n".join(lines),
+            raw=None,
+        )
+
+    def transcribe(self, audio_path: Path, prompt: Optional[str] = None) -> TranscriptionResult:
         logger.info(f"Starting OpenAI transcription using model={self.model} for {audio_path}")
         
+        extra = {"prompt": prompt} if prompt else {}
         with open(audio_path, "rb") as f:
             response = self.client.audio.transcriptions.create(
                 model=self.model,
                 file=f,
                 response_format="verbose_json",
                 timestamp_granularities=["word", "segment"],
+                **extra,
             )
 
         # Save to log file to check

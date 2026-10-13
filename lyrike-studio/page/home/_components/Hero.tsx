@@ -7,7 +7,7 @@ export function Hero() {
   const t = useTranslations("home.hero");
   return (
     <section className="px-6 pb-14 pt-12 md:px-8 md:pb-20 md:pt-20">
-      <div className="mx-auto grid max-w-[1200px] items-center gap-12 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
+      <div className="mx-auto grid max-w-[1440px] items-center gap-12 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
         <div>
           <p className="home-eyebrow mb-8">{t("label")}</p>
           <h1 className="text-balance font-serif text-5xl font-normal leading-[1.12] tracking-tight text-home-forest md:text-6xl xl:text-7xl">

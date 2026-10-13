@@ -4,6 +4,7 @@ import { requestPublishChallenge, publishLyrics } from "@/lib/api";
 import { buildPublishPayload } from "@/features/publish/model/publishPayload";
 import { solvePowInWorker } from "@/features/publish/model/powWorkerClient";
 import type { FetchMediaResponse } from "@/lib/api";
+import type { FillGapsOptions } from "@/features/publish/model/fillInstrumentalGaps";
 import type { LyricsState } from "@/entities/lyrics";
 import {
   createPublishFlowMachine,
@@ -32,10 +33,12 @@ export function usePublishMutation(options?: UsePublishOptions) {
       lyricsState,
       mediaInfo,
       exportToLrc,
+      fillGaps,
     }: {
       lyricsState: LyricsState;
       mediaInfo: FetchMediaResponse;
       exportToLrc: () => string;
+      fillGaps?: FillGapsOptions | null;
     }) => {
       await machineRef.current!.run({
         buildPayload: () =>
@@ -43,6 +46,7 @@ export function usePublishMutation(options?: UsePublishOptions) {
             lyricsState,
             mediaInfo,
             exportLrc: exportToLrc,
+            fillGaps,
           }),
         requestChallenge: requestPublishChallenge,
         solvePow: ({ prefix, targetHex, onProgress }) =>
@@ -71,6 +75,7 @@ export function usePublishMutation(options?: UsePublishOptions) {
       lyricsState: LyricsState;
       mediaInfo: FetchMediaResponse;
       exportToLrc: () => string;
+      fillGaps?: FillGapsOptions | null;
     }) => {
       mutation.mutate(input);
     },

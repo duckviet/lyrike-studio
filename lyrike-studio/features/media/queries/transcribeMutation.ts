@@ -20,10 +20,12 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
     mutationFn: async ({
       videoId,
       mode,
+      lyrics,
       signal,
     }: {
       videoId: string;
       mode?: "normal" | "karaoke";
+      lyrics?: string;
       signal?: AbortSignal;
     }) => {
       options?.onStatusChange?.("starting");
@@ -33,7 +35,7 @@ export function useTranscribeMutation(options?: UseTranscribeOptions) {
       }
 
       // Request transcription
-      const response = await requestTranscription(videoId, mode);
+      const response = await requestTranscription(videoId, mode, lyrics);
 
       if (signal?.aborted) {
         throw new Error("Aborted");

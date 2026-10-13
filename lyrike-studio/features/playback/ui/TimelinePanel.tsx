@@ -27,7 +27,7 @@ import {
 import { getAudioUrl } from "@/lib/api";
 import { useTranslations } from "next-intl";
 import { TimelineActionsBar } from "./TimelineActionsBar";
-import { EditorPanel } from "@/features/editor";
+import { EditorPanel, useEditorBusy } from "@/features/editor";
 
 export const TimelinePanel = ({
   isPlaying = false,
@@ -44,6 +44,7 @@ export const TimelinePanel = ({
   onSeekBy?: (delta: number) => void;
   onOpenShortcutsHelp?: () => void;
 } = {}) => {
+  const { isBusy } = useEditorBusy();
   const t = useTranslations("dashboard.editor");
   const waveHostRef = useRef<HTMLDivElement>(null);
   const timelineHostRef = useRef<HTMLDivElement>(null);
@@ -239,6 +240,10 @@ export const TimelinePanel = ({
         </div>
 
         {mediaInfo && (
+          <div
+            inert={isBusy}
+            className={isBusy ? "opacity-50 transition-opacity" : "transition-opacity"}
+          >
           <LyricRegionsTrack
             ref={regionsTrackRef}
             lines={doc.syncedLines}
@@ -263,6 +268,7 @@ export const TimelinePanel = ({
             onExtendLine={onExtendLine}
             onDeleteGap={handleDeleteGap}
           />
+          </div>
         )}
       </div>
     </EditorPanel>

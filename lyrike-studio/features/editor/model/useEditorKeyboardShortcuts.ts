@@ -6,6 +6,8 @@ import { useKeyCombo, type KeyComboHandler } from "@/shared/hooks/useKeyCombo";
 
 type Deps = {
   enabled?: boolean;
+  /** While true only transport shortcuts (play/pause/seek) stay active. */
+  lockEditing?: boolean;
   onTogglePlayback: () => void;
   onSeekBy: (delta: number) => void;
   onSeekTo: (time: number) => void;
@@ -38,6 +40,7 @@ const isModalOpen = () => {
 
 export function useEditorKeyboardShortcuts({
   enabled = true,
+  lockEditing = false,
   onTogglePlayback,
   onSeekBy,
   onSeekTo,
@@ -50,10 +53,11 @@ export function useEditorKeyboardShortcuts({
     return doc.syncedLines.find((line) => line.id === selectedLineId) ?? null;
   }, []);
 
-  const combos = useMemo<KeyComboHandler[]>(() => {
+  const combos = useMemo<Array<KeyComboHandler & { transport?: boolean }>>(() => {
     return [
       {
         key: " ",
+        transport: true,
         handler: (event) => {
           if (isInputFocused() || isModalOpen()) return;
           event.preventDefault();
@@ -62,6 +66,7 @@ export function useEditorKeyboardShortcuts({
       },
       {
         key: "ArrowLeft",
+        transport: true,
         handler: () => {
           if (isInputFocused() || isModalOpen()) return;
           onSeekBy(-2);
@@ -69,6 +74,7 @@ export function useEditorKeyboardShortcuts({
       },
       {
         key: "ArrowRight",
+        transport: true,
         handler: () => {
           if (isInputFocused() || isModalOpen()) return;
           onSeekBy(2);
@@ -77,6 +83,7 @@ export function useEditorKeyboardShortcuts({
       {
         key: "ArrowLeft",
         shift: true,
+        transport: true,
         preventDefault: true,
         handler: () => {
           if (isModalOpen()) return;
@@ -86,6 +93,7 @@ export function useEditorKeyboardShortcuts({
       {
         key: "ArrowRight",
         shift: true,
+        transport: true,
         preventDefault: true,
         handler: () => {
           if (isModalOpen()) return;
@@ -403,5 +411,10 @@ export function useEditorKeyboardShortcuts({
     onTogglePlayback,
   ]);
 
-  useKeyCombo(combos, enabled);
+  const active = useMemo(
+    () => (lockEditing ? combos.filter((combo) => combo.transport) : combos),
+    [combos, lockEditing],
+  );
+
+  useKeyCombo(active, enabled);
 }
