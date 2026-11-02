@@ -29,5 +29,18 @@
     "button": "Xuất bản lên LRCLIB",
     "running": "Đang xuất bản...",
     "attempts": "lần thử"
+  },
+  "projects": {
+    "title": "Dự án của tôi",
+    "new": "Dự án mới",
+    "empty": "Chưa có dự án nào. Tải một video trong trình soạn thảo, công việc sẽ tự được lưu.",
+    "untitled": "Chưa đặt tên",
+    "unknownArtist": "Không rõ nghệ sĩ",
+    "lines": "{count} dòng",
+    "delete": "Xóa dự án",
+    "confirmDelete": "Xóa \"{title}\"? Không thể hoàn tác.",
+    "back": "Dự án",
+    "eyebrow": "Không gian làm việc",
+    "subtitle": "Tự động lưu trong trình duyệt này. Tiếp tục bất kỳ bài hát nào từ chỗ bạn dừng lại."
   }
 }

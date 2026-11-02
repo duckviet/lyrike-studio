@@ -29,5 +29,18 @@
     "button": "Publish to LRCLIB",
     "running": "Publishing...",
     "attempts": "attempts"
+  },
+  "projects": {
+    "title": "My Projects",
+    "new": "New project",
+    "empty": "No projects yet. Fetch a video in the editor and your work saves itself.",
+    "untitled": "Untitled",
+    "unknownArtist": "Unknown artist",
+    "lines": "{count, plural, one {# line} other {# lines}}",
+    "delete": "Delete project",
+    "confirmDelete": "Delete \"{title}\"? This cannot be undone.",
+    "back": "Projects",
+    "eyebrow": "Workspace",
+    "subtitle": "Saved automatically in this browser. Pick up any song right where you left off."
   }
 }

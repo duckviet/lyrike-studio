@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { VideoPlayer } from "@/features/playback";
 import { SourcePanel } from "@/features/media";
 import { LyricsPanel } from "@/features/lyrics-edit/ui/LyricsPanel";
 import { TimelinePanel } from "@/features/playback/ui/TimelinePanel";
-import { useDraft } from "@/features/playback/model/useDraft";
+import { useDraft, useDraftAutosave } from "@/features/playback/model/useDraft";
 import type { LyricLine } from "@/entities/lyrics";
 import { useEditorUIStore } from "@/features/editor/store/editorUIStore";
 import { useEditorMediaStore } from "@/features/editor/store/editorMediaStore";
@@ -43,6 +43,9 @@ export default function StudioPage() {
   const setActiveWord = useLyricsStore((s) => s.setActiveWord);
   const loadDraft = useLyricsStore((s) => s.loadDraft);
   const { saveDraft } = useDraft(loadDraft);
+  useDraftAutosave();
+  // The media controller is a singleton, so stop playback when leaving the editor.
+  useEffect(() => () => editorMediaController.pause(), []);
   const { isBusy } = useEditorBusy();
 
   const { isPlaying } = usePlaybackSync({

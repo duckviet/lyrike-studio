@@ -7,6 +7,7 @@ import {
   useEditorMediaStore,
 } from "@/features/editor/store/editorMediaStore";
 import { notify } from "@/shared/lib/notify";
+import { useDraft } from "@/features/playback/model/useDraft";
 import { useLyricsStore } from "@/entities/lyrics/store/lyricsStore";
 import {
   useLoadMedia,
@@ -119,8 +120,11 @@ export function SourcePanel() {
     };
   }, []);
 
-  const onFetch = useCallback(async () => {
-    if (!sourceInput.trim()) {
+  const loadDraft = useLyricsStore((s) => s.loadDraft);
+  const { restoreDraft } = useDraft(loadDraft);
+
+  const fetchSource = useCallback(async (url: string) => {
+    if (!url.trim()) {
       setSourceMessage("Please enter a valid source URL.");
       setFetchState("error");
       notify.warning("fetch", tt("enterUrl"));
@@ -141,7 +145,7 @@ export function SourcePanel() {
     setFetchState("loading");
     notify.loading("fetch", tt("fetching"));
     try {
-      const data = await loadMediaMutation.mutateAsync(sourceInput);
+      const data = await loadMediaMutation.mutateAsync(url);
       setMediaInfo(data.mediaInfo);
       setPeaksInfo(data.peaksInfo);
       setPeaksState(data.peaksState);
@@ -151,6 +155,7 @@ export function SourcePanel() {
         title: data.mediaInfo.trackName,
         artist: data.mediaInfo.artistName,
       });
+      restoreDraft(data.mediaInfo.videoId);
       setSourceMessage("Media loaded successfully.");
       setFetchState("ready");
       notify.success("fetch", tt("fetchDone", { title: data.mediaInfo.trackName || "" }));
@@ -162,7 +167,7 @@ export function SourcePanel() {
       notify.error("fetch", tt("fetchFailed", { message }));
     }
   }, [
-    sourceInput,
+    restoreDraft,
     loadMediaMutation,
     tt,
     setSourceMessage,
@@ -174,6 +179,24 @@ export function SourcePanel() {
     setTranscribeState,
     hydrateFromMedia,
   ]);
+
+  const onFetch = useCallback(
+    () => fetchSource(sourceInput),
+    [fetchSource, sourceInput],
+  );
+
+  // Opened from the projects list: /studio?v=<videoId>
+  const didAutoFetchRef = useRef(false);
+  useEffect(() => {
+    if (didAutoFetchRef.current) return;
+    didAutoFetchRef.current = true;
+    const videoId = new URLSearchParams(window.location.search).get("v");
+    if (!videoId || useEditorMediaStore.getState().mediaInfo?.videoId === videoId) return;
+    const url = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+    setSourceInput(url);
+    void fetchSource(url);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
+  }, []);
 
   const onLyricsFile = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {

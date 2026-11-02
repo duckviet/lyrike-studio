@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Languages, PencilLine } from "lucide-react";
+import { FolderOpen, Home, Languages, PencilLine } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/shared/lib/utils";
 import { Link, usePathname, useRouter } from "@/shared/lib/i18n/navigation";
@@ -52,6 +52,7 @@ export const Navbar = () => {
 
   const links = [
     { href: "/", label: t("home"), icon: Home },
+    { href: "/projects", label: t("projects"), icon: FolderOpen },
     { href: "/studio", label: t("editor"), icon: PencilLine },
   ];
 

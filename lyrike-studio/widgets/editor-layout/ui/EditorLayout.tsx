@@ -1,11 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { EditorButton, EditorPanel } from "@/features/editor";
 import { UI } from "@/shared/config/constants";
 import { cn } from "@/shared/lib/utils";
+import { Link } from "@/shared/lib/i18n/navigation";
 
 type EditorTabId = "source" | "timeline" | "lyrics";
 
@@ -31,6 +32,7 @@ export function EditorLayout({
   onToggleSidebar,
 }: EditorLayoutProps) {
   const t = useTranslations("editor.layout");
+  const tp = useTranslations("dashboard.projects");
   const tabs: { id: EditorTabId; label: string }[] = [
     { id: "source", label: t("source") },
     { id: "timeline", label: t("timeline") },
@@ -38,7 +40,14 @@ export function EditorLayout({
   ];
 
   return (
-    <main className="flex h-[calc(100vh-65px)] w-full flex-col overflow-hidden bg-bg px-3 py-3 md:px-6 md:py-5">
+    <main className="flex h-[calc(100vh-65px)] w-full flex-col overflow-hidden bg-bg px-3 py-3 md:px-6 md:pb-5 md:pt-2">
+      <Link
+        className="mb-2 hidden w-fit items-center gap-1.5 rounded-control px-1 text-xs font-semibold text-ink-light-soft transition-colors hover:text-primary md:inline-flex"
+        href="/projects"
+      >
+        <ArrowLeft size={14} />
+        {tp("back")}
+      </Link>
       <nav
         aria-label="Editor sections"
         className="mb-3 grid grid-cols-3 gap-1 rounded-outer border border-line bg-bg p-1 md:hidden"

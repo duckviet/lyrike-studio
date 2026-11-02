@@ -7,6 +7,14 @@ export type DraftPayload = {
   selectedLineId: string | null;
 };
 
+export type DraftSummary = {
+  videoId: string;
+  title: string;
+  artist: string;
+  lineCount: number;
+  savedAt: string;
+};
+
 export type DraftAutosavePayload = Omit<DraftPayload, "savedAt">;
 
 function buildStorageKey(prefix: string, videoId: string): string {
@@ -14,7 +22,65 @@ function buildStorageKey(prefix: string, videoId: string): string {
 }
 
 export function createDraftManager(prefix = "lyrics-studio:draft") {
+  const load = (videoId: string): DraftPayload | null => {
+    const raw = localStorage.getItem(buildStorageKey(prefix, videoId));
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as Partial<DraftPayload>;
+      if (!parsed.doc || !Array.isArray(parsed.doc.syncedLines)) {
+        return null;
+      }
+
+      const normalizedDoc: LyricsDoc = {
+        ...parsed.doc,
+        syncedLines: parsed.doc.syncedLines.map((line) =>
+          normalizeWordsWithinLine(line),
+        ),
+      };
+
+      return {
+        savedAt: typeof parsed.savedAt === "string" ? parsed.savedAt : "",
+        doc: normalizedDoc,
+        selectedLineId:
+          typeof parsed.selectedLineId === "string"
+            ? parsed.selectedLineId
+            : null,
+      };
+    } catch {
+      return null;
+    }
+  };
+
   return {
+    load,
+
+    list(): DraftSummary[] {
+      const keyPrefix = `${prefix}:`;
+      const summaries: DraftSummary[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key?.startsWith(keyPrefix)) continue;
+        const videoId = key.slice(keyPrefix.length);
+        const draft = load(videoId);
+        if (!draft) continue;
+        summaries.push({
+          videoId,
+          title: draft.doc.meta?.title ?? "",
+          artist: draft.doc.meta?.artist ?? "",
+          lineCount: draft.doc.syncedLines.length,
+          savedAt: draft.savedAt,
+        });
+      }
+      return summaries.sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+    },
+
+    remove(videoId: string): void {
+      localStorage.removeItem(buildStorageKey(prefix, videoId));
+    },
+
     save(videoId: string, payload: Omit<DraftPayload, "savedAt">): void {
       const nextPayload: DraftPayload = {
         ...payload,
@@ -25,38 +91,6 @@ export function createDraftManager(prefix = "lyrics-studio:draft") {
         buildStorageKey(prefix, videoId),
         JSON.stringify(nextPayload),
       );
-    },
-
-    load(videoId: string): DraftPayload | null {
-      const raw = localStorage.getItem(buildStorageKey(prefix, videoId));
-      if (!raw) {
-        return null;
-      }
-
-      try {
-        const parsed = JSON.parse(raw) as Partial<DraftPayload>;
-        if (!parsed.doc || !Array.isArray(parsed.doc.syncedLines)) {
-          return null;
-        }
-
-        const normalizedDoc: LyricsDoc = {
-          ...parsed.doc,
-          syncedLines: parsed.doc.syncedLines.map((line) =>
-            normalizeWordsWithinLine(line),
-          ),
-        };
-
-        return {
-          savedAt: typeof parsed.savedAt === "string" ? parsed.savedAt : "",
-          doc: normalizedDoc,
-          selectedLineId:
-            typeof parsed.selectedLineId === "string"
-              ? parsed.selectedLineId
-              : null,
-        };
-      } catch {
-        return null;
-      }
     },
   };
 }
