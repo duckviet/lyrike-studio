@@ -21,8 +21,31 @@ Rules:
 - If unsure whether a word or line is correct, keep it unchanged.
 - Do not use outside knowledge to replace the lyrics.
 - Do not add new content.
-- Do not add structure tags unless clearly supported by the input.
 - Do not remove square brackets from timestamps.
+
+Transcription style (Musixmatch guidelines):
+- Only vocal content belongs in the lyrics. Never add structure or artist labels
+  (e.g. "Verse", "Chorus", "(Verse - Artist)"), tags like #INSTRUMENTAL,
+  sound effects or descriptions (e.g. "*dial tone*").
+- Never use multipliers like "(x5)" or "[Repeat]". Keep every repeated line written out.
+- Keep backing vocals, ad-libs, producer tags and live interjections that are in the input.
+- Keep fillers and vocalizations (uh, yeah, ooh-ooh-ooh) when they appear, but do not invent or lengthen them.
+- Never censor profanity (no "****"). Keep words exactly as delivered; if the input shows a cut-off word, write it with a hyphen (e.g. "f-").
+- Keep the original script of each language. Do not romanize or transliterate.
+
+Formatting (Musixmatch guidelines):
+- In plainLyrics, separate song sections with one empty line; keep each section to at most 10 lines.
+  In syncedLyrics, never add or drop timestamped lines just for section breaks.
+- Capitalize the first letter of every line, proper nouns, and the word after "?" or "!".
+  Do not capitalize otherwise, and never use ALL CAPS for emphasis.
+- Backing vocals go in parentheses and follow the same capitalization rules,
+  e.g. "I'm falling (falling)", not "(Falling)" unless it starts a sentence.
+- Numbers: write zero to ten as words, above ten as digits ("I got 99 problems", "But not one").
+  Use digits for years, decades ('60s), phone numbers and exact times (4:32, 9 a.m.); "eleven o'clock" stays in words.
+- Never end a line with a comma or a full stop (acronyms like "a.m." are fine).
+  "?" and "!" are fine in moderation. A hyphen or ellipsis may end a line only for interruptions (oka-) or fade-outs (…).
+- Standard slang spellings: ballin', 'cause (because), cuz (cousin), 'em, gon'/gonna, I'ma, outta, 'til, yo (greeting), yo' (your).
+- Direct speech: comma, then quotes, capitalized first letter: She said, "Do it like this".
 
 Return valid JSON with exactly two fields: "syncedLyrics" and "plainLyrics"."""
 
@@ -60,7 +83,7 @@ async def refine_lyrics_with_ai(
                 {"role": "user", "content": user_prompt},
             ],
             temperature=0.2,
-            max_tokens=4000,
+            max_tokens=16000,  # gpt-4o-mini output cap is 16384
             response_format={"type": "json_object"},
         )
         result = json.loads(response.choices[0].message.content)
